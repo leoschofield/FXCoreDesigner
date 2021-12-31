@@ -6,7 +6,7 @@ from kivy.uix.button import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.widget import Widget
 from kivy.uix.dropdown import DropDown
-from kivy.graphics import Rectangle, Color, Line, Ellipse
+from kivy.graphics import Rectangle, Color, Line
 from kivy.core.window import Window
 import random
 
@@ -82,7 +82,7 @@ class Block(Widget):
             self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,5))
  
 
-    #======================================================================== move_connectors
+    #------------------------------------------- move_connectors
     def move_connectors(self,touch):
         if self.inputExists is True:
             temp = list(self.input.pos)
@@ -223,7 +223,7 @@ class Block(Widget):
             self.param1Con.pos = tuple(temp)
 
 
-    #========================================================================select_block
+    #------------------------------------------- select_block
     def select_block(self,touch):
         if self.selected is SELECTED:
             if touch.pos[0] + self.rect.size[0] < 1200:
@@ -239,7 +239,7 @@ class Block(Widget):
                     #print("Selected block",touch)
 
 
-    #========================================================================move_block
+    #------------------------------------------- move_block
     def move_block(self,touch):
         if self.selected == SELECTED:
             if touch.pos[0] + self.rect.size[0] < 1200:
@@ -252,12 +252,12 @@ class Block(Widget):
 
                     self.move_connectors(touch)
 
-    #========================================================================release_block
+    #------------------------------------------- release_block
     def release_block(self,touch):
         #print("Released block",touch)
         self.selected = RELEASED 
 
-    #========================================================================is_touch_detected
+    #------------------------------------------- is_touch_detected
     def is_touch_detected(self,touch,moving):
         if touch.pos[X] > self.rect.pos[X] and touch.pos[X] < (self.rect.pos[X] + self.rect.size[X]):
             if touch.pos[1] > self.rect.pos[Y] and touch.pos[Y] < (self.rect.pos[Y] + self.rect.size[Y]):
@@ -277,18 +277,18 @@ class Block(Widget):
 #============================Click=======================================
 #========================================================================
 class Click(Widget):
+    
+    def __init__(self, **kwargs):
+        super(Click, self).__init__(**kwargs)
+        self.blocks = []
+
     def assign_block(self,name,inputNode,outputNode,nParams):
         with self.canvas:
             block = Block(name,inputNode,outputNode,nParams)
             self.blocks.append(block)
             #print("created block")
             print(self.blocks)
-
-    def __init__(self, **kwargs):
-        super(Click, self).__init__(**kwargs)
-        #self.block_manager = block_manager
-        self.blocks = []
-
+  
     def on_touch_down(self, touch):
         self.detect_collisions(touch, STILL)
 
