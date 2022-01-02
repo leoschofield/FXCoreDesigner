@@ -21,6 +21,16 @@ OPAQUE = 1
 X = 0
 Y = 1 
 
+BLOCK_WIDTH = 100 
+BLOCK_HEIGHT = 50
+
+COLLISION = 1
+NO_COLLISION = 0
+
+BUTTON_HEIGHT = 30
+
+THRESH = 20
+
 
 #========================================================================        
 #============================Block=======================================
@@ -32,7 +42,7 @@ class Block(Widget):
         self.Ypos = random.randrange(100, 600)
         Color(0.4,0.4,0.4,OPAQUE, mode="rgba")
         #self.rect = Rectangle(pos=(0,0), size=(100,50))
-        self.rect = Rectangle(pos=(self.Xpos,self.Ypos), size=(100,50))
+        self.rect = Rectangle(pos=(self.Xpos,self.Ypos), size=(BLOCK_WIDTH,BLOCK_HEIGHT))
         #Color(0.5,0.4,0.2,OPAQUE, mode="rgba")
         #self.line = Line(points=[0, 0, 100, 0, 100, 50,0,50,0,0], width=3)
         self.label = Label(pos=(self.Xpos, self.Ypos - (self.rect.size[Y]/2)),text=name)
@@ -87,162 +97,255 @@ class Block(Widget):
             self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,5))
 
     #------------------------------------------- move_connectors
-    def move_connectors(self,touch):
+    def move_connectors(self,touch,moveX,moveY):
         if self.inputExists is True:
             temp = list(self.input.pos)
-            temp[X] = touch.pos[0] + 0
-            temp[Y] = touch.pos[1] + 20
+            if moveX:
+                temp[X] = touch.pos[0] + 0
+            if moveY:
+                temp[Y] = touch.pos[1] + 20
             self.input.pos = tuple(temp)
 
         if self.outputExists is True:
             temp = list(self.output.pos)
-            temp[X] = touch.pos[0] + 95
-            temp[Y] = touch.pos[1] + 20
+            if moveX:
+                temp[X] = touch.pos[0] + 95
+            if moveY:
+                temp[Y] = touch.pos[1] + 20
             self.output.pos = tuple(temp)
 
         if self.nParams == 6:  
             temp = list(self.param1Con.pos)
-            temp[X] = touch.pos[0] + 15
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 15
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param1Con.pos = tuple(temp)
 
             temp = list(self.param2Con.pos)
-            temp[X] = touch.pos[0] + 45
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 45
+            if moveY:    
+                temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
             self.param3Con.pos = touch.pos
             temp = list(self.param3Con.pos)
-            temp[X] = touch.pos[0] + 75
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 75
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param3Con.pos = tuple(temp)
 
             self.param4Con.pos = touch.pos
             temp = list(self.param4Con.pos)
-            temp[X] = touch.pos[0] + 15
-            temp[Y] = touch.pos[1] + 0
+            if moveX:
+                temp[X] = touch.pos[0] + 15
+            if moveY:
+                temp[Y] = touch.pos[1] + 0
             self.param4Con.pos = tuple(temp)
 
             self.param5Con.pos = touch.pos
             temp = list(self.param5Con.pos)
-            temp[X] = touch.pos[0] + 45
-            temp[Y] = touch.pos[1] + 0
+            if moveX:
+                temp[X] = touch.pos[0] + 45
+            if moveY:
+                temp[Y] = touch.pos[1] + 0
             self.param5Con.pos = tuple(temp)
 
             self.param6Con.pos = touch.pos
             temp = list(self.param6Con.pos)
-            temp[X] = touch.pos[0] + 75
-            temp[Y] = touch.pos[1] + 0
+            if moveX:
+                temp[X] = touch.pos[0] + 75
+            if moveY:
+                temp[Y] = touch.pos[1] + 0
             self.param6Con.pos = tuple(temp)
 
         if self.nParams == 5:  
             temp = list(self.param1Con.pos)
-            temp[X] = touch.pos[0] + 15
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 15
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param1Con.pos = tuple(temp)
 
             temp = list(self.param2Con.pos)
-            temp[X] = touch.pos[0] + 45
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 45
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
             self.param3Con.pos = touch.pos
             temp = list(self.param3Con.pos)
-            temp[X] = touch.pos[0] + 75
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 75
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param3Con.pos = tuple(temp)
 
             self.param4Con.pos = touch.pos
             temp = list(self.param4Con.pos)
-            temp[X] = touch.pos[0] + 30
-            temp[Y] = touch.pos[1] + 0
+            if moveX:
+                temp[X] = touch.pos[0] + 30
+            if moveY:
+                temp[Y] = touch.pos[1] + 0
             self.param4Con.pos = tuple(temp)
 
             self.param5Con.pos = touch.pos
             temp = list(self.param5Con.pos)
-            temp[X] = touch.pos[0] + 60
-            temp[Y] = touch.pos[1] + 0
+            if moveX:
+                temp[X] = touch.pos[0] + 60
+            if moveY:
+                temp[Y] = touch.pos[1] + 0
             self.param5Con.pos = tuple(temp)    
 
         if self.nParams == 4:  
             temp = list(self.param1Con.pos)
-            temp[X] = touch.pos[0] + 30
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 30
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param1Con.pos = tuple(temp)
 
             temp = list(self.param2Con.pos)
-            temp[X] = touch.pos[0] + 60
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 60
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
             self.param3Con.pos = touch.pos
             temp = list(self.param3Con.pos)
-            temp[X] = touch.pos[0] + 30
-            temp[Y] = touch.pos[1] + 0
+            if moveX:
+                temp[X] = touch.pos[0] + 30
+            if moveY:
+                temp[Y] = touch.pos[1] + 0
             self.param3Con.pos = tuple(temp)
 
             self.param4Con.pos = touch.pos
             temp = list(self.param4Con.pos)
-            temp[X] = touch.pos[0] + 60
-            temp[Y] = touch.pos[1] + 0
+            if moveX:
+                temp[X] = touch.pos[0] + 60
+            if moveY:
+                temp[Y] = touch.pos[1] + 0
             self.param4Con.pos = tuple(temp)
 
         if self.nParams == 3:  
             temp = list(self.param1Con.pos)
-            temp[X] = touch.pos[0] + 30
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 30
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param1Con.pos = tuple(temp)
 
             temp = list(self.param2Con.pos)
-            temp[X] = touch.pos[0] + 60
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 60
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
             self.param3Con.pos = touch.pos
             temp = list(self.param3Con.pos)
-            temp[X] = touch.pos[0] + 45
-            temp[Y] = touch.pos[1] + 0
+            if moveX:
+                temp[X] = touch.pos[0] + 45
+            if moveY:
+                temp[Y] = touch.pos[1] + 0
             self.param3Con.pos = tuple(temp)
             
         if self.nParams == 2:  
             temp = list(self.param1Con.pos)
-            temp[X] = touch.pos[0] + 30
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 30
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param1Con.pos = tuple(temp)
 
             temp = list(self.param2Con.pos)
-            temp[X] = touch.pos[0] + 60
-            temp[Y] = touch.pos[1] + 45
+            if moveX:
+                temp[X] = touch.pos[0] + 60
+            if moveY:
+                temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
         if self.nParams == 1:  
             temp = list(self.param1Con.pos)
-            temp[X] = touch.pos[0] + 45
-            temp[Y] = touch.pos[1] + 45
+            if moveY:
+                temp[X] = touch.pos[0] + 45
+            if moveX:
+                temp[Y] = touch.pos[1] + 45
             self.param1Con.pos = tuple(temp)
 
-
-    #------------------------------------------- select_block
-    def select_block(self,touch):
-        if self.selected is SELECTED:
-            if touch.pos[0] + self.rect.size[0] < 1200:
-                if touch.pos[1] + self.rect.size[1] < 770:
-                    self.rect.pos = touch.pos
-                    #self.line = Line(points=[touch.pos[0], touch.pos[1],touch.pos[0]+100, touch.pos[1],touch.pos[0]+100,touch.pos[1] + 50,touch.pos[0],touch.pos[1] + 50,touch.pos[0],touch.pos[1]], width=3)
-                    self.label.pos[X] = touch.pos[X]
-                    self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
-                    self.move_connectors(touch)
-
     #------------------------------------------- move_block
-    def move_block(self,touch):
+    def move_block(self,touch,blocks):
         if self.selected == SELECTED:
-            if touch.pos[0] + self.rect.size[0] < 1200:
-                if touch.pos[1] + self.rect.size[1] < 770:
-                    self.rect.pos = touch.pos
-                    self.label.pos[X] = touch.pos[X]
-                    self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
-                    self.move_connectors(touch)
+            if touch.pos[0] + self.rect.size[0] < 1200: #ensures block is below the drop down buttons
+                if touch.pos[1] + self.rect.size[1] < 770: #ensures block is left of right border
+                    if len(blocks) == 1:#if is only this block in the list             
+                        self.rect.pos = touch.pos
+                        self.label.pos[X] = touch.pos[X]
+                        self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                        self.move_connectors(touch,1,1)
+                    else:  # check for block-block collisions  
+                        for secondBlock in blocks:              
+                            if self.label.text is not secondBlock.label.text: # dont compare a block with itself
+                                if self.is_collision(secondBlock):
+                                    NO_UP = 0
+                                    NO_DOWN = 0
+                                    NO_LEFT = 0
+                                    NO_RIGHT = 0
+                                    ALLOW_X = 0
+                                    ALLOW_Y = 0
+                                    #restrict movement based on relative position of colliding blocks
+                                    if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:
+                                      #  print("NO MOVE LEFT")
+                                        NO_LEFT = 1
+                                    if self.rect.pos[X] < secondBlock.rect.pos[X] - THRESH:
+                                     #   print("NO MOVE RIGHT")
+                                        NO_RIGHT = 1
+                                    if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:
+                                     #   print("NO MOVE DOWN")
+                                        NO_DOWN = 1
+                                    if self.rect.pos[Y] < secondBlock.rect.pos[Y] - THRESH:
+                                       # print("NO MOVE UP")
+                                        NO_UP = 1
 
+                                    if touch.pos[X] < self.rect.pos[X]:
+                                        if not NO_LEFT:
+                                            #print("allow MOVE LEFT") 
+                                            ALLOW_X = 1
+                                    else:
+                                        if not NO_RIGHT:
+                                         #   print("allow MOVE RIGHT") 
+                                            ALLOW_X = 1
+
+                                    if touch.pos[Y] > self.rect.pos[Y]:
+                                        if not NO_UP:
+                                            #print("allow MOVE UP")  
+                                            ALLOW_Y = 1
+                                    else:
+                                        if not NO_DOWN:
+                                           # print("allow MOVE DOWN")
+                                            ALLOW_Y = 1   
+                                    
+                                    temp = list(self.rect.pos)
+                                    if ALLOW_X:
+                                        temp[X] = touch.pos[0]
+                                        self.label.pos[X] = touch.pos[X]
+                                    if ALLOW_Y:
+                                        temp[Y] = touch.pos[1]
+                                        self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                                    self.rect.pos = tuple(temp)
+                                    self.move_connectors(touch,ALLOW_X,ALLOW_Y)  
+                                    return
+                        else: # no collisions - move block            
+                            self.rect.pos = touch.pos
+                            self.label.pos[X] = touch.pos[X]
+                            self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                            self.move_connectors(touch,1,1)
+
+                    
     #------------------------------------------- release_block
     def release_block(self):
         self.selected = RELEASED 
@@ -254,6 +357,15 @@ class Block(Widget):
                 if moving == STILL:
                     self.selected = SELECTED
 
+    #------------------------------------------- is_collision
+    def is_collision(self,secondBlock):
+        if self.rect.pos[X] < secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:        
+            if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] - THRESH:
+                if self.rect.pos[Y] < secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:        
+                    if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] - THRESH:
+                        return COLLISION
+        return NO_COLLISION                
+
 
 #========================================================================        
 #============================Click=======================================
@@ -263,7 +375,6 @@ class Click(Widget):
     def __init__(self, **kwargs):
         super(Click, self).__init__(**kwargs)
         self.blocks = []
-        #self.blockNames = []
 
     def assign_block(self,name,inputNode,outputNode,nParams):
         with self.canvas:
@@ -278,35 +389,25 @@ class Click(Widget):
                 while not create_block:
                     for block in self.blocks: 
                         temp = name + " " + str(nameCounter)
-                        print(temp[-1])
-                        print(block.label.text[-1])
-                        if temp[:-1] == block.label.text[:-1]: # if word match
+                        if temp[:-1] == block.label.text[:-1]: # if word match 
                             if temp[-1] <= block.label.text[-1]:
-                                #print("Increment")
                                 create_block = 0
                                 nameCounter = nameCounter + 1
                             if temp[-1] > block.label.text[-1]:
-                                #print("Create")
-                                create_block = 1
-                                
+                                create_block = 1              
                         else:
-                            #print("NO MATCH")
                             create_block = 1
-                #if create_block:
                 block = Block(temp,inputNode,outputNode,nParams)
                 self.blocks.append(block)
 
     def on_touch_down(self, touch):
         self.detect_collisions(touch, STILL)
-
-        for block in self.blocks:
-            block.select_block(touch)
             
     def on_touch_move(self, touch):
         self.detect_collisions(touch, MOVING)
 
         for block in self.blocks:
-            block.move_block(touch)
+            block.move_block(touch,self.blocks)
 
     def on_touch_up(self,touch):
         for block in self.blocks:
@@ -317,11 +418,11 @@ class Click(Widget):
             if block.is_touch_detected(touch,moving): 
                 return
 
-            else:
-                 for secondBlock in self.blocks:
-                     pass
-                     #print(secondBlock.label.text)
-                     #block.is_touch_detected(secondBlock,moving):
+           # else:
+           #      for secondBlock in self.blocks:              
+           #          #print(secondBlock.label.text)
+           #          if block.label.text is not secondBlock.label.text:
+           #             block.is_collision(secondBlock)
 
 #========================================================================        
 #===========================FXCoreDesignerApp============================
@@ -334,47 +435,46 @@ class FXCoreDesignerApp(App):
 
         click = Click() 
 
-        layout = GridLayout(cols = 4, row_force_default = True,
-                            row_default_height = 30)
+        layout = GridLayout(cols = 4, row_force_default = True, row_default_height = BUTTON_HEIGHT)
         
         #--------------------------------IOdrop
         IOdrop = DropDown()
-        inBtn = Button(text ='Input', size_hint_y = None, height = 30)
+        inBtn = Button(text ='Input', size_hint_y = None, height = BUTTON_HEIGHT)
         inBtn.bind(on_release = lambda none: click.assign_block('Input',0,1,0))
         IOdrop.add_widget(inBtn)
         #
-        outBtn = Button(text ='Output', size_hint_y = None, height = 30)
+        outBtn = Button(text ='Output', size_hint_y = None, height = BUTTON_HEIGHT)
         outBtn.bind(on_release = lambda none: click.assign_block('Output',1,0,0))
         IOdrop.add_widget(outBtn)
         
         #--------------------------------FXdrop
         FXdrop = DropDown()
-        reverbBtn = Button(text ='Reverb', size_hint_y = None, height = 30)
+        reverbBtn = Button(text ='Reverb', size_hint_y = None, height = BUTTON_HEIGHT)
         reverbBtn.bind(on_release = lambda none: click.assign_block('Reverb',1,1,6))
         FXdrop.add_widget(reverbBtn)
         #
-        delayBtn = Button(text ='Delay', size_hint_y = None, height = 30)
+        delayBtn = Button(text ='Delay', size_hint_y = None, height = BUTTON_HEIGHT)
         delayBtn.bind(on_release = lambda none: click.assign_block('Delay',1,1,5))
         FXdrop.add_widget(delayBtn)
 
         #--------------------------------Routingdrop
         Routingdrop = DropDown()
-        splitterBtn = Button(text ='Splitter', size_hint_y = None, height = 30)
+        splitterBtn = Button(text ='Splitter', size_hint_y = None, height = BUTTON_HEIGHT)
         splitterBtn.bind(on_release = lambda none: click.assign_block('Splitter',1,1,4))
         Routingdrop.add_widget(splitterBtn)
         #
-        mixerBtn = Button(text ='Mixer', size_hint_y = None, height = 30)
+        mixerBtn = Button(text ='Mixer', size_hint_y = None, height = BUTTON_HEIGHT)
         mixerBtn.bind(on_release = lambda none: click.assign_block('Mixer',1,1,3))
         Routingdrop.add_widget(mixerBtn)
 
         #--------------------------------AnalysisDrop
         AnalysisDrop = DropDown()
-        FFTBtn = Button(text ='FFT', size_hint_y = None, height = 30)
+        FFTBtn = Button(text ='FFT', size_hint_y = None, height = BUTTON_HEIGHT)
         FFTBtn.bind(on_release = lambda  none: click.assign_block('FFT',1,1,1))
         # then add the button inside the dropdown
         AnalysisDrop.add_widget(FFTBtn)
         #
-        envelopeFollowerBtn = Button(text ='Envelope Follower', size_hint_y = None, height = 30)
+        envelopeFollowerBtn = Button(text ='Envelope Follower', size_hint_y = None, height = BUTTON_HEIGHT)
         envelopeFollowerBtn.bind(on_release = lambda  none: click.assign_block('Envelope Follower',1,1,1))
         AnalysisDrop.add_widget(envelopeFollowerBtn)
         
