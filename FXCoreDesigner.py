@@ -31,7 +31,6 @@ BUTTON_HEIGHT = 30
 
 THRESH = 20
 
-
 #========================================================================        
 #============================Block=======================================
 #========================================================================
@@ -129,7 +128,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
-            self.param3Con.pos = touch.pos
             temp = list(self.param3Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 75
@@ -137,7 +135,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 45
             self.param3Con.pos = tuple(temp)
 
-            self.param4Con.pos = touch.pos
             temp = list(self.param4Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 15
@@ -145,7 +142,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 0
             self.param4Con.pos = tuple(temp)
 
-            self.param5Con.pos = touch.pos
             temp = list(self.param5Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 45
@@ -153,7 +149,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 0
             self.param5Con.pos = tuple(temp)
 
-            self.param6Con.pos = touch.pos
             temp = list(self.param6Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 75
@@ -176,7 +171,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
-            self.param3Con.pos = touch.pos
             temp = list(self.param3Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 75
@@ -184,7 +178,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 45
             self.param3Con.pos = tuple(temp)
 
-            self.param4Con.pos = touch.pos
             temp = list(self.param4Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
@@ -192,7 +185,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 0
             self.param4Con.pos = tuple(temp)
 
-            self.param5Con.pos = touch.pos
             temp = list(self.param5Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 60
@@ -215,7 +207,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
-            self.param3Con.pos = touch.pos
             temp = list(self.param3Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
@@ -223,7 +214,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 0
             self.param3Con.pos = tuple(temp)
 
-            self.param4Con.pos = touch.pos
             temp = list(self.param4Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 60
@@ -246,7 +236,6 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
-            self.param3Con.pos = touch.pos
             temp = list(self.param3Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 45
@@ -269,11 +258,11 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
-        if self.nParams == 1:  
+        if self.nParams == 1: 
             temp = list(self.param1Con.pos)
-            if moveY:
-                temp[X] = touch.pos[0] + 45
             if moveX:
+                temp[X] = touch.pos[0] + 45
+            if moveY:
                 temp[Y] = touch.pos[1] + 45
             self.param1Con.pos = tuple(temp)
 
@@ -299,34 +288,25 @@ class Block(Widget):
                                     ALLOW_Y = 0
                                     #restrict movement based on relative position of colliding blocks
                                     if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:
-                                      #  print("NO MOVE LEFT")
                                         NO_LEFT = 1
                                     if self.rect.pos[X] < secondBlock.rect.pos[X] - THRESH:
-                                     #   print("NO MOVE RIGHT")
                                         NO_RIGHT = 1
                                     if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:
-                                     #   print("NO MOVE DOWN")
                                         NO_DOWN = 1
                                     if self.rect.pos[Y] < secondBlock.rect.pos[Y] - THRESH:
-                                       # print("NO MOVE UP")
                                         NO_UP = 1
 
-                                    if touch.pos[X] < self.rect.pos[X]:
+                                    if touch.pos[X] < self.rect.pos[X]: # left movement
                                         if not NO_LEFT:
-                                            #print("allow MOVE LEFT") 
                                             ALLOW_X = 1
-                                    else:
+                                    else: # right movement
                                         if not NO_RIGHT:
-                                         #   print("allow MOVE RIGHT") 
                                             ALLOW_X = 1
-
-                                    if touch.pos[Y] > self.rect.pos[Y]:
+                                    if touch.pos[Y] > self.rect.pos[Y]: # up movement
                                         if not NO_UP:
-                                            #print("allow MOVE UP")  
                                             ALLOW_Y = 1
-                                    else:
+                                    else: # down movement
                                         if not NO_DOWN:
-                                           # print("allow MOVE DOWN")
                                             ALLOW_Y = 1   
                                     
                                     temp = list(self.rect.pos)
@@ -417,12 +397,6 @@ class Click(Widget):
         for block in self.blocks:
             if block.is_touch_detected(touch,moving): 
                 return
-
-           # else:
-           #      for secondBlock in self.blocks:              
-           #          #print(secondBlock.label.text)
-           #          if block.label.text is not secondBlock.label.text:
-           #             block.is_collision(secondBlock)
 
 #========================================================================        
 #===========================FXCoreDesignerApp============================
