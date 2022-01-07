@@ -31,6 +31,9 @@ BUTTON_HEIGHT = 30
 
 THRESH = 20
 
+LINE_START = ()
+LINE_END = ()
+
 #========================================================================        
 #============================Block=======================================
 #========================================================================
@@ -48,6 +51,7 @@ class Block(Widget):
 
         self.selected = RELEASED
         self.nParams = nParams
+        self.paramCons = []
         self.inputExists = 0 
         self.outputExists = 0
 
@@ -77,7 +81,7 @@ class Block(Widget):
             self.param4Con = Rectangle(pos=(self.Xpos+30,self.Ypos), size=(10,5))
             self.param5Con = Rectangle(pos=(self.Xpos+60,self.Ypos), size=(10,5))
 
-        elif self.nParams == 4:
+        elif self.nParams == 4: 
             self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+45), size=(10,5))
             self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+45), size=(10,5))
             self.param3Con = Rectangle(pos=(self.Xpos+30,self.Ypos), size=(10,5))
@@ -105,7 +109,7 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 20
             self.input.pos = tuple(temp)
 
-        if self.outputExists is True:
+        if self.outputExists is True: 
             temp = list(self.output.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 95
@@ -156,7 +160,7 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 0
             self.param6Con.pos = tuple(temp)
 
-        if self.nParams == 5:  
+        elif self.nParams == 5:  
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 15
@@ -192,7 +196,7 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 0
             self.param5Con.pos = tuple(temp)    
 
-        if self.nParams == 4:  
+        elif self.nParams == 4:  
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
@@ -221,7 +225,7 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 0
             self.param4Con.pos = tuple(temp)
 
-        if self.nParams == 3:  
+        elif self.nParams == 3:  
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
@@ -243,7 +247,7 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 0
             self.param3Con.pos = tuple(temp)
             
-        if self.nParams == 2:  
+        elif self.nParams == 2:  
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
@@ -258,7 +262,7 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 45
             self.param2Con.pos = tuple(temp)
 
-        if self.nParams == 1: 
+        elif self.nParams == 1: 
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 45
@@ -271,7 +275,7 @@ class Block(Widget):
         if self.selected == SELECTED:
             if touch.pos[0] + self.rect.size[0] < 1200: #ensures block is below the drop down buttons
                 if touch.pos[1] + self.rect.size[1] < 770: #ensures block is left of right border
-                    if len(blocks) == 1:#if is only this block in the list             
+                    if len(blocks) == 1:#if only this block is in the list - move block                    
                         self.rect.pos = touch.pos
                         self.label.pos[X] = touch.pos[X]
                         self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
@@ -330,13 +334,68 @@ class Block(Widget):
     def release_block(self):
         self.selected = RELEASED 
 
+
+    def is_inside_connector(self,touch):
+
+        if self.inputExists:
+            if touch.pos[X] > self.input.pos[X] and touch.pos[X] < (self.input.pos[X] + self.input.size[X]):
+                if touch.pos[Y] > self.input.pos[Y] and touch.pos[Y] < (self.input.pos[Y] + self.input.size[Y]):
+                    print("IN Input")  
+                    self.selected = RELEASED
+                    return 11 
+
+        if self.outputExists:
+            if touch.pos[X] > self.output.pos[X] and touch.pos[X] < (self.output.pos[X] + self.output.size[X]):
+                if touch.pos[Y] > self.output.pos[Y] and touch.pos[Y] < (self.output.pos[Y] + self.output.size[Y]):
+                    print("IN Output")  
+                    self.selected = RELEASED
+                    return 10 
+
+        if self.nParams == 6:
+            if touch.pos[X] > self.param6Con.pos[X] and touch.pos[X] < (self.param6Con.pos[X] + self.param6Con.size[X]):
+                if touch.pos[Y] > self.param6Con.pos[Y] and touch.pos[Y] < (self.param6Con.pos[Y] + self.param6Con.size[Y]):
+                    print("IN 6") 
+                    self.selected = RELEASED 
+                    return 6  
+        if self.nParams >= 5:                
+            if touch.pos[X] > self.param5Con.pos[X] and touch.pos[X] < (self.param5Con.pos[X] + self.param5Con.size[X]):
+                if touch.pos[Y] > self.param5Con.pos[Y] and touch.pos[Y] < (self.param5Con.pos[Y] + self.param5Con.size[Y]):
+                    self.selected = RELEASED
+                    print("IN 5")      
+                    return 5 
+        if self.nParams >=4:                
+            if touch.pos[X] > self.param4Con.pos[X] and touch.pos[X] < (self.param4Con.pos[X] + self.param4Con.size[X]):
+                if touch.pos[Y] > self.param4Con.pos[Y] and touch.pos[Y] < (self.param4Con.pos[Y] + self.param4Con.size[Y]):
+                    self.selected = RELEASED
+                    print("IN 4") 
+                    return 4      
+        if self.nParams >= 3:                
+            if touch.pos[X] > self.param3Con.pos[X] and touch.pos[X] < (self.param3Con.pos[X] + self.param3Con.size[X]):
+                if touch.pos[Y] > self.param3Con.pos[Y] and touch.pos[Y] < (self.param3Con.pos[Y] + self.param3Con.size[Y]):
+                    self.selected = RELEASED
+                    print("IN 3") 
+                    return 3 
+        if self.nParams >= 2:                
+            if touch.pos[X] > self.param2Con.pos[X] and touch.pos[X] < (self.param2Con.pos[X] + self.param2Con.size[X]):
+                if touch.pos[Y] > self.param2Con.pos[Y] and touch.pos[Y] < (self.param2Con.pos[Y] + self.param2Con.size[Y]):
+                    self.selected = RELEASED
+                    print("IN 2") 
+                    return 2    
+        if self.nParams >= 1:                
+            if touch.pos[X] > self.param1Con.pos[X] and touch.pos[X] < (self.param1Con.pos[X] + self.param1Con.size[X]):
+                if touch.pos[Y] > self.param1Con.pos[Y] and touch.pos[Y] < (self.param1Con.pos[Y] + self.param1Con.size[Y]):
+                    self.selected = RELEASED
+                    print("IN 1") 
+                    return 1   
+
     #------------------------------------------- is_touch_detected
     def is_touch_detected(self,touch,moving):
         if touch.pos[X] > self.rect.pos[X] and touch.pos[X] < (self.rect.pos[X] + self.rect.size[X]):
-            if touch.pos[1] > self.rect.pos[Y] and touch.pos[Y] < (self.rect.pos[Y] + self.rect.size[Y]):
+            if touch.pos[Y] > self.rect.pos[Y] and touch.pos[Y] < (self.rect.pos[Y] + self.rect.size[Y]):
                 if moving == STILL:
                     self.selected = SELECTED
-
+                    self.is_inside_connector(touch)
+                    
     #------------------------------------------- is_collision
     def is_collision(self,secondBlock):
         if self.rect.pos[X] < secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:        
@@ -355,6 +414,12 @@ class Click(Widget):
     def __init__(self, **kwargs):
         super(Click, self).__init__(**kwargs)
         self.blocks = []
+
+
+    def drawLine(self, touch):
+        with self.canvas:
+            Color(1, 1, 1, 1)
+            Line(points=[LINE_START[X], LINE_START[Y], touch.pos[X], touch.pos[Y]], width=1.4)
 
     def assign_block(self,name,inputNode,outputNode,nParams):
         with self.canvas:
@@ -381,18 +446,24 @@ class Click(Widget):
                 self.blocks.append(block)
 
     def on_touch_down(self, touch):
+        global LINE_START
         self.detect_collisions(touch, STILL)
             
+        LINE_START = touch.pos
+
     def on_touch_move(self, touch):
         self.detect_collisions(touch, MOVING)
 
         for block in self.blocks:
             block.move_block(touch,self.blocks)
 
+       # self.drawLine(touch)   
+
     def on_touch_up(self,touch):
+        global LINE_END
         for block in self.blocks:
             block.release_block()
-
+            LINE_END = touch.pos
     def detect_collisions(self, touch, moving):
         for block in self.blocks:
             if block.is_touch_detected(touch,moving): 
@@ -445,7 +516,7 @@ class FXCoreDesignerApp(App):
         AnalysisDrop = DropDown()
         FFTBtn = Button(text ='FFT', size_hint_y = None, height = BUTTON_HEIGHT)
         FFTBtn.bind(on_release = lambda  none: click.assign_block('FFT',1,1,1))
-        # then add the button inside the dropdown
+        #
         AnalysisDrop.add_widget(FFTBtn)
         #
         envelopeFollowerBtn = Button(text ='Envelope Follower', size_hint_y = None, height = BUTTON_HEIGHT)
