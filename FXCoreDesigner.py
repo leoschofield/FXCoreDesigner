@@ -34,6 +34,8 @@ THRESH = 20
 LINE_START = ()
 LINE_END = ()
 
+STOP = 0 
+START = 1 
 #========================================================================        
 #============================Block=======================================
 #========================================================================
@@ -54,6 +56,7 @@ class Block(Widget):
         self.paramCons = []
         self.inputExists = 0 
         self.outputExists = 0
+        self.lineDragging = STOP
 
         if inputConnector: ## todo need multiple inputs for mixers,stereo effects, etc
             Color(0.2,0.2,0.2,OPAQUE, mode="rgba")
@@ -336,12 +339,15 @@ class Block(Widget):
 
 
     def is_inside_connector(self,touch):
-
+        global LINE_START
         if self.inputExists:
             if touch.pos[X] > self.input.pos[X] and touch.pos[X] < (self.input.pos[X] + self.input.size[X]):
                 if touch.pos[Y] > self.input.pos[Y] and touch.pos[Y] < (self.input.pos[Y] + self.input.size[Y]):
                     print("IN Input")  
                     self.selected = RELEASED
+                    LINE_START = touch.pos
+                    self.lineDragging = START
+                    self.drawLine(touch)   
                     return 11 
 
         if self.outputExists:
@@ -349,44 +355,86 @@ class Block(Widget):
                 if touch.pos[Y] > self.output.pos[Y] and touch.pos[Y] < (self.output.pos[Y] + self.output.size[Y]):
                     print("IN Output")  
                     self.selected = RELEASED
+                    LINE_START = touch.pos
+                    self.lineDragging = START
+                    self.drawLine(touch)   
                     return 10 
+
+        if self.nParams == 7: #todo for potentiometer blocks
+            # if touch.pos[X] > self.param6Con.pos[X] and touch.pos[X] < (self.param6Con.pos[X] + self.param6Con.size[X]):
+            #     if touch.pos[Y] > self.param6Con.pos[Y] and touch.pos[Y] < (self.param6Con.pos[Y] + self.param6Con.size[Y]):
+            #         print("IN 6") 
+            #         self.selected = RELEASED
+            #         LINE_START = touch.pos
+            #         self.lineDragging = START
+            #         self.drawLine(touch)    
+            return 7  
+
 
         if self.nParams == 6:
             if touch.pos[X] > self.param6Con.pos[X] and touch.pos[X] < (self.param6Con.pos[X] + self.param6Con.size[X]):
                 if touch.pos[Y] > self.param6Con.pos[Y] and touch.pos[Y] < (self.param6Con.pos[Y] + self.param6Con.size[Y]):
                     print("IN 6") 
-                    self.selected = RELEASED 
+                    self.selected = RELEASED
+                    LINE_START = touch.pos
+                    self.lineDragging = START
+                    self.drawLine(touch)    
                     return 6  
         if self.nParams >= 5:                
             if touch.pos[X] > self.param5Con.pos[X] and touch.pos[X] < (self.param5Con.pos[X] + self.param5Con.size[X]):
                 if touch.pos[Y] > self.param5Con.pos[Y] and touch.pos[Y] < (self.param5Con.pos[Y] + self.param5Con.size[Y]):
                     self.selected = RELEASED
+                    LINE_START = touch.pos
+                    self.lineDragging = START
+                    self.drawLine(touch)   
                     print("IN 5")      
                     return 5 
         if self.nParams >=4:                
             if touch.pos[X] > self.param4Con.pos[X] and touch.pos[X] < (self.param4Con.pos[X] + self.param4Con.size[X]):
                 if touch.pos[Y] > self.param4Con.pos[Y] and touch.pos[Y] < (self.param4Con.pos[Y] + self.param4Con.size[Y]):
                     self.selected = RELEASED
+                    LINE_START = touch.pos
+                    self.lineDragging = START
+                    self.drawLine(touch)   
                     print("IN 4") 
                     return 4      
         if self.nParams >= 3:                
             if touch.pos[X] > self.param3Con.pos[X] and touch.pos[X] < (self.param3Con.pos[X] + self.param3Con.size[X]):
                 if touch.pos[Y] > self.param3Con.pos[Y] and touch.pos[Y] < (self.param3Con.pos[Y] + self.param3Con.size[Y]):
                     self.selected = RELEASED
+                    LINE_START = touch.pos
+                    self.lineDragging = START
+                    self.drawLine(touch)   
                     print("IN 3") 
                     return 3 
         if self.nParams >= 2:                
             if touch.pos[X] > self.param2Con.pos[X] and touch.pos[X] < (self.param2Con.pos[X] + self.param2Con.size[X]):
                 if touch.pos[Y] > self.param2Con.pos[Y] and touch.pos[Y] < (self.param2Con.pos[Y] + self.param2Con.size[Y]):
                     self.selected = RELEASED
+                    LINE_START = touch.pos
+                    self.lineDragging = START
+                    self.drawLine(touch)   
                     print("IN 2") 
                     return 2    
         if self.nParams >= 1:                
             if touch.pos[X] > self.param1Con.pos[X] and touch.pos[X] < (self.param1Con.pos[X] + self.param1Con.size[X]):
                 if touch.pos[Y] > self.param1Con.pos[Y] and touch.pos[Y] < (self.param1Con.pos[Y] + self.param1Con.size[Y]):
                     self.selected = RELEASED
+                    LINE_START = touch.pos
+                    self.lineDragging = START
+                    self.drawLine(touch)   
                     print("IN 1") 
                     return 1   
+
+    def drawLine(self, touch):
+        with self.canvas:
+            Color(1, 1, 1, 1)
+            self.line = Line(points=[LINE_START[X], LINE_START[Y], touch.pos[X], touch.pos[Y]], width=1.4)
+
+    def move_line(self, touch):
+        with self.canvas:
+            Color(1, 1, 1, 1)
+            self.line.points=[LINE_START[X], LINE_START[Y], touch.pos[X], touch.pos[Y]]
 
     #------------------------------------------- is_touch_detected
     def is_touch_detected(self,touch,moving):
@@ -410,16 +458,11 @@ class Block(Widget):
 #============================Click=======================================
 #========================================================================
 class Click(Widget):
-    
+
     def __init__(self, **kwargs):
         super(Click, self).__init__(**kwargs)
         self.blocks = []
 
-
-    def drawLine(self, touch):
-        with self.canvas:
-            Color(1, 1, 1, 1)
-            Line(points=[LINE_START[X], LINE_START[Y], touch.pos[X], touch.pos[Y]], width=1.4)
 
     def assign_block(self,name,inputNode,outputNode,nParams):
         with self.canvas:
@@ -445,11 +488,10 @@ class Click(Widget):
                 block = Block(temp,inputNode,outputNode,nParams)
                 self.blocks.append(block)
 
+
     def on_touch_down(self, touch):
-        global LINE_START
         self.detect_collisions(touch, STILL)
-            
-        LINE_START = touch.pos
+
 
     def on_touch_move(self, touch):
         self.detect_collisions(touch, MOVING)
@@ -457,13 +499,16 @@ class Click(Widget):
         for block in self.blocks:
             block.move_block(touch,self.blocks)
 
-       # self.drawLine(touch)   
+            if block.lineDragging is START:
+                block.move_line(touch)   
 
     def on_touch_up(self,touch):
         global LINE_END
         for block in self.blocks:
             block.release_block()
+
             LINE_END = touch.pos
+
     def detect_collisions(self, touch, moving):
         for block in self.blocks:
             if block.is_touch_detected(touch,moving): 
@@ -480,10 +525,11 @@ class FXCoreDesignerApp(App):
 
         click = Click() 
 
-        layout = GridLayout(cols = 4, row_force_default = True, row_default_height = BUTTON_HEIGHT)
+        layout = GridLayout(cols = 5, row_force_default = True, row_default_height = BUTTON_HEIGHT)
         
         #--------------------------------IOdrop
         IOdrop = DropDown()
+        #
         inBtn = Button(text ='Input', size_hint_y = None, height = BUTTON_HEIGHT)
         inBtn.bind(on_release = lambda none: click.assign_block('Input',0,1,0))
         IOdrop.add_widget(inBtn)
@@ -494,6 +540,7 @@ class FXCoreDesignerApp(App):
         
         #--------------------------------FXdrop
         FXdrop = DropDown()
+        #
         reverbBtn = Button(text ='Reverb', size_hint_y = None, height = BUTTON_HEIGHT)
         reverbBtn.bind(on_release = lambda none: click.assign_block('Reverb',1,1,6))
         FXdrop.add_widget(reverbBtn)
@@ -504,6 +551,7 @@ class FXCoreDesignerApp(App):
 
         #--------------------------------Routingdrop
         Routingdrop = DropDown()
+        #
         splitterBtn = Button(text ='Splitter', size_hint_y = None, height = BUTTON_HEIGHT)
         splitterBtn.bind(on_release = lambda none: click.assign_block('Splitter',1,1,4))
         Routingdrop.add_widget(splitterBtn)
@@ -514,15 +562,23 @@ class FXCoreDesignerApp(App):
 
         #--------------------------------AnalysisDrop
         AnalysisDrop = DropDown()
+        #
         FFTBtn = Button(text ='FFT', size_hint_y = None, height = BUTTON_HEIGHT)
         FFTBtn.bind(on_release = lambda  none: click.assign_block('FFT',1,1,1))
-        #
         AnalysisDrop.add_widget(FFTBtn)
         #
-        envelopeFollowerBtn = Button(text ='Envelope Follower', size_hint_y = None, height = BUTTON_HEIGHT)
-        envelopeFollowerBtn.bind(on_release = lambda  none: click.assign_block('Envelope Follower',1,1,1))
+        envelopeFollowerBtn = Button(text ='Envelope', size_hint_y = None, height = BUTTON_HEIGHT)
+        envelopeFollowerBtn.bind(on_release = lambda  none: click.assign_block('Envelope',1,1,1))
         AnalysisDrop.add_widget(envelopeFollowerBtn)
         
+        #--------------------------------ControlsDrop
+        ControlsDrop = DropDown()
+        # 
+        PotentiomenterBtn = Button(text ='Pot', size_hint_y = None, height = BUTTON_HEIGHT)
+        PotentiomenterBtn.bind(on_release = lambda  none: click.assign_block('Pot',0,0,7))
+        ControlsDrop.add_widget(PotentiomenterBtn)
+        #
+
         #--------------------------------
         IObutton = Button(text ='IO')
         IObutton.bind(on_release = IOdrop.open)
@@ -532,11 +588,13 @@ class FXCoreDesignerApp(App):
         RoutingButton.bind(on_release = Routingdrop.open)
         AnalysisButton = Button(text ='Analysis')
         AnalysisButton.bind(on_release = AnalysisDrop.open)
-
+        ControlsButton = Button(text ='Controls')
+        ControlsButton.bind(on_release = ControlsDrop.open)
         layout.add_widget(IObutton)
         layout.add_widget(FXbutton)
         layout.add_widget(RoutingButton)
         layout.add_widget(AnalysisButton)
+        layout.add_widget(ControlsButton)
         layout.add_widget(click)
 
         return layout
