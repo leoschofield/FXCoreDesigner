@@ -1,5 +1,6 @@
 ## LeoSchofield 31/12/2021
 
+from pickle import FALSE, TRUE
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.button import Label
@@ -31,45 +32,65 @@ BUTTON_HEIGHT = 30
 
 THRESH = 20
 
-LINE_START = ()
+LINE_STARTED = ()
 LINE_END = ()
 
-STOP = 0 
-START = 1 
+STOPPED = 0 
+STARTED = 1 
+
+
+#========================================================================        
+#============================Line========================================
+#========================================================================
+class MyLine(Widget):
+
+    def __init__(self, touch, start_block, start_connector, **kwargs):
+        super(MyLine, self).__init__(**kwargs)
+        self.start_point = touch.pos
+        self.end_point = touch.pos
+        self.start_block = start_block
+        self.start_connector = start_connector
+        print(self.start_block)
+        print(self.start_connector)
+        self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=1.4)
+            
+    def move_line(self, touch):
+        with self.canvas:
+            Color(1, 1, 1, 1)
+            self.end_point = touch.pos
+            self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
+
+
 #========================================================================        
 #============================Block=======================================
 #========================================================================
 class Block(Widget):
     def __init__(self,name,inputConnector,outputConnector,nParams, **kwargs):
         super(Block, self).__init__(**kwargs)
+        self.name = name
         self.Xpos = random.randrange(200, 1000)
         self.Ypos = random.randrange(100, 600)
         Color(0.4,0.4,0.4,OPAQUE, mode="rgba")
-        #self.rect = Rectangle(pos=(0,0), size=(100,50))
         self.rect = Rectangle(pos=(self.Xpos,self.Ypos), size=(BLOCK_WIDTH,BLOCK_HEIGHT))
-        #Color(0.5,0.4,0.2,OPAQUE, mode="rgba")
-        #self.line = Line(points=[0, 0, 100, 0, 100, 50,0,50,0,0], width=3)
         self.label = Label(pos=(self.Xpos, self.Ypos - (self.rect.size[Y]/2)),text=name)
-
         self.selected = RELEASED
+        self.lineDragging = STOPPED
         self.nParams = nParams
         self.paramCons = []
+        self.lines = []
         self.inputExists = 0 
         self.outputExists = 0
-        self.lineDragging = STOP
-
-        if inputConnector: ## todo need multiple inputs for mixers,stereo effects, etc
-            Color(0.2,0.2,0.2,OPAQUE, mode="rgba")
+        Color(0.2,0.2,0.2,OPAQUE, mode="rgba")
+        
+        if inputConnector: ## todo need multiple inputs for mixers,stereo effects, etc 
             self.input = Rectangle(pos=(self.Xpos,self.Ypos+20), size=(5,10))
             self.inputExists = True
 
         if outputConnector: ## todo need multiple outputs for splitters,stereo effects, etc
-            Color(0.2,0.2,0.2,OPAQUE, mode="rgba")
             self.output = Rectangle(pos=(self.Xpos+95,self.Ypos+20), size=(5,10))
             self.outputExists = True
 
         if self.nParams == 6:  
-            Color(0.2,0.2,0.2,OPAQUE, mode="rgba")
             self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+45), size=(10,5))
             self.param2Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,5))
             self.param3Con = Rectangle(pos=(self.Xpos+75,self.Ypos+45), size=(10,5))
@@ -283,6 +304,7 @@ class Block(Widget):
                         self.label.pos[X] = touch.pos[X]
                         self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
                         self.move_connectors(touch,1,1)
+                        
                     else:  # check for block-block collisions  
                         for secondBlock in blocks:              
                             if self.label.text is not secondBlock.label.text: # dont compare a block with itself
@@ -302,7 +324,7 @@ class Block(Widget):
                                         NO_DOWN = 1
                                     if self.rect.pos[Y] < secondBlock.rect.pos[Y] - THRESH:
                                         NO_UP = 1
-
+                                    #check movement and movement restrictions    
                                     if touch.pos[X] < self.rect.pos[X]: # left movement
                                         if not NO_LEFT:
                                             ALLOW_X = 1
@@ -315,7 +337,7 @@ class Block(Widget):
                                     else: # down movement
                                         if not NO_DOWN:
                                             ALLOW_Y = 1   
-                                    
+                                    #move the block if allowed
                                     temp = list(self.rect.pos)
                                     if ALLOW_X:
                                         temp[X] = touch.pos[0]
@@ -337,17 +359,15 @@ class Block(Widget):
     def release_block(self):
         self.selected = RELEASED 
 
-
+    #-------------------------------------------is touch inside connector
     def is_inside_connector(self,touch):
-        global LINE_START
         if self.inputExists:
             if touch.pos[X] > self.input.pos[X] and touch.pos[X] < (self.input.pos[X] + self.input.size[X]):
                 if touch.pos[Y] > self.input.pos[Y] and touch.pos[Y] < (self.input.pos[Y] + self.input.size[Y]):
                     print("IN Input")  
                     self.selected = RELEASED
-                    LINE_START = touch.pos
-                    self.lineDragging = START
-                    self.drawLine(touch)   
+                    self.lineDragging = STARTED
+                    self.assign_line(touch,self.name,11)   
                     return 11 
 
         if self.outputExists:
@@ -355,9 +375,8 @@ class Block(Widget):
                 if touch.pos[Y] > self.output.pos[Y] and touch.pos[Y] < (self.output.pos[Y] + self.output.size[Y]):
                     print("IN Output")  
                     self.selected = RELEASED
-                    LINE_START = touch.pos
-                    self.lineDragging = START
-                    self.drawLine(touch)   
+                    self.lineDragging = STARTED
+                    self.assign_line(touch,self.name,10)   
                     return 10 
 
         if self.nParams == 7: #todo for potentiometer blocks
@@ -365,8 +384,8 @@ class Block(Widget):
             #     if touch.pos[Y] > self.param6Con.pos[Y] and touch.pos[Y] < (self.param6Con.pos[Y] + self.param6Con.size[Y]):
             #         print("IN 6") 
             #         self.selected = RELEASED
-            #         LINE_START = touch.pos
-            #         self.lineDragging = START
+            #         LINE_STARTED = touch.pos
+            #         self.lineDragging = STARTED
             #         self.drawLine(touch)    
             return 7  
 
@@ -376,65 +395,50 @@ class Block(Widget):
                 if touch.pos[Y] > self.param6Con.pos[Y] and touch.pos[Y] < (self.param6Con.pos[Y] + self.param6Con.size[Y]):
                     print("IN 6") 
                     self.selected = RELEASED
-                    LINE_START = touch.pos
-                    self.lineDragging = START
-                    self.drawLine(touch)    
+                    self.lineDragging = STARTED
+                    self.assign_line(touch,self.name, 6)  
                     return 6  
         if self.nParams >= 5:                
             if touch.pos[X] > self.param5Con.pos[X] and touch.pos[X] < (self.param5Con.pos[X] + self.param5Con.size[X]):
                 if touch.pos[Y] > self.param5Con.pos[Y] and touch.pos[Y] < (self.param5Con.pos[Y] + self.param5Con.size[Y]):
                     self.selected = RELEASED
-                    LINE_START = touch.pos
-                    self.lineDragging = START
-                    self.drawLine(touch)   
+                    self.lineDragging = STARTED
+                    self.assign_line(touch,self.name,5)  
                     print("IN 5")      
                     return 5 
         if self.nParams >=4:                
             if touch.pos[X] > self.param4Con.pos[X] and touch.pos[X] < (self.param4Con.pos[X] + self.param4Con.size[X]):
                 if touch.pos[Y] > self.param4Con.pos[Y] and touch.pos[Y] < (self.param4Con.pos[Y] + self.param4Con.size[Y]):
                     self.selected = RELEASED
-                    LINE_START = touch.pos
-                    self.lineDragging = START
-                    self.drawLine(touch)   
+                    self.lineDragging = STARTED
+                    self.assign_line(touch,self.name,4)  
                     print("IN 4") 
                     return 4      
         if self.nParams >= 3:                
             if touch.pos[X] > self.param3Con.pos[X] and touch.pos[X] < (self.param3Con.pos[X] + self.param3Con.size[X]):
                 if touch.pos[Y] > self.param3Con.pos[Y] and touch.pos[Y] < (self.param3Con.pos[Y] + self.param3Con.size[Y]):
                     self.selected = RELEASED
-                    LINE_START = touch.pos
-                    self.lineDragging = START
-                    self.drawLine(touch)   
+                    self.lineDragging = STARTED
+                    self.assign_line(touch,self.name,3)  
                     print("IN 3") 
                     return 3 
         if self.nParams >= 2:                
             if touch.pos[X] > self.param2Con.pos[X] and touch.pos[X] < (self.param2Con.pos[X] + self.param2Con.size[X]):
                 if touch.pos[Y] > self.param2Con.pos[Y] and touch.pos[Y] < (self.param2Con.pos[Y] + self.param2Con.size[Y]):
                     self.selected = RELEASED
-                    LINE_START = touch.pos
-                    self.lineDragging = START
-                    self.drawLine(touch)   
+                    self.lineDragging = STARTED
+                    self.assign_line(touch,self.name,2)  
                     print("IN 2") 
                     return 2    
         if self.nParams >= 1:                
             if touch.pos[X] > self.param1Con.pos[X] and touch.pos[X] < (self.param1Con.pos[X] + self.param1Con.size[X]):
                 if touch.pos[Y] > self.param1Con.pos[Y] and touch.pos[Y] < (self.param1Con.pos[Y] + self.param1Con.size[Y]):
                     self.selected = RELEASED
-                    LINE_START = touch.pos
-                    self.lineDragging = START
-                    self.drawLine(touch)   
+                    self.lineDragging = STARTED
+                    self.assign_line(touch,self.name,1)   
                     print("IN 1") 
                     return 1   
 
-    def drawLine(self, touch):
-        with self.canvas:
-            Color(1, 1, 1, 1)
-            self.line = Line(points=[LINE_START[X], LINE_START[Y], touch.pos[X], touch.pos[Y]], width=1.4)
-
-    def move_line(self, touch):
-        with self.canvas:
-            Color(1, 1, 1, 1)
-            self.line.points=[LINE_START[X], LINE_START[Y], touch.pos[X], touch.pos[Y]]
 
     #------------------------------------------- is_touch_detected
     def is_touch_detected(self,touch,moving):
@@ -443,6 +447,8 @@ class Block(Widget):
                 if moving == STILL:
                     self.selected = SELECTED
                     self.is_inside_connector(touch)
+                    return 1
+        return 0            
                     
     #------------------------------------------- is_collision
     def is_collision(self,secondBlock):
@@ -453,6 +459,11 @@ class Block(Widget):
                         return COLLISION
         return NO_COLLISION                
 
+ #------------------------------------------- assign_line
+    def assign_line(self,touch, start_block, start_connector):
+        with self.canvas:
+            line = MyLine(touch,start_block,start_connector)
+            self.lines.append(line)
 
 #========================================================================        
 #============================Click=======================================
@@ -463,7 +474,7 @@ class Click(Widget):
         super(Click, self).__init__(**kwargs)
         self.blocks = []
 
-
+    #-------------------------------------------
     def assign_block(self,name,inputNode,outputNode,nParams):
         with self.canvas:
             nameCounter = 1
@@ -477,7 +488,8 @@ class Click(Widget):
                 while not create_block:
                     for block in self.blocks: 
                         temp = name + " " + str(nameCounter)
-                        if temp[:-1] == block.label.text[:-1]: # if word match 
+                        #if word match 
+                        if temp[:-1] == block.label.text[:-1]: 
                             if temp[-1] <= block.label.text[-1]:
                                 create_block = 0
                                 nameCounter = nameCounter + 1
@@ -488,31 +500,34 @@ class Click(Widget):
                 block = Block(temp,inputNode,outputNode,nParams)
                 self.blocks.append(block)
 
-
+    #-------------------------------------------
     def on_touch_down(self, touch):
-        self.detect_collisions(touch, STILL)
-
-
+        self.detect_collisions(touch,STILL)
+    #-------------------------------------------
     def on_touch_move(self, touch):
-        self.detect_collisions(touch, MOVING)
-
+        self.detect_collisions(touch,MOVING)
         for block in self.blocks:
             block.move_block(touch,self.blocks)
+            if block.lineDragging is STARTED:
+                for line in block.lines:
+                    line.move_line(touch)
+                    pass   
 
-            if block.lineDragging is START:
-                block.move_line(touch)   
-
+    #-------------------------------------------
     def on_touch_up(self,touch):
-        global LINE_END
+        #global LINE_END
         for block in self.blocks:
             block.release_block()
+            #LINE_END = touch.pos
+            #todo only stop if inside another connector
+            block.lineDragging = STOPPED
 
-            LINE_END = touch.pos
-
+    #-------------------------------------------
     def detect_collisions(self, touch, moving):
         for block in self.blocks:
             if block.is_touch_detected(touch,moving): 
-                return
+                return TRUE
+        return FALSE
 
 #========================================================================        
 #===========================FXCoreDesignerApp============================
