@@ -22,7 +22,7 @@ DRAGGING = 1
 NOT_DRAGGING = 0
 
 OPAQUE = 1 
-#
+
 X = 0
 Y = 1 
 
