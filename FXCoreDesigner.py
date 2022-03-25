@@ -44,7 +44,8 @@ STARTED = 1
 
 blocks = []
 
-
+DONT_ASSIGN_LINE = 0
+ASSIGN_LINE = 1
 #========================================================================        
 #============================Line========================================
 #========================================================================
@@ -55,11 +56,15 @@ class MyLine(Widget):
         self.start_point = touch.pos
         self.end_point = touch.pos
         self.start_block = start_block
+        self.end_block = None
         self.start_connector = start_connector
+        self.end_connector = None
         self.nBlockParams = nblockParams
         self.dragging = DRAGGING
-        self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=1.4)
-            
+        self.name = "line_"+start_block +"_"+str(start_connector)
+        print("NEW!"+self.name)
+        self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=1.4, cap='none', joint='none')
+        
     def move_line(self, touch):
         with self.canvas:
             for block in blocks:
@@ -70,10 +75,14 @@ class MyLine(Widget):
                         self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
 
                     elif block.selected == SELECTED: #if moving the block that created the line
-                        self.end_point = touch.pos
+                        self.start_point = touch.pos
                         self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
 
-
+                if block.name == self.end_block: #if in the block that the line finished dragging in
+                    if block.selected == SELECTED:
+                        self.end_point = touch.pos
+                        self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
+                        
 
 #========================================================================        
 #============================Block=======================================
@@ -138,7 +147,7 @@ class Block(Widget):
 
     #------------------------------------------- move_connectors
     def move_connectors(self,touch,moveX,moveY):
-        if self.inputExists is True:
+        if self.inputExists == True:
             temp = list(self.input.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 0
@@ -146,7 +155,7 @@ class Block(Widget):
                 temp[Y] = touch.pos[1] + 20
             self.input.pos = tuple(temp)
 
-        if self.outputExists is True: 
+        if self.outputExists == True: 
             temp = list(self.output.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 95
@@ -320,7 +329,7 @@ class Block(Widget):
                         
                     else:  # check for block-block collisions  
                         for secondBlock in blocks:              
-                            if self.label.text is not secondBlock.label.text: # dont compare a block with itself
+                            if self.label.text != secondBlock.label.text: # dont compare a block with itself
                                 if self.is_collision(secondBlock):
                                     NO_UP = 0
                                     NO_DOWN = 0
@@ -372,13 +381,14 @@ class Block(Widget):
         self.selected = RELEASED 
      
     #-------------------------------------------is touch inside connector
-    def is_inside_connector(self,touch):
+    def is_inside_connector(self,touch,allow_assign_line):
         if self.inputExists:
             if touch.pos[X] > self.input.pos[X] and touch.pos[X] < (self.input.pos[X] + self.input.size[X]):
                 if touch.pos[Y] > self.input.pos[Y] and touch.pos[Y] < (self.input.pos[Y] + self.input.size[Y]):
                     print("IN Input")  
                     self.selected = RELEASED
-                    self.assign_line(touch,self.name,11,self.nParams)   
+                    if allow_assign_line:
+                        self.assign_line(touch,self.name,11,self.nParams)   
                     return 11 
 
         if self.outputExists:
@@ -386,7 +396,8 @@ class Block(Widget):
                 if touch.pos[Y] > self.output.pos[Y] and touch.pos[Y] < (self.output.pos[Y] + self.output.size[Y]):
                     print("IN Output")  
                     self.selected = RELEASED
-                    self.assign_line(touch,self.name,10,self.nParams)   
+                    if allow_assign_line:
+                        self.assign_line(touch,self.name,10,self.nParams)   
                     return 10 
 
         if self.nParams == 7: #todo for potentiometer blocks
@@ -403,41 +414,47 @@ class Block(Widget):
                 if touch.pos[Y] > self.param6Con.pos[Y] and touch.pos[Y] < (self.param6Con.pos[Y] + self.param6Con.size[Y]):
                     #print("IN 6") 
                     self.selected = RELEASED
-                    self.assign_line(touch,self.name, 6,self.nParams)  
+                    if allow_assign_line:
+                        self.assign_line(touch,self.name, 6,self.nParams)  
                     return 6  
         if self.nParams >= 5:                
             if touch.pos[X] > self.param5Con.pos[X] and touch.pos[X] < (self.param5Con.pos[X] + self.param5Con.size[X]):
                 if touch.pos[Y] > self.param5Con.pos[Y] and touch.pos[Y] < (self.param5Con.pos[Y] + self.param5Con.size[Y]):
                     self.selected = RELEASED
-                    self.assign_line(touch,self.name,5,self.nParams)  
+                    if allow_assign_line:
+                        self.assign_line(touch,self.name,5,self.nParams)  
                     #print("IN 5")      
                     return 5 
         if self.nParams >=4:                
             if touch.pos[X] > self.param4Con.pos[X] and touch.pos[X] < (self.param4Con.pos[X] + self.param4Con.size[X]):
                 if touch.pos[Y] > self.param4Con.pos[Y] and touch.pos[Y] < (self.param4Con.pos[Y] + self.param4Con.size[Y]):
                     self.selected = RELEASED
-                    self.assign_line(touch,self.name,4,self.nParams)  
+                    if allow_assign_line:
+                        self.assign_line(touch,self.name,4,self.nParams)  
                     #print("IN 4") 
                     return 4      
         if self.nParams >= 3:                
             if touch.pos[X] > self.param3Con.pos[X] and touch.pos[X] < (self.param3Con.pos[X] + self.param3Con.size[X]):
                 if touch.pos[Y] > self.param3Con.pos[Y] and touch.pos[Y] < (self.param3Con.pos[Y] + self.param3Con.size[Y]):
                     self.selected = RELEASED
-                    self.assign_line(touch,self.name,3,self.nParams)  
+                    if allow_assign_line:
+                        self.assign_line(touch,self.name,3,self.nParams)  
                     #print("IN 3") 
                     return 3 
         if self.nParams >= 2:                
             if touch.pos[X] > self.param2Con.pos[X] and touch.pos[X] < (self.param2Con.pos[X] + self.param2Con.size[X]):
                 if touch.pos[Y] > self.param2Con.pos[Y] and touch.pos[Y] < (self.param2Con.pos[Y] + self.param2Con.size[Y]):
                     self.selected = RELEASED
-                    self.assign_line(touch,self.name,2,self.nParams)  
+                    if allow_assign_line:
+                        self.assign_line(touch,self.name,2,self.nParams)  
                     #print("IN 2") 
                     return 2    
         if self.nParams >= 1:                
             if touch.pos[X] > self.param1Con.pos[X] and touch.pos[X] < (self.param1Con.pos[X] + self.param1Con.size[X]):
                 if touch.pos[Y] > self.param1Con.pos[Y] and touch.pos[Y] < (self.param1Con.pos[Y] + self.param1Con.size[Y]):
                     self.selected = RELEASED
-                    self.assign_line(touch,self.name,1,self.nParams)   
+                    if allow_assign_line:
+                        self.assign_line(touch,self.name,1,self.nParams)   
                     #print("IN 1") 
                     return 1
         return 0   
@@ -448,7 +465,8 @@ class Block(Widget):
             if touch.pos[Y] > self.rect.pos[Y] and touch.pos[Y] < (self.rect.pos[Y] + self.rect.size[Y]):
                 if moving == STILL:
                     self.selected = SELECTED
-                    self.is_inside_connector(touch)
+                    print("BLOCK SELECTED")
+                    self.is_inside_connector(touch,ASSIGN_LINE) #assign a line if inside a connector
                     return 1 
         return 0            
                     
@@ -510,38 +528,32 @@ class Click(Widget):
         if blocks:
             for block in blocks:
                 if block.conLines:
-                    for line in block.conLines:
-                        if line.dragging is DRAGGING:
-                            return
-        self.detect_collisions(touch,STILL)
+                    for line in block.conLines:   
+                        if line.dragging == DRAGGING:
+                            line.move_line(touch)
+                            return #don't check for collision with block if dragging a line
+            self.detect_collisions(touch,STILL)
+
     #-------------------------------------------
     def on_touch_move(self, touch):
-        self.detect_collisions(touch,MOVING)
         for block in blocks:
             block.move_block(touch,blocks)
             for conLine in block.conLines:
-                #if conLine.dragging is DRAGGING:
                 conLine.move_line(touch)
 
     #-------------------------------------------
     def on_touch_up(self,touch):
         for block1 in blocks:
             block1.release_block(touch)
-            print("release block", block1.name)
             if block1.conLines:
-                print(block1.name, "has connector lines", block1.conLines )
                 for conLine in block1.conLines:
-                    if conLine.dragging is DRAGGING:
-                        print("dragging")
-                        for block2 in blocks:
-                            if block1.name is not block2.name:
-                                print("other block",block2.name)
-                                if block2.is_inside_connector(touch) is not 0:
-                                    print(block2.is_inside_connector(touch))
-                                    print("RELEASE LINE")
-                                    conLine = NOT_DRAGGING
-
-            #todo only stop if inside another connector
+                    if conLine.dragging == DRAGGING:
+                        for block2 in blocks:#search through the other blocks to see if end of line (mouse pointer) is inside a connector
+                            if block1.name != block2.name:
+                                if block2.is_inside_connector(touch,DONT_ASSIGN_LINE):                   
+                                    conLine.dragging = NOT_DRAGGING
+                                    conLine.end_block=block2.name
+                                    print(conLine.end_block)
 
 
     #-------------------------------------------
