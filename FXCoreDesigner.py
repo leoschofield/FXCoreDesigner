@@ -65,7 +65,7 @@ class MyLine(Widget):
         self.end_connector = None
         self.dragging = DRAGGING
         #self.nBlockParams = nblockParams
-        #self.name = "line_"+start_block +"_"+str(start_connector)
+        self.name = "line_"+start_block +"_"+str(start_connector)
         Color(0.50, 0, 0.70, 1)
         self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=2.5, cap='round', joint='none')
         
@@ -86,6 +86,8 @@ class MyLine(Widget):
         with self.canvas:
             for block in blocks:
                 if block.selected == SELECTED:
+                    print(self.name)
+                    print(conX, conY)
                     if block.name == self.start_block: #if in the block that created the connector line
                             self.start_point = [conX, conY]
                             self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
@@ -205,11 +207,14 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 45
             for conLine in self.conLines: #move connected lines
+                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))   
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 1:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 1:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
             self.param1Con.pos = tuple(temp)
 
@@ -220,11 +225,14 @@ class Block(Widget):
             if moveY:    
                 temp[Y] = touch.pos[1] + 45
             for conLine in self.conLines: #move connected lines
+                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 2:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 2:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
             self.param2Con.pos = tuple(temp)
 
@@ -235,11 +243,14 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 45
             for conLine in self.conLines: #move connected lines
+                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 3:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 3:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
             self.param3Con.pos = tuple(temp)
 
@@ -250,11 +261,14 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
+                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 4:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 4:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
             self.param4Con.pos = tuple(temp)
 
@@ -265,11 +279,14 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
+                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 5:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 5:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
             self.param5Con.pos = tuple(temp)
 
@@ -280,11 +297,14 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
+                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 6:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 6:
+                        print(conLine.name +" moving")
                         conLine.move_line(temp[X]+5,temp[Y]) 
             self.param6Con.pos = tuple(temp)
 
@@ -593,7 +613,6 @@ class Block(Widget):
         if self.inputExists:
             if touch.pos[X] > self.input.pos[X] and touch.pos[X] < (self.input.pos[X] + self.input.size[X]):
                 if touch.pos[Y] > self.input.pos[Y] and touch.pos[Y] < (self.input.pos[Y] + self.input.size[Y]):
-                    #print("IN Input")  
                     self.selected = RELEASED
                     if allow_assign_line:
                         if self.conLines != []: # if there are conlines
@@ -612,7 +631,6 @@ class Block(Widget):
         if self.outputExists:
             if touch.pos[X] > self.output.pos[X] and touch.pos[X] < (self.output.pos[X] + self.output.size[X]):
                 if touch.pos[Y] > self.output.pos[Y] and touch.pos[Y] < (self.output.pos[Y] + self.output.size[Y]):
-                    #print("IN Output")  
                     self.selected = RELEASED
                     if allow_assign_line:
                         if self.conLines != []: # if there are conlines
@@ -729,7 +747,7 @@ class Block(Widget):
                         else: #assign a line as there are none connected to this block
                             self.assign_line(touch,self.name,2,self.nParams)
                     return 2     
-                    
+
         #==============Parameter 1 
         if self.nParams >= 1:                
             if touch.pos[X] > self.param1Con.pos[X] and touch.pos[X] < (self.param1Con.pos[X] + self.param1Con.size[X]):
@@ -815,9 +833,9 @@ class Click(Widget):
 
     #-------------------------------------------
     def on_touch_down(self, touch):
-        if blocks is not None:
+        if blocks != []:
             for block in blocks:
-                if block.conLines is not None:
+                if block.conLines != []:
                     for line in block.conLines:   
                         if line.dragging == DRAGGING:
                             line.drag_line(touch,DRAG_MODE0)
@@ -826,13 +844,13 @@ class Click(Widget):
 
     #-------------------------------------------
     def on_touch_move(self, touch):
-        if blocks is not None:
+        if blocks != []:
             for block in blocks:
                 block.move_block(touch,blocks)
-                for conLine in block.conLines:
-                    #print(conLine.start_connector,conLine.end_connector)
-                    if conLine.dragging == DRAGGING:
-                        conLine.drag_line(touch,DRAG_MODE0)
+                if block.conLines != []:
+                    for conLine in block.conLines:
+                        if conLine.dragging == DRAGGING:
+                            conLine.drag_line(touch,DRAG_MODE0)
 
     #-------------------------------------------
     def on_touch_up(self,touch):
@@ -843,25 +861,31 @@ class Click(Widget):
                     if conLine.dragging == DRAGGING:#letting go of a line that hasn't been linked to end block yet
                         for block2 in blocks: #search through the other blocks to see if end of line (mouse pointer) is inside a connector
                             if block1.name != block2.name: #dont let a block connect to itself
-                                conLine.end_connector = block2.is_inside_connector(touch,DONT_ASSIGN_LINE) #inside a connector of block 2?
-                                if conLine.end_connector != 0: #yes!
-                                    if block2.conLines != []: # block2 has lines?
-                                        for conLine2 in block2.conLines:
-                                            if conLine2.start_block == block2.name: #only check the connections that start on block 2
-                                                if conLine2.start_connector == conLine.end_connector:
-                                                    return #found line that is connected here so break out so cursor keeps hold of line
-                                            elif conLine2.end_block == block2.name:#...or end on block 2 
-                                                if conLine2.end_connector == conLine.end_connector:
-                                                    return #found line that is connected here so break out so cursor keeps hold of line              
-                                        conLine.dragging = NOT_DRAGGING
-                                        conLine.end_block=block2.name
-                                        block2.conLines.append(conLine)# add the newly connected line to the list of lines
-                                                 
-                                    else: #block 2 has no lines            
-                                        conLine.dragging = NOT_DRAGGING
-                                        conLine.end_block=block2.name
-                                        block2.conLines.append(conLine)# add the newly connected line to the list of lines
-                                        break                
+                                checkInsideConnector = block2.is_inside_connector(touch,DONT_ASSIGN_LINE) #inside a connector of block 2?
+                                print("dropped in end connector "+ str(conLine.end_connector))
+                                if checkInsideConnector != 0: #...
+                                    if checkInsideConnector is not None: #yes!
+                                        if block2.conLines != []: # block2 has lines?
+                                            for conLine2 in block2.conLines:
+                                                if conLine2.start_block == block2.name: #only check the connections that start on block 2
+                                                    if conLine2.start_connector == checkInsideConnector:
+                                                        return #found line that is connected here so break out so cursor keeps hold of line
+                                                elif conLine2.end_block == block2.name:#...or end on block 2 
+                                                    if conLine2.end_connector == checkInsideConnector:
+                                                        return #found line that is connected here so break out so cursor keeps hold of line              
+                                            conLine.dragging = NOT_DRAGGING
+                                            conLine.end_block=block2.name
+                                            block2.conLines.append(conLine)# add the newly connected line to the list of lines
+                                            conLine.end_connector = checkInsideConnector
+                                            conLine.name += (" " + block2.name + " " + str(conLine.end_connector))
+
+                                        else: #block 2 has no lines            
+                                            conLine.dragging = NOT_DRAGGING
+                                            conLine.end_block=block2.name
+                                            block2.conLines.append(conLine)# add the newly connected line to the list of lines
+                                            conLine.end_connector = checkInsideConnector
+                                            conLine.name += (" " + block2.name + " " + str(conLine.end_connector))
+                                            break                
     #--------------------------------------------
     def detect_collisions(self, touch, moving):
         for block in blocks:
