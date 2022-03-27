@@ -1,4 +1,5 @@
 # LeoSchofield 01/01/2022
+from unicodedata import name
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.button import Label
@@ -59,30 +60,37 @@ class MyLine(Widget):
         self.end_block = None
         self.start_connector = start_connector
         self.end_connector = None
-        self.nBlockParams = nblockParams
         self.dragging = DRAGGING
-        self.name = "line_"+start_block +"_"+str(start_connector)
-        print("NEW!"+self.name)
+        #self.nBlockParams = nblockParams
+        #self.name = "line_"+start_block +"_"+str(start_connector)
         self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=1.4, cap='none', joint='none')
         
-    def move_line(self, touch):
+    def drag_line(self, touch,mode):
+        with self.canvas:
+            if mode == 0:
+                for block in blocks:
+                    if block.name == self.start_block: #if in the block that created the connector line
+                            Color(0.7, 0.7, 0.7, 1)
+                            self.end_point = touch.pos
+                            self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
+            elif mode == 1:
+                for block in blocks:
+                    if block.name == self.start_block: #if in the block that created the connector line
+                            Color(0.7, 0.7, 0.7, 1)
+                            self.end_point = touch #touch is pos passed to this function in main function
+                            self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]    
+      
+    def move_line(self, conX,conY):
         with self.canvas:
             for block in blocks:
-                if block.name == self.start_block: #if in the block that created the connector line
-                    if self.dragging == DRAGGING:  #if dragging the line on intial creation 
-                        Color(0.7, 0.7, 0.7, 1)
-                        self.end_point = touch.pos
-                        self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
+                if block.selected == SELECTED:
+                    if block.name == self.start_block: #if in the block that created the connector line
+                            self.start_point = [conX, conY]
+                            self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
 
-                    elif block.selected == SELECTED: #if moving the block that created the line
-                        self.start_point = touch.pos
-                        self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
-
-                if block.name == self.end_block: #if in the block that the line finished dragging in
-                    if block.selected == SELECTED:
-                        self.end_point = touch.pos
-                        self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
-                        
+                    if block.name == self.end_block: #if in the block that the line finished dragging in
+                            self.end_point = [conX, conY]
+                            self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]      
 
 #========================================================================        
 #============================Block=======================================
@@ -145,175 +153,366 @@ class Block(Widget):
         elif self.nParams == 1:
             self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,5))
 
-    #------------------------------------------- move_connectors
+    #------------------------------------------- move connectors and lines
     def move_connectors(self,touch,moveX,moveY):
+        #**********************************Input Connector
         if self.inputExists == True:
             temp = list(self.input.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 0
             if moveY:
                 temp[Y] = touch.pos[1] + 20
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 11:
+                        conLine.move_line(temp[X],temp[Y]+5) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 11:
+                        conLine.move_line(temp[X],temp[Y]+5) 
             self.input.pos = tuple(temp)
 
+        #**********************************Output Connector
         if self.outputExists == True: 
             temp = list(self.output.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 95
             if moveY:
                 temp[Y] = touch.pos[1] + 20
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 10:
+                        conLine.move_line(temp[X],temp[Y]+5) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 10:
+                        conLine.move_line(temp[X],temp[Y]+5) 
             self.output.pos = tuple(temp)
-
+        
+        #========================================6 Parameters
         if self.nParams == 6:  
+            #**********************************Connector 1
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 15
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param1Con.pos = tuple(temp)
 
+            #**********************************Connector 2
             temp = list(self.param2Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 45
             if moveY:    
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param2Con.pos = tuple(temp)
 
+            #**********************************Connector 3
             temp = list(self.param3Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 75
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 3:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 3:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param3Con.pos = tuple(temp)
 
+            #**********************************Connector 4
             temp = list(self.param4Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 15
             if moveY:
                 temp[Y] = touch.pos[1] + 0
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 4:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 4:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param4Con.pos = tuple(temp)
 
+            #**********************************Connector 5
             temp = list(self.param5Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 45
             if moveY:
                 temp[Y] = touch.pos[1] + 0
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 5:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 5:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param5Con.pos = tuple(temp)
 
+            #**********************************Connector 6
             temp = list(self.param6Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 75
             if moveY:
                 temp[Y] = touch.pos[1] + 0
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 6:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 6:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param6Con.pos = tuple(temp)
 
+        #========================================5 Parameters
         elif self.nParams == 5:  
+            #**********************************Connector 1
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 15
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param1Con.pos = tuple(temp)
 
+            #**********************************Connector 2
             temp = list(self.param2Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 45
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param2Con.pos = tuple(temp)
 
+            #**********************************Connector 3
             temp = list(self.param3Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 75
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 3:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 3:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param3Con.pos = tuple(temp)
 
+            #**********************************Connector 4
             temp = list(self.param4Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
             if moveY:
                 temp[Y] = touch.pos[1] + 0
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 4:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 4:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param4Con.pos = tuple(temp)
 
+            #**********************************Connector 5
             temp = list(self.param5Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 60
             if moveY:
                 temp[Y] = touch.pos[1] + 0
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 5:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 5:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param5Con.pos = tuple(temp)    
 
+
+        #========================================4 Parameters
         elif self.nParams == 4:  
+            #**********************************Connector 1
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param1Con.pos = tuple(temp)
 
+            #**********************************Connector 2
             temp = list(self.param2Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 60
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param2Con.pos = tuple(temp)
 
+            #**********************************Connector 3
             temp = list(self.param3Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
             if moveY:
                 temp[Y] = touch.pos[1] + 0
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 3:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 3:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param3Con.pos = tuple(temp)
 
+            #**********************************Connector 4
             temp = list(self.param4Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 60
             if moveY:
                 temp[Y] = touch.pos[1] + 0
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 4:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 4:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param4Con.pos = tuple(temp)
 
+        #========================================3 Parameters
         elif self.nParams == 3:  
+            #**********************************Connector 1
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param1Con.pos = tuple(temp)
 
+            #**********************************Connector 2
             temp = list(self.param2Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 60
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param2Con.pos = tuple(temp)
 
+            #**********************************Connector 3
             temp = list(self.param3Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 45
             if moveY:
                 temp[Y] = touch.pos[1] + 0
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 3:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 3:
+                        conLine.move_line(temp[X]+5,temp[Y])  
             self.param3Con.pos = tuple(temp)
-            
+
+        #========================================2 Parameters
         elif self.nParams == 2:  
+            #**********************************Connector 1
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 30
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y])  
             self.param1Con.pos = tuple(temp)
 
+            #**********************************Connector 2
             temp = list(self.param2Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 60
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 2:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param2Con.pos = tuple(temp)
 
+        #========================================1 Parameter
         elif self.nParams == 1: 
+            #**********************************Connector 1
             temp = list(self.param1Con.pos)
             if moveX:
                 temp[X] = touch.pos[0] + 45
             if moveY:
                 temp[Y] = touch.pos[1] + 45
+            for conLine in self.conLines: #move connected lines
+                if conLine.start_block == self.name:
+                    if conLine.start_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
+                elif conLine.end_block == self.name:
+                    if conLine.end_connector == 1:
+                        conLine.move_line(temp[X]+5,temp[Y]) 
             self.param1Con.pos = tuple(temp)
 
     #------------------------------------------- move_block
@@ -385,7 +584,7 @@ class Block(Widget):
         if self.inputExists:
             if touch.pos[X] > self.input.pos[X] and touch.pos[X] < (self.input.pos[X] + self.input.size[X]):
                 if touch.pos[Y] > self.input.pos[Y] and touch.pos[Y] < (self.input.pos[Y] + self.input.size[Y]):
-                    print("IN Input")  
+                    #print("IN Input")  
                     self.selected = RELEASED
                     if allow_assign_line:
                         self.assign_line(touch,self.name,11,self.nParams)   
@@ -394,7 +593,7 @@ class Block(Widget):
         if self.outputExists:
             if touch.pos[X] > self.output.pos[X] and touch.pos[X] < (self.output.pos[X] + self.output.size[X]):
                 if touch.pos[Y] > self.output.pos[Y] and touch.pos[Y] < (self.output.pos[Y] + self.output.size[Y]):
-                    print("IN Output")  
+                    #print("IN Output")  
                     self.selected = RELEASED
                     if allow_assign_line:
                         self.assign_line(touch,self.name,10,self.nParams)   
@@ -407,7 +606,8 @@ class Block(Widget):
             #         self.selected = RELEASED
             #         LINE_STARTED = touch.pos
             #         self.drawLine(touch)    
-            return 7  
+            #return 7  
+            pass
 
         if self.nParams == 6:
             if touch.pos[X] > self.param6Con.pos[X] and touch.pos[X] < (self.param6Con.pos[X] + self.param6Con.size[X]):
@@ -457,6 +657,7 @@ class Block(Widget):
                         self.assign_line(touch,self.name,1,self.nParams)   
                     #print("IN 1") 
                     return 1
+        #print("NOT IN CONNECTOR")
         return 0   
 
     #------------------------------------------- is_touch_detected
@@ -465,7 +666,6 @@ class Block(Widget):
             if touch.pos[Y] > self.rect.pos[Y] and touch.pos[Y] < (self.rect.pos[Y] + self.rect.size[Y]):
                 if moving == STILL:
                     self.selected = SELECTED
-                    print("BLOCK SELECTED")
                     self.is_inside_connector(touch,ASSIGN_LINE) #assign a line if inside a connector
                     return 1 
         return 0            
@@ -525,21 +725,24 @@ class Click(Widget):
 
     #-------------------------------------------
     def on_touch_down(self, touch):
-        if blocks:
+        if blocks is not None:
             for block in blocks:
-                if block.conLines:
+                if block.conLines is not None:
                     for line in block.conLines:   
                         if line.dragging == DRAGGING:
-                            line.move_line(touch)
+                            line.drag_line(touch,0)
                             return #don't check for collision with block if dragging a line
             self.detect_collisions(touch,STILL)
 
     #-------------------------------------------
     def on_touch_move(self, touch):
-        for block in blocks:
-            block.move_block(touch,blocks)
-            for conLine in block.conLines:
-                conLine.move_line(touch)
+        if blocks is not None:
+            for block in blocks:
+                block.move_block(touch,blocks)
+                for conLine in block.conLines:
+                    #print(conLine.start_connector,conLine.end_connector)
+                    if conLine.dragging == DRAGGING:
+                        conLine.drag_line(touch,0)
 
     #-------------------------------------------
     def on_touch_up(self,touch):
@@ -548,15 +751,16 @@ class Click(Widget):
             if block1.conLines:
                 for conLine in block1.conLines:
                     if conLine.dragging == DRAGGING:
-                        for block2 in blocks:#search through the other blocks to see if end of line (mouse pointer) is inside a connector
+                        for block2 in blocks: #search through the other blocks to see if end of line (mouse pointer) is inside a connector
                             if block1.name != block2.name:
-                                if block2.is_inside_connector(touch,DONT_ASSIGN_LINE):                   
+                                conLine.end_connector = block2.is_inside_connector(touch,DONT_ASSIGN_LINE)
+                                if conLine.end_connector != 0:
                                     conLine.dragging = NOT_DRAGGING
                                     conLine.end_block=block2.name
-                                    print(conLine.end_block)
-
-
-    #-------------------------------------------
+                                    block2.conLines.append(conLine)
+                                    break
+                                    
+    #--------------------------------------------
     def detect_collisions(self, touch, moving):
         for block in blocks:
             if block.is_touch_detected(touch,moving): 
@@ -650,7 +854,12 @@ class FXCoreDesignerApp(App):
         return layout
         
     def on_mouse_pos(self, window, pos):
-        #print("pos",pos) todo highlight connectors as mouse hovers over
+        if blocks is not None:
+            for block in blocks:
+                if block.conLines is not None:
+                    for conLine in block.conLines:
+                        if conLine.dragging == DRAGGING:
+                            conLine.drag_line(pos,1)
         pass
 
 if __name__ == '__main__':
