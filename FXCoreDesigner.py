@@ -66,7 +66,7 @@ class MyLine(Widget):
         self.dragging = DRAGGING
         #self.nBlockParams = nblockParams
         self.name = "line_"+start_block +"_"+str(start_connector)
-        Color(0.50, 0, 0.70, 1)
+        Color(0.00, 0.60, 0.00, OPAQUE)
         self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=2.5, cap='round', joint='none')
         
     def drag_line(self, touch,mode):
@@ -86,8 +86,6 @@ class MyLine(Widget):
         with self.canvas:
             for block in blocks:
                 if block.selected == SELECTED:
-                    print(self.name)
-                    print(conX, conY)
                     if block.name == self.start_block: #if in the block that created the connector line
                             self.start_point = [conX, conY]
                             self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
@@ -103,8 +101,8 @@ class Block(Widget):
     def __init__(self,name,inputConnector,outputConnector,nParams, **kwargs):
         super(Block, self).__init__(**kwargs)
         self.name = name
-        self.Xpos = random.randrange(200, 1000)
-        self.Ypos = random.randrange(100, 600)
+        self.Xpos = random.randrange(100, 1500)
+        self.Ypos = random.randrange(100, 800)
         Color(0.4,0.4,0.4,OPAQUE, mode="rgba")
         self.rect = Rectangle(pos=(self.Xpos,self.Ypos), size=(BLOCK_WIDTH,BLOCK_HEIGHT))
         self.label = Label(pos=(self.Xpos, self.Ypos - (self.rect.size[Y]/2)),text=name)
@@ -114,10 +112,10 @@ class Block(Widget):
         self.conLines = []
         self.inputExists = 0 
         self.outputExists = 0
-        Color(0.2,0.2,0.2,OPAQUE, mode="rgba")
+        Color(0.8,0.8,0.8,OPAQUE, mode="rgba")
         
         if inputConnector: ## todo need multiple inputs for mixers,stereo effects, etc 
-            self.input = Rectangle(pos=(self.Xpos,self.Ypos+20), size=(10,10))
+            self.input = Rectangle(pos=(self.Xpos-5,self.Ypos+20), size=(10,10))
             self.inputExists = True
 
         if outputConnector: ## todo need multiple outputs for splitters,stereo effects, etc
@@ -125,44 +123,37 @@ class Block(Widget):
             self.outputExists = True
 
         if self.nParams == 6:  
-            self.param1Con = Rectangle(pos=(self.Xpos+10,self.Ypos+40), size=(10,10))
-            self.param2Con = Rectangle(pos=(self.Xpos+40,self.Ypos+40), size=(10,10))
-            self.param3Con = Rectangle(pos=(self.Xpos+70,self.Ypos+40), size=(10,10))
-            self.param4Con = Rectangle(pos=(self.Xpos+10,self.Ypos), size=(10,10))
-            self.param5Con = Rectangle(pos=(self.Xpos+40,self.Ypos), size=(10,10))
-            self.param6Con = Rectangle(pos=(self.Xpos+70,self.Ypos), size=(10,10))
-
-            #    self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+45), size=(10,5))
-            # self.param2Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,5))
-            # self.param3Con = Rectangle(pos=(self.Xpos+75,self.Ypos+45), size=(10,5))
-            # self.param4Con = Rectangle(pos=(self.Xpos+15,self.Ypos), size=(10,5))
-            # self.param5Con = Rectangle(pos=(self.Xpos+45,self.Ypos), size=(10,5))
-            # self.param6Con = Rectangle(pos=(self.Xpos+75,self.Ypos), size=(10,5))         
+            self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+45), size=(10,10))
+            self.param2Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,10))
+            self.param3Con = Rectangle(pos=(self.Xpos+75,self.Ypos+45), size=(10,10))
+            self.param4Con = Rectangle(pos=(self.Xpos+15,self.Ypos-5), size=(10,10))
+            self.param5Con = Rectangle(pos=(self.Xpos+45,self.Ypos-5), size=(10,10))
+            self.param6Con = Rectangle(pos=(self.Xpos+75,self.Ypos-5), size=(10,10))         
 
         elif self.nParams == 5:
-            self.param1Con = Rectangle(pos=(self.Xpos+10,self.Ypos+45), size=(10,10))
-            self.param2Con = Rectangle(pos=(self.Xpos+40,self.Ypos+45), size=(10,10))
-            self.param3Con = Rectangle(pos=(self.Xpos+70,self.Ypos+45), size=(10,10))
-            self.param4Con = Rectangle(pos=(self.Xpos+30,self.Ypos), size=(10,10))
-            self.param5Con = Rectangle(pos=(self.Xpos+60,self.Ypos), size=(10,10))
+            self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+45), size=(10,10))
+            self.param2Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,10))
+            self.param3Con = Rectangle(pos=(self.Xpos+75,self.Ypos+45), size=(10,10))
+            self.param4Con = Rectangle(pos=(self.Xpos+30,self.Ypos-5), size=(10,10))
+            self.param5Con = Rectangle(pos=(self.Xpos+60,self.Ypos-5), size=(10,10))
 
         elif self.nParams == 4: 
-            self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+45), size=(10,5))
-            self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+45), size=(10,5))
-            self.param3Con = Rectangle(pos=(self.Xpos+30,self.Ypos), size=(10,5))
-            self.param4Con = Rectangle(pos=(self.Xpos+60,self.Ypos), size=(10,5))
+            self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+45), size=(10,10))
+            self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+45), size=(10,10))
+            self.param3Con = Rectangle(pos=(self.Xpos+30,self.Ypos-5), size=(10,10))
+            self.param4Con = Rectangle(pos=(self.Xpos+60,self.Ypos-5), size=(10,10))
 
         elif self.nParams == 3:
-            self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+45), size=(10,5))
-            self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+45), size=(10,5))
-            self.param3Con = Rectangle(pos=(self.Xpos+45,self.Ypos), size=(10,5))
+            self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+45), size=(10,10))
+            self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+45), size=(10,10))
+            self.param3Con = Rectangle(pos=(self.Xpos+45,self.Ypos-5), size=(10,10))
 
         elif self.nParams == 2:
-            self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+45), size=(10,5))
-            self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+45), size=(10,5))
+            self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+45), size=(10,10))
+            self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+45), size=(10,10))
 
         elif self.nParams == 1:
-            self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,5))
+            self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+45), size=(10,10))
 
     #------------------------------------------- move connectors and lines
     def move_connectors(self,touch,moveX,moveY):
@@ -170,16 +161,16 @@ class Block(Widget):
         if self.inputExists == True:
             temp = list(self.input.pos)
             if moveX:
-                temp[X] = touch.pos[0] + 0
+                temp[X] = touch.pos[0] - 5
             if moveY:
                 temp[Y] = touch.pos[1] + 20
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 11:
-                        conLine.move_line(temp[X],temp[Y]+5) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 11:
-                        conLine.move_line(temp[X],temp[Y]+5) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.input.pos = tuple(temp)
 
         #**********************************Output Connector
@@ -207,15 +198,12 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 45
             for conLine in self.conLines: #move connected lines
-                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))   
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 1:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 1:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
 
             #**********************************Connector 2
@@ -225,15 +213,12 @@ class Block(Widget):
             if moveY:    
                 temp[Y] = touch.pos[1] + 45
             for conLine in self.conLines: #move connected lines
-                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 2:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 2:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
 
             #**********************************Connector 3
@@ -243,15 +228,12 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 45
             for conLine in self.conLines: #move connected lines
-                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 3:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 3:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param3Con.pos = tuple(temp)
 
             #**********************************Connector 4
@@ -259,17 +241,14 @@ class Block(Widget):
             if moveX:
                 temp[X] = touch.pos[0] + 15
             if moveY:
-                temp[Y] = touch.pos[1] + 0
+                temp[Y] = touch.pos[1] - 5
             for conLine in self.conLines: #move connected lines
-                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 4:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 4:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param4Con.pos = tuple(temp)
 
             #**********************************Connector 5
@@ -277,17 +256,14 @@ class Block(Widget):
             if moveX:
                 temp[X] = touch.pos[0] + 45
             if moveY:
-                temp[Y] = touch.pos[1] + 0
+                temp[Y] = touch.pos[1] - 5
             for conLine in self.conLines: #move connected lines
-                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 5:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 5:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param5Con.pos = tuple(temp)
 
             #**********************************Connector 6
@@ -295,17 +271,14 @@ class Block(Widget):
             if moveX:
                 temp[X] = touch.pos[0] + 75
             if moveY:
-                temp[Y] = touch.pos[1] + 0
+                temp[Y] = touch.pos[1] - 5
             for conLine in self.conLines: #move connected lines
-                print(self.name + "conline! " + conLine.name + " SB " + conLine.start_block + " SC " + str(conLine.start_connector) + "  EB  " + conLine.end_block  + " EC " + str(conLine.end_connector))
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 6:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 6:
-                        print(conLine.name +" moving")
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param6Con.pos = tuple(temp)
 
         #========================================5 Parameters
@@ -319,10 +292,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
 
             #**********************************Connector 2
@@ -334,10 +307,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 2:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 2:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
 
             #**********************************Connector 3
@@ -349,10 +322,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 3:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 3:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param3Con.pos = tuple(temp)
 
             #**********************************Connector 4
@@ -360,14 +333,14 @@ class Block(Widget):
             if moveX:
                 temp[X] = touch.pos[0] + 30
             if moveY:
-                temp[Y] = touch.pos[1] + 0
+                temp[Y] = touch.pos[1] - 5
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 4:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 4:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param4Con.pos = tuple(temp)
 
             #**********************************Connector 5
@@ -375,14 +348,14 @@ class Block(Widget):
             if moveX:
                 temp[X] = touch.pos[0] + 60
             if moveY:
-                temp[Y] = touch.pos[1] + 0
+                temp[Y] = touch.pos[1] - 5
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 5:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 5:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param5Con.pos = tuple(temp)    
 
 
@@ -397,10 +370,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
 
             #**********************************Connector 2
@@ -412,10 +385,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 2:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 2:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
 
             #**********************************Connector 3
@@ -423,14 +396,14 @@ class Block(Widget):
             if moveX:
                 temp[X] = touch.pos[0] + 30
             if moveY:
-                temp[Y] = touch.pos[1] + 0
+                temp[Y] = touch.pos[1] - 5
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 3:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 3:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param3Con.pos = tuple(temp)
 
             #**********************************Connector 4
@@ -438,14 +411,14 @@ class Block(Widget):
             if moveX:
                 temp[X] = touch.pos[0] + 60
             if moveY:
-                temp[Y] = touch.pos[1] + 0
+                temp[Y] = touch.pos[1] - 5
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 4:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 4:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param4Con.pos = tuple(temp)
 
         #========================================3 Parameters
@@ -459,10 +432,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
 
             #**********************************Connector 2
@@ -474,10 +447,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 2:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 2:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
 
             #**********************************Connector 3
@@ -485,14 +458,14 @@ class Block(Widget):
             if moveX:
                 temp[X] = touch.pos[0] + 45
             if moveY:
-                temp[Y] = touch.pos[1] + 0
+                temp[Y] = touch.pos[1] - 5
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 3:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 3:
-                        conLine.move_line(temp[X]+5,temp[Y])  
+                        conLine.move_line(temp[X]+5,temp[Y]+5)  
             self.param3Con.pos = tuple(temp)
 
         #========================================2 Parameters
@@ -506,10 +479,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y])  
+                        conLine.move_line(temp[X]+5,temp[Y]+5)  
             self.param1Con.pos = tuple(temp)
 
             #**********************************Connector 2
@@ -521,10 +494,10 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 2:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 2:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
 
         #========================================1 Parameter
@@ -538,77 +511,15 @@ class Block(Widget):
             for conLine in self.conLines: #move connected lines
                 if conLine.start_block == self.name:
                     if conLine.start_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
                     if conLine.end_connector == 1:
-                        conLine.move_line(temp[X]+5,temp[Y]) 
+                        conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
 
-    #------------------------------------------- move_block
-    def move_block(self,touch,blocks):
-        if self.selected == SELECTED:
-            if touch.pos[0] + self.rect.size[0] < 1200: #ensures block is below the drop down buttons
-                if touch.pos[1] + self.rect.size[1] < 770: #ensures block is left of right border
-                    if len(blocks) == 1:#if only this block is in the list - move block                    
-                        self.rect.pos = touch.pos
-                        self.label.pos[X] = touch.pos[X]
-                        self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
-                        self.move_connectors(touch,1,1)
-                        
-                    else:  # check for block-block collisions  
-                        for secondBlock in blocks:              
-                            if self.label.text != secondBlock.label.text: # dont compare a block with itself
-                                if self.is_collision(secondBlock):
-                                    NO_UP = 0
-                                    NO_DOWN = 0
-                                    NO_LEFT = 0
-                                    NO_RIGHT = 0
-                                    ALLOW_X = 0
-                                    ALLOW_Y = 0
-                                    #restrict movement based on relative position of colliding blocks
-                                    if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:
-                                        NO_LEFT = 1
-                                    if self.rect.pos[X] < secondBlock.rect.pos[X] - THRESH:
-                                        NO_RIGHT = 1
-                                    if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:
-                                        NO_DOWN = 1
-                                    if self.rect.pos[Y] < secondBlock.rect.pos[Y] - THRESH:
-                                        NO_UP = 1
-                                    #check movement and movement restrictions    
-                                    if touch.pos[X] < self.rect.pos[X]: # left movement
-                                        if not NO_LEFT:
-                                            ALLOW_X = 1
-                                    else: # right movement
-                                        if not NO_RIGHT:
-                                            ALLOW_X = 1
-                                    if touch.pos[Y] > self.rect.pos[Y]: # up movement
-                                        if not NO_UP:
-                                            ALLOW_Y = 1
-                                    else: # down movement
-                                        if not NO_DOWN:
-                                            ALLOW_Y = 1   
-                                    #move the block if allowed
-                                    temp = list(self.rect.pos)
-                                    if ALLOW_X:
-                                        temp[X] = touch.pos[0]
-                                        self.label.pos[X] = touch.pos[X]
-                                    if ALLOW_Y:
-                                        temp[Y] = touch.pos[1]
-                                        self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
-                                    self.rect.pos = tuple(temp)
-                                    self.move_connectors(touch,ALLOW_X,ALLOW_Y)  
-                                    return
-                        else: # no collisions - move block            
-                            self.rect.pos = touch.pos
-                            self.label.pos[X] = touch.pos[X]
-                            self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
-                            self.move_connectors(touch,1,1)
 
-    #------------------------------------------- release_block
-    def release_block(self,touch):
-        self.selected = RELEASED 
-     
-    #-------------------------------------------is touch inside connector
+
+  #-------------------------------------------is touch inside connector
     def is_inside_connector(self,touch,allow_assign_line):
         if self.inputExists:
             if touch.pos[X] > self.input.pos[X] and touch.pos[X] < (self.input.pos[X] + self.input.size[X]):
@@ -768,6 +679,75 @@ class Block(Widget):
                     return 1 
         return 0   
 
+
+
+
+    #------------------------------------------- move_block
+    def move_block(self,touch,blocks):
+        if self.selected == SELECTED:
+            if touch.pos[X] > 20:
+                if touch.pos[X] + self.rect.size[X] < 1650: 
+                    if touch.pos[Y] > 20:
+                        if touch.pos[Y] + self.rect.size[Y] < 1000: 
+                            if len(blocks) == 1:#if only this block is in the list - move block                    
+                                self.rect.pos = touch.pos
+                                self.label.pos[X] = touch.pos[X]
+                                self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                                self.move_connectors(touch,1,1)
+                                
+                            else:  # check for block-block collisions  
+                                for secondBlock in blocks:              
+                                    if self.label.text != secondBlock.label.text: # dont compare a block with itself
+                                        if self.is_collision(secondBlock):
+                                            NO_UP = 0
+                                            NO_DOWN = 0
+                                            NO_LEFT = 0
+                                            NO_RIGHT = 0
+                                            ALLOW_X = 0
+                                            ALLOW_Y = 0
+                                            #restrict movement based on relative position of colliding blocks
+                                            if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:
+                                                NO_LEFT = 1
+                                            if self.rect.pos[X] < secondBlock.rect.pos[X] - THRESH:
+                                                NO_RIGHT = 1
+                                            if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:
+                                                NO_DOWN = 1
+                                            if self.rect.pos[Y] < secondBlock.rect.pos[Y] - THRESH:
+                                                NO_UP = 1
+                                            #check movement and movement restrictions    
+                                            if touch.pos[X] < self.rect.pos[X]: # left movement
+                                                if not NO_LEFT:
+                                                    ALLOW_X = 1
+                                            else: # right movement
+                                                if not NO_RIGHT:
+                                                    ALLOW_X = 1
+                                            if touch.pos[Y] > self.rect.pos[Y]: # up movement
+                                                if not NO_UP:
+                                                    ALLOW_Y = 1
+                                            else: # down movement
+                                                if not NO_DOWN:
+                                                    ALLOW_Y = 1   
+                                            #move the block if allowed
+                                            temp = list(self.rect.pos)
+                                            if ALLOW_X:
+                                                temp[X] = touch.pos[0]
+                                                self.label.pos[X] = touch.pos[X]
+                                            if ALLOW_Y:
+                                                temp[Y] = touch.pos[1]
+                                                self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                                            self.rect.pos = tuple(temp)
+                                            self.move_connectors(touch,ALLOW_X,ALLOW_Y)  
+                                            return
+                                else: # no collisions - move block            
+                                    self.rect.pos = touch.pos
+                                    self.label.pos[X] = touch.pos[X]
+                                    self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                                    self.move_connectors(touch,1,1)
+
+    #------------------------------------------- release_block
+    def release_block(self,touch):
+        self.selected = RELEASED 
+
     #------------------------------------------- is_touch_detected
     def is_touch_detected(self,touch,moving):
         if touch.pos[X] > self.rect.pos[X] and touch.pos[X] < (self.rect.pos[X] + self.rect.size[X]):
@@ -862,7 +842,6 @@ class Click(Widget):
                         for block2 in blocks: #search through the other blocks to see if end of line (mouse pointer) is inside a connector
                             if block1.name != block2.name: #dont let a block connect to itself
                                 checkInsideConnector = block2.is_inside_connector(touch,DONT_ASSIGN_LINE) #inside a connector of block 2?
-                                print("dropped in end connector "+ str(conLine.end_connector))
                                 if checkInsideConnector != 0: #...
                                     if checkInsideConnector is not None: #yes!
                                         if block2.conLines != []: # block2 has lines?
@@ -872,7 +851,7 @@ class Click(Widget):
                                                         return #found line that is connected here so break out so cursor keeps hold of line
                                                 elif conLine2.end_block == block2.name:#...or end on block 2 
                                                     if conLine2.end_connector == checkInsideConnector:
-                                                        return #found line that is connected here so break out so cursor keeps hold of line              
+                                                        return #found line that is connected here so break out so that cursor keeps hold of line              
                                             conLine.dragging = NOT_DRAGGING
                                             conLine.end_block=block2.name
                                             block2.conLines.append(conLine)# add the newly connected line to the list of lines
@@ -901,7 +880,8 @@ class FXCoreDesignerApp(App):
     def build(self):
 
 
-        Window.size = (1200, 800)
+        Window.size = (1920, 1080)
+        Window.fullscreen = 'auto'
         Window.bind(mouse_pos=self.on_mouse_pos)
 
         
