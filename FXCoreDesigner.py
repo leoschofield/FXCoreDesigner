@@ -21,8 +21,6 @@ OPAQUE = 1
 
 THRESH = 20
 
-blocks = []
-
 DONT_ASSIGN_LINE = 0
 ASSIGN_LINE = 1
 
@@ -54,7 +52,11 @@ MIXER = 20
 SPLITTER = 30
 
 MAX_PARAMS = 6
-#========================================================================        
+
+global blocks
+blocks = []
+#========================
+# ================================================        
 #============================Line========================================
 #========================================================================
 class MyLine(Widget):
@@ -1184,18 +1186,17 @@ class Click(Widget):
 #             Color(0.4,0.0,0.0,OPAQUE, mode="rgba")
 #             self.rect = Rectangle(pos = (conPos[X],conPos[Y]), size=(100,100))
 
-
 #========================================================================        
 #==============================myMousePos================================
 #========================================================================
-class myMousePos():
-    def __init__(self, **kwargs):
-        super(myMousePos, self).__init__(**kwargs)
-        self.pos = []
+# class myMousePos():
+#     def __init__(self, **kwargs):
+#         super(myMousePos, self).__init__(**kwargs)
+#         self.pos = []
 
-    def assign_pos(self,pos):    
-        self.pos = pos
-        
+#     def assign_pos(self,pos):    
+#         self.pos = pos
+
 
 #========================================================================        
 #===========================FXCoreDesignerApp============================
@@ -1208,73 +1209,73 @@ class FXCoreDesignerApp(App):
         Window.size = (1920, 1080)
         #Window.fullscreen = 'auto'
         Window.bind(mouse_pos=self.on_mouse_pos)
+        Window.bind(on_key_down=self.key_action)
+        #self.my_mouse_pos = myMousePos();    
 
-        self.my_mouse_pos = myMousePos();    
-
-        click = Click() 
-        layout = GridLayout(cols = 9, row_force_default = True, row_default_height = BUTTON_HEIGHT)
+        self.click = Click() 
+        self.layout = GridLayout(cols = 9, row_force_default = True, row_default_height = BUTTON_HEIGHT)
         
         #--------------------------------IOdrop
         IOdrop = DropDown()
         #
         inBtn = Button(text ='Input', size_hint_y = None, height = BUTTON_HEIGHT)
-        inBtn.bind(on_release = lambda none: click.assign_block('Input',0,1,0))
+        inBtn.bind(on_release = lambda none: self.click.assign_block('Input',0,1,0))
         IOdrop.add_widget(inBtn)
         #
         outBtn = Button(text ='Output', size_hint_y = None, height = BUTTON_HEIGHT)
-        outBtn.bind(on_release = lambda none: click.assign_block('Output',1,0,0))
+        outBtn.bind(on_release = lambda none: self.click.assign_block('Output',1,0,0))
         IOdrop.add_widget(outBtn)
         
         #--------------------------------FXdrop
         FXdrop = DropDown()
         #
         reverbBtn = Button(text ='Reverb', size_hint_y = None, height = BUTTON_HEIGHT)
-        reverbBtn.bind(on_release = lambda none: click.assign_block('Reverb',1,1,6))
+        reverbBtn.bind(on_release = lambda none: self.click.assign_block('Reverb',1,1,6))
         FXdrop.add_widget(reverbBtn)
         #
         delayBtn = Button(text ='Delay', size_hint_y = None, height = BUTTON_HEIGHT)
-        delayBtn.bind(on_release = lambda none: click.assign_block('Delay',1,1,5))
+        delayBtn.bind(on_release = lambda none: self.click.assign_block('Delay',1,1,5))
         FXdrop.add_widget(delayBtn)
         #Chorus
         chorusBtn = Button(text ='Chorus', size_hint_y = None, height = BUTTON_HEIGHT)
-        chorusBtn.bind(on_release = lambda none: click.assign_block('Chorus',1,1,4))
+        chorusBtn.bind(on_release = lambda none: self.click.assign_block('Chorus',1,1,4))
         FXdrop.add_widget(chorusBtn)
         #Tremelo
         tremoloBtn = Button(text ='Tremelo', size_hint_y = None, height = BUTTON_HEIGHT)
-        tremoloBtn.bind(on_release = lambda none: click.assign_block('Tremelo',1,1,3))
+        tremoloBtn.bind(on_release = lambda none: self.click.assign_block('Tremelo',1,1,3))
         FXdrop.add_widget(tremoloBtn)
 
         #--------------------------------AnalysisDrop
         AnalysisDrop = DropDown()
         #
         FFTBtn = Button(text ='FFT', size_hint_y = None, height = BUTTON_HEIGHT)
-        FFTBtn.bind(on_release = lambda  none: click.assign_block('FFT',1,1,2))
+        FFTBtn.bind(on_release = lambda  none: self.click.assign_block('FFT',1,1,2))
         AnalysisDrop.add_widget(FFTBtn)
         #
         envelopeFollowerBtn = Button(text ='Envelope', size_hint_y = None, height = BUTTON_HEIGHT)
-        envelopeFollowerBtn.bind(on_release = lambda  none: click.assign_block('Envelope',1,1,1))
+        envelopeFollowerBtn.bind(on_release = lambda  none: self.click.assign_block('Envelope',1,1,1))
         AnalysisDrop.add_widget(envelopeFollowerBtn)
         
         #--------------------------------ControlsDrop
         ControlsDrop = DropDown()
         # 
         PotentiomenterBtn = Button(text ='Potentiometer', size_hint_y = None, height = BUTTON_HEIGHT)
-        PotentiomenterBtn.bind(on_release = lambda  none: click.assign_block('Pot',0,0,1))
+        PotentiomenterBtn.bind(on_release = lambda  none: self.click.assign_block('Pot',0,0,1))
         ControlsDrop.add_widget(PotentiomenterBtn)
         #
         ConstantBtn = Button(text ='Constant', size_hint_y = None, height = BUTTON_HEIGHT)
-        ConstantBtn.bind(on_release = lambda  none: click.assign_block('Constant',0,0,1))
+        ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
         ControlsDrop.add_widget(ConstantBtn)
 
         #--------------------------------Routingdrop
         #Routingdrop = DropDown()
         #
         splitterBtn = Button(text ='Splitter', size_hint_y = None, height = BUTTON_HEIGHT)
-        splitterBtn.bind(on_release = lambda none: click.assign_block('Splitter',1,0,SPLITTER))
+        splitterBtn.bind(on_release = lambda none: self.click.assign_block('Splitter',1,0,SPLITTER))
         #Routingdrop.add_widget(splitterBtn)temp fix
         #
         mixerBtn = Button(text ='Mixer', size_hint_y = None, height = BUTTON_HEIGHT)
-        mixerBtn.bind(on_release = lambda none: click.assign_block('Mixer',0,1,MIXER))
+        mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1,MIXER))
         #Routingdrop.add_widget(mixerBtn)temp fix
         
         #--------------------------------
@@ -1295,11 +1296,11 @@ class FXCoreDesignerApp(App):
 
          #--------------------------------
         CodeButton = Button(text ='Generate Code')
-        CodeButton.bind(on_release =  lambda none: self.printLines())
+        CodeButton.bind(on_release =  lambda none: self.generate_asm())
 
         #--------------------------------
         ClearButton = Button(text ='Clear Screen')
-        #ClearButton.bind(on_release = 
+        ClearButton.bind(on_release = lambda none: self.clear_screen())
         
         #--------------------------------
         AboutButton = Button(text ='About')
@@ -1310,20 +1311,23 @@ class FXCoreDesignerApp(App):
         AboutButton.bind(on_release = lambda none: popup.open())
 
 
-        layout.add_widget(IObutton)
-        layout.add_widget(FXbutton)
-        layout.add_widget(AnalysisButton)
-        layout.add_widget(ControlsButton)
-       #layout.add_widget(RoutingButton)
-        layout.add_widget(splitterBtn)#temp fix for RoutingButton failing to open if another block...
-        layout.add_widget(mixerBtn)#... is generated from another dropdown before a block from RoutingButton
-        layout.add_widget(CodeButton)
-        layout.add_widget(ClearButton)
-        layout.add_widget(AboutButton)
-        layout.add_widget(click)
+        self.layout.add_widget(IObutton)
+        self.layout.add_widget(FXbutton)
+        self.layout.add_widget(AnalysisButton)
+        self.layout.add_widget(ControlsButton)
+       #self.layout.add_widget(RoutingButton)
+        self.layout.add_widget(splitterBtn)#temp fix for RoutingButton failing to open if another block...
+        self.layout.add_widget(mixerBtn)#... is generated from another dropdown before a block from RoutingButton
+        self.layout.add_widget(CodeButton)
+        self.layout.add_widget(ClearButton)
+        self.layout.add_widget(AboutButton)
+        self.layout.add_widget(self.click)
     
-        return layout
+        return self.layout
 
+   #------------------------------------------- mouse hover event
+    def key_action(self, *args):
+        print("got a key event: %s" % list(args))
 
   #------------------------------------------- mouse hover event
     def on_mouse_pos(self, window, pos):
@@ -1348,8 +1352,16 @@ class FXCoreDesignerApp(App):
                 #         overlay_square.__del__()
                 #         isOverlay = 0
 
-    #-------------------------------------------
-    def printLines(self):
+    #-------------------------------------------clear_screen
+    def clear_screen(self):
+        global blocks
+        blocks = []
+        self.layout.remove_widget(self.click)
+        self.click = Click()
+        self.layout.add_widget(self.click)
+
+    #-------------------------------------------generate_asm
+    def generate_asm(self):
         print("Code Generating...")
         for block in blocks:
             if block.conLines != []:
