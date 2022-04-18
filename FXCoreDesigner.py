@@ -1351,8 +1351,8 @@ class FXCoreDesignerApp(App):
         #--------------------------------
         AboutButton = Button(text ='About')
         popup = Popup(title='FXCore Designer',
-            content=Label(text='Instructions:'),
-            size_hint=(None, None), size=(400, 400))
+            content=Label(text='       ****** Developed by Leo S Schofield, 2022 ****** Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple are for control signals. Press d when dragging a block to delete that block and its lines. Press d when dragging a line to delete that line.',text_size=(380,250)),
+            size_hint=(None, None), size=(400,0))
 
         AboutButton.bind(on_release = lambda none: popup.open())
 
