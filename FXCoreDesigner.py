@@ -5,6 +5,7 @@ Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.button import Label
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.widget import Widget
 from kivy.uix.dropdown import DropDown
@@ -201,7 +202,7 @@ class Block(Widget):
                 self.canvas.remove(self.output2)  
                 self.canvas.remove(self.param1Con)
                 self.canvas.remove(self.param2Con)
-            if self.nParams == MIXER:
+            elif self.nParams == MIXER:
                 self.canvas.remove(self.input1)      
                 self.canvas.remove(self.input2)  
                 self.canvas.remove(self.param1Con)
@@ -1259,7 +1260,7 @@ class FXCoreDesignerApp(App):
         #self.my_mouse_pos = myMousePos();    
 
         self.click = Click() 
-        self.layout = GridLayout(cols = 9, row_force_default = True, row_default_height = BUTTON_HEIGHT)
+        self.layout = GridLayout(cols = 11, row_force_default = True, row_default_height = BUTTON_HEIGHT)
         
         #--------------------------------IOdrop
         IOdrop = DropDown()
@@ -1314,16 +1315,27 @@ class FXCoreDesignerApp(App):
         ControlsDrop.add_widget(ConstantBtn)
 
         #--------------------------------Routingdrop
-        #Routingdrop = DropDown()
+        RoutingDrop = DropDown()
         #
         splitterBtn = Button(text ='Splitter', size_hint_y = None, height = BUTTON_HEIGHT)
         splitterBtn.bind(on_release = lambda none: self.click.assign_block('Splitter',1,0,SPLITTER))
-        #Routingdrop.add_widget(splitterBtn)temp fix
+        RoutingDrop.add_widget(splitterBtn)
         #
         mixerBtn = Button(text ='Mixer', size_hint_y = None, height = BUTTON_HEIGHT)
         mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1,MIXER))
-        #Routingdrop.add_widget(mixerBtn)temp fix
+        RoutingDrop.add_widget(mixerBtn)
         
+        #--------------------------------SwitchesDrop
+        SwitchesDrop = DropDown()
+        # 
+        TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
+        TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Pot',0,0,1))
+        SwitchesDrop.add_widget(TapTempoBtn)
+        #
+        ToggleBtn = Button(text ='Toggle Switch', size_hint_y = None, height = BUTTON_HEIGHT)
+        ToggleBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
+        SwitchesDrop.add_widget(ToggleBtn)
+
         #--------------------------------
         IObutton = Button(text ='IO')
         IObutton.bind(on_release = IOdrop.open)
@@ -1337,8 +1349,11 @@ class FXCoreDesignerApp(App):
         ControlsButton = Button(text ='Controls')
         ControlsButton.bind(on_release = ControlsDrop.open)
 
-        # RoutingButton = Button(text ='Routing')
-        # RoutingButton.bind(on_release = Routingdrop.open)
+        RoutingButton = Button(text ='Routing')
+        RoutingButton.bind(on_release = RoutingDrop.open)
+        
+        SwitchesButton = Button(text ='Switches')
+        SwitchesButton.bind(on_release = SwitchesDrop.open)
 
          #--------------------------------
         CodeButton = Button(text ='Generate Code')
@@ -1348,10 +1363,18 @@ class FXCoreDesignerApp(App):
         ClearButton = Button(text ='Clear Screen')
         ClearButton.bind(on_release = lambda none: self.clear_screen())
         
+
+        #--------------------------------
+        SaveButton = Button(text ='Save Patch')
+        #SaveButton.bind(on_release = lambda none: self.clear_screen())
+
+        #--------------------------------
+        LoadButton = Button(text ='Load Patch')
+        #ClearButton.bind(on_release = lambda none: self.clear_screen())
         #--------------------------------
         AboutButton = Button(text ='About')
-        popup = Popup(title='FXCore Designer',
-            content=Label(text='       ****** Developed by Leo S Schofield, 2022 ****** Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple are for control signals. Press d when dragging a block to delete that block and its lines. Press d when dragging a line to delete that line.',text_size=(380,250)),
+        popup = Popup(title='FXCore DSP Patch Designer - Leo Schofield 2022',
+            content=Label(text='Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple are for control signals. Press d when dragging a block to delete that block and its lines. Press d when dragging a line to delete that line.',text_size=(380,300)),
             size_hint=(None, None), size=(400,0))
 
         AboutButton.bind(on_release = lambda none: popup.open())
@@ -1361,10 +1384,11 @@ class FXCoreDesignerApp(App):
         self.layout.add_widget(FXbutton)
         self.layout.add_widget(AnalysisButton)
         self.layout.add_widget(ControlsButton)
-       #self.layout.add_widget(RoutingButton)
-        self.layout.add_widget(splitterBtn)#temp fix for RoutingButton failing to open if another block...
-        self.layout.add_widget(mixerBtn)#... is generated from another dropdown before a block from RoutingButton
+        self.layout.add_widget(RoutingButton)
+        self.layout.add_widget(SwitchesButton)
         self.layout.add_widget(CodeButton)
+        self.layout.add_widget(SaveButton)
+        self.layout.add_widget(LoadButton)
         self.layout.add_widget(ClearButton)
         self.layout.add_widget(AboutButton)
         self.layout.add_widget(self.click)
@@ -1406,7 +1430,7 @@ class FXCoreDesignerApp(App):
                         if conLine.dragging == DRAGGING:# when first dragging the line keep hold of it until clicked in block or deleted
                             conLine.drag_line(pos,DRAG_MODE1)
 
-                            ##todo highlight connector when hovered over
+                ##todo highlight connector when hovered over
                 # self.my_mouse_pos.assign_pos(pos)
                 # newConnector = block.is_inside_connector(self.my_mouse_pos,DONT_ASSIGN_LINE)
                 # if newConnector != 0:
@@ -1423,6 +1447,21 @@ class FXCoreDesignerApp(App):
 
     #-------------------------------------------clear_screen
     def clear_screen(self):
+        box = BoxLayout(orientation = 'vertical', padding = (10))
+        btn1 = Button(text = "No")
+        btn2 = Button(text = "Yes")
+        box.add_widget(btn1)
+        box.add_widget(btn2)
+        popup = Popup(title="Clear Screen? Can't Undo!", title_size= (30), 
+                title_align = 'center', content = box,
+                size_hint=(None, None), size=(400, 400),
+                auto_dismiss = True)
+        btn1.bind(on_press = popup.dismiss)
+        btn2.bind(on_press = lambda none:self.clear_screen2())
+        popup.open()
+
+    #-------------------------------------------clear_screen
+    def clear_screen2(self):       
         global blocks
         blocks = []
         self.layout.remove_widget(self.click)
@@ -1432,7 +1471,7 @@ class FXCoreDesignerApp(App):
 
     #-------------------------------------------generate_asm
     def generate_asm(self):
-        print("Code Generating...")
+        print("Code Generating...") 
         for block in blocks:
             if block.conLines != []:
                 for conLine in block.conLines:
