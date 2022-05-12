@@ -1,6 +1,7 @@
 # LeoSchofield 01/01/2022
 from unicodedata import name
 from kivy.config import Config
+from sympy import Q
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.app import App
 from kivy.uix.button import Button
@@ -13,7 +14,9 @@ from kivy.uix.popup import Popup
 from kivy.graphics import Rectangle, Color, Line, InstructionGroup
 from kivy.core.window import Window
 import random
-
+#dsp classes
+import Distortion
+import Inputs
 BLOCK_WIDTH = 100 
 BLOCK_HEIGHT = 50
 
@@ -73,6 +76,7 @@ class MyLine(Widget):
         self.end_connector = None
         self.dragging = DRAGGING
         self.name = "line_"+start_block +"_"+str(start_connector)
+        self.removed = 0
         with self.canvas:
             if start_connector >= 10:#green line for inputs/outputs etc
                 Color(0.00, 0.60, 0.00, OPAQUE)
@@ -107,8 +111,10 @@ class MyLine(Widget):
                             self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]      
     def remove_line(self):
         with self.canvas:
-            self.canvas.remove(self.line)
-            self.canvas.ask_update()
+            if self.removed == 0:
+                self.canvas.remove(self.line)
+                self.canvas.ask_update()
+                self.removed = 1
 #========================================================================        
 #============================Block=======================================
 #========================================================================
@@ -1292,6 +1298,11 @@ class FXCoreDesignerApp(App):
         tremoloBtn.bind(on_release = lambda none: self.click.assign_block('Tremelo',1,1,3))
         FXdrop.add_widget(tremoloBtn)
 
+        #Distortion
+        distBtn = Button(text ='Distortion', size_hint_y = None, height = BUTTON_HEIGHT)
+        distBtn.bind(on_release = lambda none: self.click.assign_block('Distortion',1,1,2))
+        FXdrop.add_widget(distBtn)
+
         #--------------------------------AnalysisDrop
         AnalysisDrop = DropDown()
         #
@@ -1398,7 +1409,7 @@ class FXCoreDesignerApp(App):
    #------------------------------------------- mouse hover event
     def key_action(self, *args):
         global blocks
-        print("got a key event: %s" % list(args))
+        # print("got a key event: %s" % list(args))
         if args[3] == 'd':
             for block in blocks:
                     if block.selected == 1:
@@ -1409,14 +1420,14 @@ class FXCoreDesignerApp(App):
                         for block2 in blocks:
                             for line in block2.conLines:
                                 if line.start_block == block.name:
+                                    line.remove_line()
                                     block2.conLines.remove(line)
                                 elif line.end_block == block.name:
+                                    line.remove_line()
                                     block2.conLines.remove(line)
-
-
                         blocks.remove(block)
                     else:
-                        for line in block.conLines:
+                        for line in block.conLines:#search for dragging lines
                             if line.dragging == DRAGGING:
                                 line.dragging = NOT_DRAGGING
                                 block.conLines.remove(line)
@@ -1430,7 +1441,7 @@ class FXCoreDesignerApp(App):
                         if conLine.dragging == DRAGGING:# when first dragging the line keep hold of it until clicked in block or deleted
                             conLine.drag_line(pos,DRAG_MODE1)
 
-                ##todo highlight connector when hovered over
+                ##TODO highlight connector when hovered over
                 # self.my_mouse_pos.assign_pos(pos)
                 # newConnector = block.is_inside_connector(self.my_mouse_pos,DONT_ASSIGN_LINE)
                 # if newConnector != 0:
@@ -1457,30 +1468,144 @@ class FXCoreDesignerApp(App):
                 size_hint=(None, None), size=(400, 400),
                 auto_dismiss = True)
         btn1.bind(on_press = popup.dismiss)
-        btn2.bind(on_press = lambda none:self.clear_screen2())
+        btn2.bind(on_press = lambda none:self.clear_screen2(popup))
         popup.open()
 
-    #-------------------------------------------clear_screen
-    def clear_screen2(self):       
+    #-------------------------------------------clear_screen2
+    def clear_screen2(self,popup):       
         global blocks
         blocks = []
         self.layout.remove_widget(self.click)
         self.click = Click()
         self.layout.add_widget(self.click)
+        popup.dismiss()
 
 
     #-------------------------------------------generate_asm
     def generate_asm(self):
-        print("Code Generating...") 
+        asm_nodes = []
+        ser_position = 0
+        par_position = 0
+        register_count = 0
         for block in blocks:
             if block.conLines != []:
-                for conLine in block.conLines:
-                    if conLine.end_block != block.name:
-                        print(block.name, conLine.start_connector, conLine.end_connector, conLine.end_block)
+                if 'Input' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
+                    ser_position = 1
+                    par_position = par_position + 1
+                    input_node = asm_node(block.name,ser_position,par_position)    
+                    asm_nodes.append(input_node)#add input to list
+                    for conLine in block.conLines: # continue building graph from connected conline
+                        if conLine.start_block != block.name: #
+                            ser_position = ser_position + 1
+                            new_node = asm_node(conLine.start_block,ser_position,par_position)    
+                            asm_nodes.append(new_node)
+                            new_node.add_input(input_node)
+                            input_node.add_output(new_node)
+                        elif conLine.end_block != block.name:
+                            ser_position = ser_position + 1    
+                            new_node = asm_node(conLine.end_block,ser_position,par_position)    
+                            asm_nodes.append(new_node)
+                            new_node.add_input(input_node)
+                            input_node.add_output(new_node)
+
+
+                else:# if not an Input block
+                    for node in asm_nodes:
+                        if block.name == node.name:#if block has been added already continue adding connected blocks
+                            for conLine in block.conLines: #loop through blocks conlines
+                                if conLine.start_block != block.name:# don't add block thats already added
+                                    already_added = 0
+                                    for node_2 in asm_nodes: # check if node already added to list
+                                        if conLine.start_block == node_2.name:
+                                            already_added = 1
+                                    if already_added == 0: # only add if not already added
+                                        
+                                        if conLine.end_connector == 10: #if this is an output connector
+                                            ser_position = ser_position + 1       
+                                            new_node = asm_node(conLine.start_block,ser_position,par_position)
+                                            node.add_output(new_node)
+                                            new_node.add_input(node)
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                        elif conLine.end_connector <= 6:#if this is an control connector
+                                            new_node = asm_node(conLine.start_block,ser_position,par_position)
+                                            new_node.add_output(node)
+                                            node.add_control(conLine.end_connector,new_node)
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                elif conLine.end_block != block.name:#don't add block thats already added
+                                    already_added = 0
+                                    for node_2 in asm_nodes: # check if node already added to list
+                                        if conLine.end_block == node_2.name:
+                                            already_added = 1
+                                    if already_added == 0: # only add if not already added
+                                        if conLine.start_connector == 10:#if this is an output connector
+                                            ser_position = ser_position + 1
+                                            new_node = asm_node(conLine.end_block,ser_position,par_position)
+                                            node.add_output(new_node)
+                                            new_node.add_input(node)
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                        elif conLine.start_connector <= 6:#if this is an control connector
+                                            new_node = asm_node(conLine.end_block,ser_position,par_position)
+                                            new_node.add_output(node)
+                                            node.add_control(conLine.start_connector,new_node)
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+        for node in asm_nodes:
+            # if "Input" not in node.name:
+            #     if "Output" not in node.name:   
+            #         if "Pot" not in node.name:   
+            #             if "Constant" not in node.name:   
+            #                 print(node.name)
+            #                 print(" "+node.input.name)
+            #                 print(" "+node.output.name)
+            #                 for iteration,control in enumerate(node.controls):
+            #                     # print(iteration)
+            #                     if control != 0:
+            #                         print(control.name)
+            #                     else:
+            #                         print(control)
+            if node.par_position == 1:
+                print(node.name)
+
+
+
+class asm_node():
+    def __init__(self,name,ser_position,par_position,**kwargs):
+        super(asm_node, self).__init__(**kwargs)
+        self.name = name
+        self.ser_position = ser_position
+        self.par_position = par_position
+
+        if "Input" in self.name:
+            self.controls = []
+
+        if "Output" in self.name:
+            self.controls = []
+            
+        if "Mixer" in self.name:
+            self.controls = []
+
+        if "Splitter" in self.name:
+            self.controls = [] 
+
+        if "Pot" in self.name:
+            self.controls = [] 
+
+        if "Constant" in self.name:
+            self.controls = [] 
+
+        if "Distortion" in self.name:
+            self.controls = [0,0] 
+
+
+    def add_input(self,input_node):
+        self.input = input_node
+
+    def add_output(self,output_node):
+        self.output = output_node
+
+    def add_control(self,connector,control_node):
+        self.controls[connector-1] = control_node #-1 as connector names start at 1 in GUI
 
 
 if __name__ == '__main__':
     FXCoreDesignerApp().run()
 
-
-   
