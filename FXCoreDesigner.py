@@ -14,9 +14,8 @@ from kivy.uix.popup import Popup
 from kivy.graphics import Rectangle, Color, Line, InstructionGroup
 from kivy.core.window import Window
 import random
-#dsp classes
-import Distortion
-import Inputs
+
+
 BLOCK_WIDTH = 100 
 BLOCK_HEIGHT = 50
 
@@ -1385,7 +1384,7 @@ class FXCoreDesignerApp(App):
         #--------------------------------
         AboutButton = Button(text ='About')
         popup = Popup(title='FXCore DSP Patch Designer - Leo Schofield 2022',
-            content=Label(text='Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple are for control signals. Press d when dragging a block to delete that block and its lines. Press d when dragging a line to delete that line.',text_size=(380,300)),
+            content=Label(text='Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
             size_hint=(None, None), size=(400,0))
 
         AboutButton.bind(on_release = lambda none: popup.open())
@@ -1484,9 +1483,9 @@ class FXCoreDesignerApp(App):
     #-------------------------------------------generate_asm
     def generate_asm(self):
         asm_nodes = []
+        asm_string = ""
         ser_position = 0
         par_position = 0
-        register_count = 0
         for block in blocks:
             if block.conLines != []:
                 if 'Input' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
@@ -1494,16 +1493,19 @@ class FXCoreDesignerApp(App):
                     par_position = par_position + 1
                     input_node = asm_node(block.name,ser_position,par_position)    
                     asm_nodes.append(input_node)#add input to list
+                    asm_string = asm_string + input_node.asm_string #add asm string from node class
                     for conLine in block.conLines: # continue building graph from connected conline
                         if conLine.start_block != block.name: #
                             ser_position = ser_position + 1
-                            new_node = asm_node(conLine.start_block,ser_position,par_position)    
+                            new_node = asm_node(conLine.start_block,ser_position,par_position)   
+                            asm_string = asm_string + new_node.asm_string
                             asm_nodes.append(new_node)
                             new_node.add_input(input_node)
                             input_node.add_output(new_node)
                         elif conLine.end_block != block.name:
                             ser_position = ser_position + 1    
                             new_node = asm_node(conLine.end_block,ser_position,par_position)    
+                            asm_string = asm_string + new_node.asm_string
                             asm_nodes.append(new_node)
                             new_node.add_input(input_node)
                             input_node.add_output(new_node)
@@ -1523,31 +1525,41 @@ class FXCoreDesignerApp(App):
                                         if conLine.end_connector == 10: #if this is an output connector
                                             ser_position = ser_position + 1       
                                             new_node = asm_node(conLine.start_block,ser_position,par_position)
+                                            asm_string = asm_string + new_node.asm_string
                                             node.add_output(new_node)
                                             new_node.add_input(node)
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
-                                        elif conLine.end_connector <= 6:#if this is an control connector
+                                            
+                                        elif conLine.end_connector <= 6:#if this is a control connector
                                             new_node = asm_node(conLine.start_block,ser_position,par_position)
+                                            asm_string = asm_string + new_node.asm_string
                                             new_node.add_output(node)
                                             node.add_control(conLine.end_connector,new_node)
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
+
+                                        
                                 elif conLine.end_block != block.name:#don't add block thats already added
                                     already_added = 0
                                     for node_2 in asm_nodes: # check if node already added to list
                                         if conLine.end_block == node_2.name:
                                             already_added = 1
                                     if already_added == 0: # only add if not already added
+
                                         if conLine.start_connector == 10:#if this is an output connector
                                             ser_position = ser_position + 1
                                             new_node = asm_node(conLine.end_block,ser_position,par_position)
+                                            asm_string = asm_string + new_node.asm_string
                                             node.add_output(new_node)
                                             new_node.add_input(node)
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
-                                        elif conLine.start_connector <= 6:#if this is an control connector
+
+                                        elif conLine.start_connector <= 6:#if this is a control connector
                                             new_node = asm_node(conLine.end_block,ser_position,par_position)
+                                            asm_string = asm_string + new_node.asm_string
                                             new_node.add_output(node)
                                             node.add_control(conLine.start_connector,new_node)
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
+        print(asm_string)
         for node in asm_nodes:
             # if "Input" not in node.name:
             #     if "Output" not in node.name:   
@@ -1562,10 +1574,41 @@ class FXCoreDesignerApp(App):
             #                         print(control.name)
             #                     else:
             #                         print(control)
-            if node.par_position == 1:
-                print(node.name)
+            #if node.par_position == 1:
+            print(node.name)
+            print(node.ser_position)
+            print(node.par_position)
+            #
+            R0_used = 0
+            R1_used = 0
+            R2_used = 0
+            R3_used = 0
+            R4_used = 0
+            R5_used = 0
+            R6_used = 0
+            R7_used = 0
+            R8_used = 0
+            R9_used = 0
+            R10_used = 0
+            R11_used = 0
+            R12_used = 0
+            R13_used = 0
+            R14_used = 0
+            R15_used = 0
 
+            ser_position_count = 0
+            par_position_count = 0
 
+            while par_position_count <= par_position: # par_position is now the max parallel chain number
+                par_position_count = par_position_count + 1 #increment parallel chain number
+                ser_position_count = 1 #start on first block
+                if "Output" and "Mixer" not in node.name:# start new parallel path when output is added or register is saved to add to mixer
+                    ser_position_count + 1
+                    #todo if mixer save register
+               
+   
+              
+              
 
 class asm_node():
     def __init__(self,name,ser_position,par_position,**kwargs):
@@ -1573,12 +1616,29 @@ class asm_node():
         self.name = name
         self.ser_position = ser_position
         self.par_position = par_position
+        self.asm_string = ""
 
         if "Input" in self.name:
             self.controls = []
+            if "1" in self.name:
+                self.asm_string = "cpy_cs    temp, in0\n"
+            if "2" in self.name:
+                self.asm_string = "cpy_cs    temp, in1\n"     
+            if "3" in self.name:
+                self.asm_string = "cpy_cs    temp, in2\n"
+            if "4" in self.name:
+                self.asm_string = "cpy_cs    temp, in3\n"
 
         if "Output" in self.name:
             self.controls = []
+            if "1" in self.name:
+                self.asm_string = "cpy_cs    out0, acc32\n"
+            if "2" in self.name:
+                self.asm_string = "cpy_cs    out1, acc32\n"
+            if "3" in self.name:
+                self.asm_string = "cpy_cs    out3, acc32\n"
+            if "4" in self.name:
+                self.asm_string = "cpy_cs    out3, acc32\n"
             
         if "Mixer" in self.name:
             self.controls = []
@@ -1594,7 +1654,65 @@ class asm_node():
 
         if "Distortion" in self.name:
             self.controls = [0,0] 
+            self.asm_string = """;*****************************input and gain
+cpy_cs    temp2, pot0_smth
+multrr    temp, temp2
+sls       acc32, 4
+adds      temp, acc32
+cpy_cc    in, acc32
 
+; adjust pot1 for f control
+; kf needs to range from 0.086 to about 0.95 
+cpy_cs    temp, pot1_smth
+multri    temp, 0.864             ; Coefficient is high end - low end
+addsi     acc32, 0.086            ; add in the low end
+cpy_cc    kf, acc32
+
+; adjust pot2 for Q control
+; range from about 0.8 to 0.05 for damping
+cpy_cs    acc32, pot2_smth        ; Read in pot1
+addsi     acc32, -1.0             ; acc32 ranges -1 to 0
+multri    acc32, 0.75             ; acc32 ranges -0.75 to 0
+neg       acc32                   ; acc32 ranges 0.75 to 0
+addsi     acc32, 0.05             ; acc32 ranges 0.8 to 0.05
+cpy_cc    kq, acc32
+
+; distortion
+; 0.5*IN + 0.8*(IN-sgn(IN)*IN^2)
+multrr    in, in                  ; IN^2
+jgez      in, jp1                 ; if IN is positive jump
+neg       acc32                   ; IN < 0 so negate it
+jp1:
+subs      in, acc32               ; IN-sgn(IN)*IN^2
+multri    acc32, 0.8              ; 0.8*(IN-sgn(IN)*IN^2)
+cpy_cc    temp, acc32             ; save to temp
+sra       in, 1                   ; 0.5*IN
+adds      temp, acc32             ; 0.5*IN + 0.8*(IN-sgn(IN)*IN^2)
+
+; now the SVF 
+; first a LP FIR with a null at Fs/2 to help make the filter stable
+; and allow a wider range of coefficients
+; input in acc32
+sra       acc32, 1                ; in/2
+cpy_cc    temp, acc32             ; save to temp
+adds      acc32, inlp             ; in/2 + input LP
+cpy_cc    in, acc32               ; save to in
+cpy_cc    inlp, temp              ; save in/2 to input LP
+; now the svf
+multrr    kf, bp                  ; Kf * BP
+adds      lp, acc32               ; + LP
+cpy_cc    lp, acc32               ; save to LP
+multrr    kq, bp                  ; Kq * BP
+adds      lp, acc32               ; LP + Kq * BP
+subs      in, acc32               ; IN - (LP + Kq * BP)
+cpy_cc    hp, acc32               ; save to HP
+multrr    kf, hp                  ; Kf * HP
+adds      bp, acc32               ; + BP
+cpy_cc    bp, acc32               ; Save to BP
+
+cpy_cs    temp, pot3_smth         ; Adjust output level
+multrr    temp, temp
+multrr    acc32, lp\n"""
 
     def add_input(self,input_node):
         self.input = input_node
@@ -1608,4 +1726,3 @@ class asm_node():
 
 if __name__ == '__main__':
     FXCoreDesignerApp().run()
-
