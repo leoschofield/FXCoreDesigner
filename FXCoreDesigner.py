@@ -1147,17 +1147,27 @@ class Click(Widget):
                 blocks.append(block)
             else:
                 while create_block == 0:
-                    for block in blocks: 
+                    # for block in blocks: 
+                    #     temp = name + " " + str(nameCounter)
+                    #     if temp[:-1] == block.label.text[:-1]: #if block names match
+                    #         if temp[-1] <= block.label.text[-1]:#if new block number is less than existing number... 
+                    #             create_block = 0 #...dont create block yet
+                    #             nameCounter = nameCounter + 1 #...but increment name count
+                    #         if temp[-1] > block.label.text[-1]: #if more than existing block number then create block
+                    #             create_block = 1              
+                    #     else:
+                    #         create_block = 1
+                    for block in blocks:
                         temp = name + " " + str(nameCounter)
-                        #if word match 
-                        if temp[:-1] == block.label.text[:-1]: 
-                            if temp[-1] <= block.label.text[-1]:
-                                create_block = 0
-                                nameCounter = nameCounter + 1
-                            if temp[-1] > block.label.text[-1]:
-                                create_block = 1              
+                        if temp[:-1] == block.label.text[:-1]: #if block names match
+                            for block in blocks: #now check for block names and number matches
+                                temp = name + " " + str(nameCounter)
+                                if temp == block.name:
+                                    nameCounter = nameCounter + 1
+                            create_block = 1
                         else:
                             create_block = 1
+                temp = name + " " + str(nameCounter)
                 block = Block(temp,inputNode,outputNode,nParams)
                 blocks.append(block)
                 
@@ -1425,6 +1435,8 @@ class FXCoreDesignerApp(App):
                                     line.remove_line()
                                     block2.conLines.remove(line)
                         blocks.remove(block)
+                        # for block in blocks:
+                        #     print(block.label.text)
                     else:
                         for line in block.conLines:#search for dragging lines
                             if line.dragging == DRAGGING:
