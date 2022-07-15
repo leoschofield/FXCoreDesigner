@@ -1,7 +1,7 @@
 # LeoSchofield 01/01/2022
 from unicodedata import name
 from kivy.config import Config
-from sympy import Q
+from regex import W
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.app import App
 from kivy.uix.button import Button
@@ -11,9 +11,11 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.widget import Widget
 from kivy.uix.dropdown import DropDown
 from kivy.uix.popup import Popup
-from kivy.graphics import Rectangle, Color, Line, InstructionGroup
+from kivy.graphics import Rectangle, Color, Line
 from kivy.core.window import Window
 import random
+import os
+
 
 
 BLOCK_WIDTH = 100 
@@ -59,7 +61,7 @@ MAX_PARAMS = 6
 
 global blocks
 blocks = []
-
+global paramLabel
 # ======================================================================= 
 #============================Line========================================
 #========================================================================
@@ -150,13 +152,17 @@ class Block(Widget):
                 self.output1 = Rectangle(pos=(self.Xpos+90,self.Ypos+30), size=(10,10))
                 self.output2 = Rectangle(pos=(self.Xpos+90,self.Ypos+10), size=(10,10))
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
+                self.param1ConName = 'Output Level 1'
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
+                self.param1ConName = 'Output Level 2'
 
             elif self.nParams == MIXER: 
                 self.input1 = Rectangle(pos=(self.Xpos,self.Ypos+30), size=(10,10))
                 self.input2 = Rectangle(pos=(self.Xpos,self.Ypos+10), size=(10,10))
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
+                self.param1ConName = 'Level 1'
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
+                self.param2ConName = 'Level 2'
 
             elif self.nParams == 6:  
                 self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+40), size=(10,10))
@@ -1029,9 +1035,6 @@ class Block(Widget):
                         return 1 
         return 0   
 
-
-
-
     #------------------------------------------- move_block
     def move_block(self,touch,blocks):
         if self.selected == SELECTED:
@@ -1132,9 +1135,6 @@ class Block(Widget):
 #========================================================================
 class Click(Widget):
 
-    def __init__(self, **kwargs):
-        super(Click, self).__init__(**kwargs)
-
     #-------------------------------------------
     def assign_block(self,name,inputNode,outputNode,nParams):
         with self.canvas:
@@ -1147,16 +1147,6 @@ class Click(Widget):
                 blocks.append(block)
             else:
                 while create_block == 0:
-                    # for block in blocks: 
-                    #     temp = name + " " + str(nameCounter)
-                    #     if temp[:-1] == block.label.text[:-1]: #if block names match
-                    #         if temp[-1] <= block.label.text[-1]:#if new block number is less than existing number... 
-                    #             create_block = 0 #...dont create block yet
-                    #             nameCounter = nameCounter + 1 #...but increment name count
-                    #         if temp[-1] > block.label.text[-1]: #if more than existing block number then create block
-                    #             create_block = 1              
-                    #     else:
-                    #         create_block = 1
                     for block in blocks:
                         temp = name + " " + str(nameCounter)
                         if temp[:-1] == block.label.text[:-1]: #if block names match
@@ -1164,6 +1154,15 @@ class Click(Widget):
                                 temp = name + " " + str(nameCounter)
                                 if temp == block.name:
                                     nameCounter = nameCounter + 1
+                                    if name == 'Input' or name == 'Output' or name == 'Switch':
+                                        if nameCounter > 4:
+                                            return
+                                    if name == 'Pot':
+                                        if nameCounter > 6:
+                                            return       
+                                    if name == 'Tap Tempo':
+                                        if nameCounter > 1:
+                                            return   
                             create_block = 1
                         else:
                             create_block = 1
@@ -1238,26 +1237,33 @@ class Click(Widget):
                                                     conLine.name += (" " + block2.name + " " + str(conLine.end_connector))
                                                     break                
 
-#========================================================================        
-#============================overlaySquare===============================
-#========================================================================
-# class overlaySquare(Widget):
-#     def __init__(self, conPos, **kwargs):
-#         super(overlaySquare, self).__init__(**kwargs)
-#         with self.canvas:
-#             Color(0.4,0.0,0.0,OPAQUE, mode="rgba")
-#             self.rect = Rectangle(pos = (conPos[X],conPos[Y]), size=(100,100))
+# ========================================================================        
+# ==============================myMousePos================================
+# ========================================================================
+class popUpParamLabel(Widget):
+    def __init__(self,**kwargs):
+        super(popUpParamLabel, self).__init__(**kwargs)
+        with self.canvas:
+            self.paramlabel = Label(pos=(0, 0),text="")
+        self.released = 1
 
-#========================================================================        
-#==============================myMousePos================================
-#========================================================================
-# class myMousePos():
-#     def __init__(self, **kwargs):
-#         super(myMousePos, self).__init__(**kwargs)
-#         self.pos = []
+    def destroy_label(self):
+        with self.canvas:
+            self.paramlabel.text =""
+            self.released = 1
 
-#     def assign_pos(self,pos):    
-#         self.pos = pos
+    def update_label(self,mousepos):
+        with self.canvas:
+            if self.released == 1:
+                self.paramlabel.pos=(mousepos[X]-50, mousepos[Y]+20)
+                self.paramlabel.text="Hi"
+                self.released = 0
+# ========================================================================        
+# ==============================myMousePos================================
+# ========================================================================
+class myMousePos():
+    def __init__(self):
+        self.pos = [0,0]
 
 
 #========================================================================        
@@ -1273,9 +1279,9 @@ class FXCoreDesignerApp(App):
         Window.bind(mouse_pos=self.on_mouse_pos)
         Window.bind(on_key_down=self.key_action)
         #self.my_mouse_pos = myMousePos();    
-
+        self.popUpLabel = popUpParamLabel()
         self.click = Click() 
-        self.layout = GridLayout(cols = 11, row_force_default = True, row_default_height = BUTTON_HEIGHT)
+        self.layout = GridLayout(cols = 12, row_force_default = True, row_default_height = BUTTON_HEIGHT)
         
         #--------------------------------IOdrop
         IOdrop = DropDown()
@@ -1312,6 +1318,15 @@ class FXCoreDesignerApp(App):
         distBtn.bind(on_release = lambda none: self.click.assign_block('Distortion',1,1,2))
         FXdrop.add_widget(distBtn)
 
+        #Pitch Shift
+        pitchBtn = Button(text ='Pitch Shifter', size_hint_y = None, height = BUTTON_HEIGHT)
+        pitchBtn.bind(on_release = lambda none: self.click.assign_block('Pitch',1,1,2))
+        FXdrop.add_widget(pitchBtn)
+
+        #Looper
+        looperBtn = Button(text ='Looper', size_hint_y = None, height = BUTTON_HEIGHT)
+        looperBtn.bind(on_release = lambda none: self.click.assign_block('Looper',1,1,2))
+        FXdrop.add_widget(looperBtn)
         #--------------------------------AnalysisDrop
         AnalysisDrop = DropDown()
         #
@@ -1333,6 +1348,14 @@ class FXCoreDesignerApp(App):
         ConstantBtn = Button(text ='Constant', size_hint_y = None, height = BUTTON_HEIGHT)
         ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
         ControlsDrop.add_widget(ConstantBtn)
+        #
+        TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
+        TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Tap Tempo',0,0,1))
+        ControlsDrop.add_widget(TapTempoBtn)
+        #
+        ToggleBtn = Button(text ='Switch', size_hint_y = None, height = BUTTON_HEIGHT)
+        ToggleBtn.bind(on_release = lambda  none: self.click.assign_block('Switch',0,0,1))
+        ControlsDrop.add_widget(ToggleBtn)
 
         #--------------------------------Routingdrop
         RoutingDrop = DropDown()
@@ -1344,17 +1367,6 @@ class FXCoreDesignerApp(App):
         mixerBtn = Button(text ='Mixer', size_hint_y = None, height = BUTTON_HEIGHT)
         mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1,MIXER))
         RoutingDrop.add_widget(mixerBtn)
-        
-        #--------------------------------SwitchesDrop
-        SwitchesDrop = DropDown()
-        # 
-        TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
-        TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Pot',0,0,1))
-        SwitchesDrop.add_widget(TapTempoBtn)
-        #
-        ToggleBtn = Button(text ='Toggle Switch', size_hint_y = None, height = BUTTON_HEIGHT)
-        ToggleBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
-        SwitchesDrop.add_widget(ToggleBtn)
 
         #--------------------------------
         IObutton = Button(text ='IO')
@@ -1371,11 +1383,8 @@ class FXCoreDesignerApp(App):
 
         RoutingButton = Button(text ='Routing')
         RoutingButton.bind(on_release = RoutingDrop.open)
-        
-        SwitchesButton = Button(text ='Switches')
-        SwitchesButton.bind(on_release = SwitchesDrop.open)
 
-         #--------------------------------
+        #--------------------------------
         CodeButton = Button(text ='Generate Code')
         CodeButton.bind(on_release =  lambda none: self.generate_asm())
 
@@ -1391,29 +1400,41 @@ class FXCoreDesignerApp(App):
         #--------------------------------
         LoadButton = Button(text ='Load Patch')
         #ClearButton.bind(on_release = lambda none: self.clear_screen())
+
+        #--------------------------------
+        RunButton = Button(text ='Run From RAM')
+        #ClearButton.bind(on_release = lambda none: self.clear_screen())
+
+        #--------------------------------
+        ProgButton = Button(text ='Load to Flash')
+        #ClearButton.bind(on_release = lambda none: self.clear_screen())
+
         #--------------------------------
         AboutButton = Button(text ='About')
         popup = Popup(title='FXCore DSP Patch Designer - Leo Schofield 2022',
-            content=Label(text='Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
-            size_hint=(None, None), size=(400,0))
+        content=Label(text='Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
+        size_hint=(None, None), size=(400,0))
 
         AboutButton.bind(on_release = lambda none: popup.open())
-
-
+    
+        #---------------------------------------------
         self.layout.add_widget(IObutton)
         self.layout.add_widget(FXbutton)
         self.layout.add_widget(AnalysisButton)
         self.layout.add_widget(ControlsButton)
         self.layout.add_widget(RoutingButton)
-        self.layout.add_widget(SwitchesButton)
         self.layout.add_widget(CodeButton)
         self.layout.add_widget(SaveButton)
         self.layout.add_widget(LoadButton)
         self.layout.add_widget(ClearButton)
+        self.layout.add_widget(RunButton)
+        self.layout.add_widget(ProgButton)
         self.layout.add_widget(AboutButton)
+        self.layout.add_widget(self.popUpLabel)
         self.layout.add_widget(self.click)
     
         return self.layout
+
 
    #------------------------------------------- mouse hover event
     def key_action(self, *args):
@@ -1444,27 +1465,24 @@ class FXCoreDesignerApp(App):
                                 block.conLines.remove(line)
                                 line.remove_line()
   #------------------------------------------- mouse hover event
-    def on_mouse_pos(self, window, pos):
+    def on_mouse_pos(self, window, mousepos):
+        myPos = myMousePos() 
         if blocks is not None:
             for block in blocks:
+                myPos.pos[X] = mousepos[0]
+                myPos.pos[Y] = mousepos[1]
+                readConnector = block.is_inside_connector(myPos,DONT_ASSIGN_LINE)
+                if readConnector != 0:
+                    self.popUpLabel.update_label(mousepos)
+                else:
+                    self.popUpLabel.destroy_label()
+
                 if block.conLines is not None:
                     for conLine in block.conLines:
                         if conLine.dragging == DRAGGING:# when first dragging the line keep hold of it until clicked in block or deleted
-                            conLine.drag_line(pos,DRAG_MODE1)
+                            conLine.drag_line(mousepos,DRAG_MODE1)
+                            
 
-                ##TODO highlight connector when hovered over
-                # self.my_mouse_pos.assign_pos(pos)
-                # newConnector = block.is_inside_connector(self.my_mouse_pos,DONT_ASSIGN_LINE)
-                # if newConnector != 0:
-                #     print(newConnector)
-                #     if newConnector == 11:
-                #         if self.isOverlay == 0:
-                #             overlay_square = overlaySquare(block.input.pos)
-                #             self.isOverlay = 1
-                #             layout.add_widget(click)
-                #     elif isOverlay == 1:
-                #         overlay_square.__del__()
-                #         isOverlay = 0
 
 
     #-------------------------------------------clear_screen
@@ -1572,159 +1590,369 @@ class FXCoreDesignerApp(App):
                                             node.add_control(conLine.start_connector,new_node)
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
         print(asm_string)
-        for node in asm_nodes:
-            # if "Input" not in node.name:
-            #     if "Output" not in node.name:   
-            #         if "Pot" not in node.name:   
-            #             if "Constant" not in node.name:   
-            #                 print(node.name)
-            #                 print(" "+node.input.name)
-            #                 print(" "+node.output.name)
-            #                 for iteration,control in enumerate(node.controls):
-            #                     # print(iteration)
-            #                     if control != 0:
-            #                         print(control.name)
-            #                     else:
-            #                         print(control)
-            #if node.par_position == 1:
-            print(node.name)
-            print(node.ser_position)
-            print(node.par_position)
-            #
-            R0_used = 0
-            R1_used = 0
-            R2_used = 0
-            R3_used = 0
-            R4_used = 0
-            R5_used = 0
-            R6_used = 0
-            R7_used = 0
-            R8_used = 0
-            R9_used = 0
-            R10_used = 0
-            R11_used = 0
-            R12_used = 0
-            R13_used = 0
-            R14_used = 0
-            R15_used = 0
+        
+        # for node in asm_nodes:
+        #     # if "Input" not in node.name:
+        #     #     if "Output" not in node.name:   
+        #     #         if "Pot" not in node.name:   
+        #     #             if "Constant" not in node.name:   
+        #     #                 print(node.name)
+        #     #                 print(" "+node.input.name)
+        #     #                 print(" "+node.output.name)
+        #     #                 for iteration,control in enumerate(node.controls):
+        #     #                     # print(iteration)
+        #     #                     if control != 0:
+        #     #                         print(control.name)
+        #     #                     else:
+        #     #                         print(control)
+        #     #if node.par_position == 1:
+        #     print(node.name)
+        #     print(node.ser_position)
+        #     print(node.par_position)
+        #     #
+        #     R0_used = 0
+        #     R1_used = 0
+        #     R2_used = 0
+        #     R3_used = 0
+        #     R4_used = 0
+        #     R5_used = 0
+        #     R6_used = 0
+        #     R7_used = 0
+        #     R8_used = 0
+        #     R9_used = 0
+        #     R10_used = 0
+        #     R11_used = 0
+        #     R12_used = 0
+        #     R13_used = 0
+        #     R14_used = 0
+        #     R15_used = 0
 
-            ser_position_count = 0
-            par_position_count = 0
+        #     ser_position_count = 0
+        #     par_position_count = 0
 
-            while par_position_count <= par_position: # par_position is now the max parallel chain number
-                par_position_count = par_position_count + 1 #increment parallel chain number
-                ser_position_count = 1 #start on first block
-                if "Output" and "Mixer" not in node.name:# start new parallel path when output is added or register is saved to add to mixer
-                    ser_position_count + 1
-                    #todo if mixer save register
-               
-   
-              
-              
+        #     while par_position_count <= par_position: # par_position is now the max parallel chain number
+        #         par_position_count = par_position_count + 1 #increment parallel chain number
+        #         ser_position_count = 1 #start on first block
+        #         if "Output" and "Mixer" not in node.name:# start new parallel path when output is added or register is saved to add to mixer
+        #             ser_position_count + 1
+        #             #todo if mixer save register
+        #     f = open("generated.fxc", 'w')
+        #     f.write(asm_string)
+        #     f.close()    
+        #     os.system('FXCoreCmdAsm.exe -h ')
+
 
 class asm_node():
-    def __init__(self,name,ser_position,par_position,**kwargs):
-        super(asm_node, self).__init__(**kwargs)
+    def __init__(self,name,ser_position,par_position):
         self.name = name
         self.ser_position = ser_position
         self.par_position = par_position
-        self.asm_string = ""
 
         if "Input" in self.name:
-            self.controls = []
             if "1" in self.name:
-                self.asm_string = "cpy_cs    temp, in0\n"
+                self.asm_string = "cpy_cs    acc32, in0\n"
             if "2" in self.name:
-                self.asm_string = "cpy_cs    temp, in1\n"     
+                self.asm_string = "cpy_cs    acc32, in1\n"     
             if "3" in self.name:
-                self.asm_string = "cpy_cs    temp, in2\n"
+                self.asm_string = "cpy_cs    acc32, in2\n"
             if "4" in self.name:
-                self.asm_string = "cpy_cs    temp, in3\n"
+                self.asm_string = "cpy_cs    acc32, in3\n"
 
         if "Output" in self.name:
-            self.controls = []
             if "1" in self.name:
                 self.asm_string = "cpy_cs    out0, acc32\n"
             if "2" in self.name:
                 self.asm_string = "cpy_cs    out1, acc32\n"
             if "3" in self.name:
-                self.asm_string = "cpy_cs    out3, acc32\n"
+                self.asm_string = "cpy_cs    out2, acc32\n"
             if "4" in self.name:
                 self.asm_string = "cpy_cs    out3, acc32\n"
-            
-        if "Mixer" in self.name:
-            self.controls = []
-
-        if "Splitter" in self.name:
-            self.controls = [] 
 
         if "Pot" in self.name:
-            self.controls = [] 
+            pass
 
+        if "Switch" in self.name:
+            pass
+            
         if "Constant" in self.name:
+            pass
+  
+        if "Mixer" in self.name:
+            pass
+
+        if "Splitter" in self.name:
+            pass
+
+        if "Pitch" in self.name:
             self.controls = [] 
+            self.directive_string = """.equ      shiftbase    -1048576   ; shift of +1 octave
+
+.rn       temp      r0            ; temp reg
+.rn       input     r1            ; input
+
+; Define the delay block for the pitch delay
+.mem      pdelay    4096"""
+
+            self.asm_string = """; single pitch shift mono in/out based on default program double pitch shifter
+; pot0 = shifter 0
+; pot1 = level
+; pot2 = dry level
+cpy_cs    tmprg_temp, ptrg_pot0_smth         ; read in pot0
+addsi     tmprg_temp, -0.5              ; ranges -0.5 to 0.5 in acc32
+wrdld     tmprg_temp,shiftbase.u        ; Put upper part of shiftbase into temp
+multrr    acc32, tmprg_temp             ; Multiply the adjusted POT0 value by shiftbase
+jgez      acc32, OK               ; If positive jump over the multiply by 2
+sls       acc32, 1                ; Do the multiply by shifting left 1 bit
+OK:
+cpy_sc    ramp0_f, acc32          ; Write the result to the ramp0 frequency control
+
+cpy_cs    tmprg_input, in0
+               ; Read channel 0 input
+wrdel     pdelay, tmprg_input           ; Write it to the delay
+
+pitch     rmp0|l4096, pdelay      ; Do the shift, result will be in ACC32
+cpy_cs    tmprg_temp, ptrg_pot1_smth         ; level from pot 1
+multrr    tmprg_temp, acc32             ; multiply it
+cpy_cc    tmprg_temp, acc32             ; and save to temp
+
+cpy_cs    acc32, ptrg_pot2_smth        ; level from pot 2 for dry
+multrr    acc32, tmprg_input            ; multiply it
+adds      acc32, tmprg_temp             ; add result of first shifter""" 
 
         if "Distortion" in self.name:
-            self.controls = [0,0] 
-            self.asm_string = """;*****************************input and gain
-cpy_cs    temp2, pot0_smth
-multrr    temp, temp2
+            self.controls = [] 
+            directive_string = """
+; pot0 = Input gain
+; pot1 = Low-pass frequency control
+; pot2 = Low-pass Q control
+; pot3 = Output level
+
+.rn       temp      r0
+.rn       temp2     r1
+.rn       in        r2
+.rn       inlp      r3
+.rn       hp        r4
+.rn       bp        r5
+.rn       lp        r6
+.rn       kf        r7
+.rn       kq        r8
+"""
+            self.asm_string = """
+; gain
+cpy_cs    tmprg_temp, in0
+cpy_cs    tmprg_temp2, ptrg_pot0_smth
+multrr    tmprg_temp, tmprg_temp2
 sls       acc32, 4
-adds      temp, acc32
-cpy_cc    in, acc32
+adds      tmprg_temp, acc32
+cpy_cc    tmprg_in, acc32
 
 ; adjust pot1 for f control
 ; kf needs to range from 0.086 to about 0.95 
-cpy_cs    temp, pot1_smth
-multri    temp, 0.864             ; Coefficient is high end - low end
+cpy_cs    tmprg_temp, ptrg_pot1_smth
+multri    tmprg_temp, 0.864             ; Coefficient is high end - low end
 addsi     acc32, 0.086            ; add in the low end
-cpy_cc    kf, acc32
+cpy_cc    tmprg_kf, acc32
 
 ; adjust pot2 for Q control
 ; range from about 0.8 to 0.05 for damping
-cpy_cs    acc32, pot2_smth        ; Read in pot1
+cpy_cs    acc32, ptrg_pot2_smth        ; Read in pot1
 addsi     acc32, -1.0             ; acc32 ranges -1 to 0
 multri    acc32, 0.75             ; acc32 ranges -0.75 to 0
 neg       acc32                   ; acc32 ranges 0.75 to 0
 addsi     acc32, 0.05             ; acc32 ranges 0.8 to 0.05
-cpy_cc    kq, acc32
+cpy_cc    tmprg_kq, acc32
 
 ; distortion
 ; 0.5*IN + 0.8*(IN-sgn(IN)*IN^2)
-multrr    in, in                  ; IN^2
-jgez      in, jp1                 ; if IN is positive jump
+multrr    tmprg_in, tmprg_in                  ; IN^2
+jgez      tmprg_in, jp1                 ; if IN is positive jump
 neg       acc32                   ; IN < 0 so negate it
 jp1:
-subs      in, acc32               ; IN-sgn(IN)*IN^2
+subs      tmprg_in, acc32               ; IN-sgn(IN)*IN^2
 multri    acc32, 0.8              ; 0.8*(IN-sgn(IN)*IN^2)
-cpy_cc    temp, acc32             ; save to temp
-sra       in, 1                   ; 0.5*IN
-adds      temp, acc32             ; 0.5*IN + 0.8*(IN-sgn(IN)*IN^2)
+cpy_cc    tmprg_temp, acc32             ; save to temp
+sra       tmprg_in, 1                   ; 0.5*IN
+adds      tmprg_temp, acc32             ; 0.5*IN + 0.8*(IN-sgn(IN)*IN^2)
 
 ; now the SVF 
 ; first a LP FIR with a null at Fs/2 to help make the filter stable
 ; and allow a wider range of coefficients
 ; input in acc32
 sra       acc32, 1                ; in/2
-cpy_cc    temp, acc32             ; save to temp
-adds      acc32, inlp             ; in/2 + input LP
-cpy_cc    in, acc32               ; save to in
-cpy_cc    inlp, temp              ; save in/2 to input LP
+cpy_cc    tmprg_temp, acc32             ; save to temp
+adds      acc32, tmprg_inlp             ; in/2 + input LP
+cpy_cc    tmprg_in, acc32               ; save to in
+cpy_cc    tmprg_inlp, tmprg_temp              ; save in/2 to input LP
 ; now the svf
-multrr    kf, bp                  ; Kf * BP
-adds      lp, acc32               ; + LP
-cpy_cc    lp, acc32               ; save to LP
-multrr    kq, bp                  ; Kq * BP
-adds      lp, acc32               ; LP + Kq * BP
-subs      in, acc32               ; IN - (LP + Kq * BP)
-cpy_cc    hp, acc32               ; save to HP
-multrr    kf, hp                  ; Kf * HP
-adds      bp, acc32               ; + BP
-cpy_cc    bp, acc32               ; Save to BP
+multrr    tmprg_kf, tmprg_bp                  ; Kf * BP
+adds      tmprg_lp, acc32               ; + LP
+cpy_cc    tmprg_lp, acc32               ; save to LP
+multrr    tmprg_kq, tmprg_bp                  ; Kq * BP
+adds      tmprg_lp, acc32               ; LP + Kq * BP
+subs      tmprg_in, acc32               ; IN - (LP + Kq * BP)
+cpy_cc    tmprg_hp, acc32               ; save to HP
+multrr    tmprg_kf, tmprg_hp                  ; Kf * HP
+adds      tmprg_bp, acc32               ; + BP
+cpy_cc    tmprg_bp, acc32               ; Save to BP
 
-cpy_cs    temp, pot3_smth         ; Adjust output level
-multrr    temp, temp
-multrr    acc32, lp\n"""
+cpy_cs    tmprg_temp, ptrg_pot3_smth         ; Adjust output level
+multrr    tmprg_temp, tmprg_temp
+multrr    acc32, lp""" 
+
+
+        if "Looper" in self.name:
+            self.controls = [] 
+            directive_string = """
+; sw0    - 0: play back recording forward
+;          1: playback in reverse
+; tap    - press to record, release to play
+;
+; If user holds tap longer than max recording time then program forces to playback state
+
+.rn      temp      r0
+.rn      ptr       r1
+.rn      status    r2
+.rn      xfade     r3
+.rn      length    r4
+.rn      bright    r5
+.rn      bright2   r6
+
+
+; status - 0 : Playback
+;          1 : Record
+;          2 : We are in a forced playback state but not first time
+;          3 : Forced playback state, first time
+
+.creg    status    0
+.creg    ptr       0
+.creg    length    0x100          ; Any value > 0 can be used as a default
+"""
+    asm_string = """; first check for a forced playback state where user recorded longer than
+; the 32K samples, special state as we need to ignore certain things
+andi     status, 0x0002           ; are we in a forced playback state?
+jz       acc32, normal            ; no so either a record or playback
+andi     status, 0x0001           ; first time in forced playback?
+jz       acc32, force_more        ; if not then check other force issues
+andi     status, 0x0002           ; change status to forced but not first time
+cpy_cc   status, acc32
+xor      acc32, acc32             ; clear acc32
+cpy_cc   ptr, acc32               ; reset the pointer
+jmp      pb                       ; jump to playback
+force_more:
+andi     flags, taplvl            ; get the tap button state
+jz       acc32, pb                ; if == 0 jump as user is still pushing it (pin has pull-up so pressed button is a 0)
+xor      acc32, acc32             ; if here user has released it, clear acc32
+cpy_cc   status, acc32            ; set status to playback, do not reset ptr as that should have been done on the first pass
+jmp      pb
+
+
+normal:
+andi     flags, taplvl            ; get the tap button state
+jnz      acc32, playback          ; if != 0 jump (pin has pull-up so pressed button is a 0)
+andi     status, 0x0001           ; tap button pushed (is 0), was the last state record?
+jnz      acc32, record            ; yes, continue recording
+xor      acc32, acc32             ; nope, so starting a new recording
+cpy_cc   ptr, acc32               ; reset pointer
+cpy_cc   length, acc32            ; and length count
+jmp      record                   ; and record
+
+playback:
+; Playback
+andi     status, 0x0001           ; was the last state record?
+jz       acc32, pb                ; no, continue playback
+xor      acc32, acc32             ; yes it was
+cpy_cc   ptr, acc32               ; reset pointer
+cpy_cc   status, acc32            ; set status to playback
+pb:
+rddirx   acc32, ptr               ; read from current pointer position
+cpy_cs   temp, in0                ; get the dry
+adds     acc32, temp              ; add them
+cpy_sc   out0, acc32              ; write to output
+cpy_sc   out1, acc32              ; and to other output
+; read sw0
+cpy_cs   acc32, switch
+andi     acc32, sw0
+jz       acc32, forward           ; if switch 0 is 0 then forward playback
+jz       ptr, ptr_zero            ; playing back backwards, if ptr is zero we need to reset it
+subs     ptr, acc32               ; since the lsb was left set in the above andi we can just subtract
+cpy_cc   ptr, acc32               ; copy updated pointer
+jmp      over                     ; and jump past rest
+ptr_zero:
+subs     length, acc32            ; pointer was zero, need to rest to end
+cpy_cc   ptr, acc32               ; which was easy as the lsb was set in acc32 already
+jmp      over                     ; so just subtract it from the length, save it and jump
+
+forward:
+xor      acc32, acc32             ; clear the acc32
+ori      acc32, 0x0001            ; set lsb
+add      ptr, acc32               ; add to current ptr
+cpy_cc   ptr, acc32               ; save it
+subs     ptr, length              ; ptr - length
+jnz      acc32, over              ; if !=0 then not at end jump over the rest
+xor      acc32, acc32             ; if 0 then load 0 into acc32
+cpy_cc   ptr, acc32               ; copy to ptr
+jmp      over                     ; jump to end
+
+record:
+; read input and write to delay
+xor      acc32, acc32             ; set status to record
+ori      acc32, 0x0001
+cpy_cc   status, acc32
+cpy_cs   temp, in0                ; read input 0
+wrdirx   ptr, temp                ; write to delay
+cpy_sc   out0, temp               ; and to out0
+cpy_sc   out1, temp               ; and to out1
+xor      acc32, acc32             ; clear acc32
+ori      acc32, 0x0001            ; set lsb
+add      ptr, acc32               ; add to current ptr
+cpy_cc   ptr, acc32               ; save it
+cpy_cc   length, acc32            ; and save to length
+xori     length, 0x8000           ; XOR length with 0x8000
+jnz      acc32, over              ; if not 0 then not at max count
+ori      acc32, 0x0003            ; passed the end, forced playback
+cpy_cc   status, acc32
+
+
+over:
+cpy_cs    acc32, samplecnt        ; Get the sample counter
+andi      acc32, 0xFF             ; Mask b[7:0]
+jnz       acc32, doPWM0           ;
+
+sr        ptr, 8
+cpy_cc    bright, acc32           ; save it
+
+doPWM0:
+; Performing the decrement prior to driving the LED makes sure
+; that the LED can go completly off.
+addi      bright, -1              ; subtract 1 from on count
+cpy_cc    bright, acc32           ; Save updated "bright"
+xor       acc32, acc32            ; Clear acc32 for the LED off case
+jneg      bright, doLED0          ;
+ori       acc32, 1                ; Set acc32[0] for the LED on case
+
+doLED0:
+set       user0|0, acc32           ; set the usr0 output per the acc32 LSB
+
+; PWM usr1
+cpy_cs    acc32, samplecnt        ; Get the sample counter
+andi      acc32, 0xFF             ; Mask b[7:0]
+jnz       acc32, doPWM1           ;
+
+sr        length, 8
+cpy_cc    bright2, acc32          ; save it
+
+doPWM1:
+; Performing the decrement prior to driving the LED makes sure
+; that the LED can go completly off.
+addi      bright2, -1             ; subtract 1 from on count
+cpy_cc    bright2, acc32          ; Save updated "bright"
+xor       acc32, acc32            ; Clear acc32 for the LED off case
+jneg      bright2, doLED1         ;
+ori       acc32, 1                ; Set acc32[0] for the LED on case
+
+doLED1:
+set       user1|0, acc32           ; set the usr0 output per the acc32 LSB"""
+
 
     def add_input(self,input_node):
         self.input = input_node
