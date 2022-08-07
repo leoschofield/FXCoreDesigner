@@ -1,6 +1,7 @@
 # LeoSchofield 01/01/2022
 from unicodedata import name
 from kivy.config import Config
+from pytest import param
 from regex import W
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.app import App
@@ -152,17 +153,13 @@ class Block(Widget):
                 self.output1 = Rectangle(pos=(self.Xpos+90,self.Ypos+30), size=(10,10))
                 self.output2 = Rectangle(pos=(self.Xpos+90,self.Ypos+10), size=(10,10))
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
-                self.param1ConName = 'Output Level 1'
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
-                self.param1ConName = 'Output Level 2'
 
             elif self.nParams == MIXER: 
                 self.input1 = Rectangle(pos=(self.Xpos,self.Ypos+30), size=(10,10))
                 self.input2 = Rectangle(pos=(self.Xpos,self.Ypos+10), size=(10,10))
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
-                self.param1ConName = 'Level 1'
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
-                self.param2ConName = 'Level 2'
 
             elif self.nParams == 6:  
                 self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+40), size=(10,10))
@@ -195,11 +192,40 @@ class Block(Widget):
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
 
             elif self.nParams == 1:
-                if self.inputExists:
+                if self.outputExists:
                     self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+40), size=(10,10))
                 else: # if a potentiometer or constant block
-                    self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+0), size=(10,10))
+                    self.paramOutCon = Rectangle(pos=(self.Xpos+45,self.Ypos+0), size=(10,10))
 
+    def get_param_name(self,paramNum):
+        if paramNum == 10:
+            return 'Output'
+
+        if paramNum == 11:
+            return 'Input'
+
+        if 'Mixer' in self.name:
+            if MIXER+paramNum == MIXER+1:
+                return 'Input Level 1'
+            elif MIXER+paramNum == MIXER+2:
+                return 'Input Level 2'
+
+        if 'Splitter' in self.name:
+            if SPLITTER+paramNum == SPLITTER+1:
+                return 'Output Level 1'
+            elif SPLITTER+paramNum == SPLITTER+2:
+                return 'Output Level 2'      
+
+        if 'Pitch' in self.name:
+            if paramNum == 1:
+                return 'Pitch'
+            elif paramNum == 2:
+                return 'Dry Mix'                          
+        return "TODO"
+
+
+
+        
     def remove_block(self):
         with self.canvas:
             self.canvas.remove(self.rect)
@@ -1228,7 +1254,6 @@ class Click(Widget):
                                                     conLine.end_connector = newConnector
                                                     conLine.name += (" " + block2.name + " " + str(conLine.end_connector))
 
-
                                                 else: #block 2 has no lines            
                                                     conLine.dragging = NOT_DRAGGING
                                                     conLine.end_block=block2.name
@@ -1252,12 +1277,13 @@ class popUpParamLabel(Widget):
             self.paramlabel.text =""
             self.released = 1
 
-    def update_label(self,mousepos):
+    def update_label(self,mousepos,name):
         with self.canvas:
             if self.released == 1:
                 self.paramlabel.pos=(mousepos[X]-50, mousepos[Y]+20)
-                self.paramlabel.text="Hi"
+                self.paramlabel.text=name
                 self.released = 0
+
 # ========================================================================        
 # ==============================myMousePos================================
 # ========================================================================
@@ -1270,9 +1296,7 @@ class myMousePos():
 #===========================FXCoreDesignerApp============================
 #========================================================================
 class FXCoreDesignerApp(App):
-
     def build(self):
-        
         #self.isOverlay = 0
         Window.size = (1920, 1080)
         #Window.fullscreen = 'auto'
@@ -1371,16 +1395,16 @@ class FXCoreDesignerApp(App):
         #--------------------------------
         IObutton = Button(text ='IO')
         IObutton.bind(on_release = IOdrop.open)
-
+        #
         FXbutton = Button(text ='FX')
         FXbutton.bind(on_release = FXdrop.open)
-
+        #
         AnalysisButton = Button(text ='Analysis')
         AnalysisButton.bind(on_release = AnalysisDrop.open)
-
+        #
         ControlsButton = Button(text ='Controls')
         ControlsButton.bind(on_release = ControlsDrop.open)
-
+        #
         RoutingButton = Button(text ='Routing')
         RoutingButton.bind(on_release = RoutingDrop.open)
 
@@ -1392,7 +1416,6 @@ class FXCoreDesignerApp(App):
         ClearButton = Button(text ='Clear Screen')
         ClearButton.bind(on_release = lambda none: self.clear_screen())
         
-
         #--------------------------------
         SaveButton = Button(text ='Save Patch')
         #SaveButton.bind(on_release = lambda none: self.clear_screen())
@@ -1473,7 +1496,8 @@ class FXCoreDesignerApp(App):
                 myPos.pos[Y] = mousepos[1]
                 readConnector = block.is_inside_connector(myPos,DONT_ASSIGN_LINE)
                 if readConnector != 0:
-                    self.popUpLabel.update_label(mousepos)
+                    self.popUpLabel.update_label(mousepos,block.get_param_name(readConnector))
+                    return
                 else:
                     self.popUpLabel.destroy_label()
 
@@ -1482,7 +1506,6 @@ class FXCoreDesignerApp(App):
                         if conLine.dragging == DRAGGING:# when first dragging the line keep hold of it until clicked in block or deleted
                             conLine.drag_line(mousepos,DRAG_MODE1)
                             
-
 
 
     #-------------------------------------------clear_screen
@@ -1683,6 +1706,8 @@ class asm_node():
         if "Splitter" in self.name:
             pass
 
+
+
         if "Pitch" in self.name:
             self.controls = [] 
             self.directive_string = """.equ      shiftbase    -1048576   ; shift of +1 octave
@@ -1718,6 +1743,8 @@ cpy_cc    tmprg_temp, acc32             ; and save to temp
 cpy_cs    acc32, ptrg_pot2_smth        ; level from pot 2 for dry
 multrr    acc32, tmprg_input            ; multiply it
 adds      acc32, tmprg_temp             ; add result of first shifter""" 
+
+
 
         if "Distortion" in self.name:
             self.controls = [] 
@@ -1798,6 +1825,7 @@ cpy_cc    tmprg_bp, acc32               ; Save to BP
 cpy_cs    tmprg_temp, ptrg_pot3_smth         ; Adjust output level
 multrr    tmprg_temp, tmprg_temp
 multrr    acc32, lp""" 
+
 
 
         if "Looper" in self.name:
