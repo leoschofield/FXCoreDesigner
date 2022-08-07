@@ -1,8 +1,5 @@
 # LeoSchofield 01/01/2022
-from unicodedata import name
 from kivy.config import Config
-from pytest import param
-from regex import W
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.app import App
 from kivy.uix.button import Button
@@ -16,8 +13,6 @@ from kivy.graphics import Rectangle, Color, Line
 from kivy.core.window import Window
 import random
 import os
-
-
 
 BLOCK_WIDTH = 100 
 BLOCK_HEIGHT = 50
@@ -85,16 +80,15 @@ class MyLine(Widget):
             else: #purple line for parameter controls etc
                 Color(0.50, 0.00, 0.70, OPAQUE)    
             self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=2.5, cap='round', joint='none')
-
         
     def drag_line(self, touch,mode):
         with self.canvas:
-            if mode == 0:
+            if mode == 0:#for touch.pos coords
                 for block in blocks:
                     if block.name == self.start_block: #if in the block that created the connector line
                             self.end_point = touch.pos
                             self.line.points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]]
-            elif mode == 1:
+            elif mode == 1:#for touch coord array without
                 for block in blocks:
                     if block.name == self.start_block: #if in the block that created the connector line
                             self.end_point = touch #touch is pos passed to this function in main function
@@ -117,6 +111,7 @@ class MyLine(Widget):
                 self.canvas.remove(self.line)
                 self.canvas.ask_update()
                 self.removed = 1
+
 #========================================================================        
 #============================Block=======================================
 #========================================================================
@@ -195,37 +190,67 @@ class Block(Widget):
                 if self.outputExists:
                     self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+40), size=(10,10))
                 else: # if a potentiometer or constant block
-                    self.paramOutCon = Rectangle(pos=(self.Xpos+45,self.Ypos+0), size=(10,10))
+                    self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+0), size=(10,10))
 
-    def get_param_name(self,paramNum):
-        if paramNum == 10:
+    def get_connector_name(self,connector):
+        if connector == 10:
             return 'Output'
 
-        if paramNum == 11:
+        if connector == 11:
             return 'Input'
 
         if 'Mixer' in self.name:
-            if MIXER+paramNum == MIXER+1:
+            if connector == 1:
                 return 'Input Level 1'
-            elif MIXER+paramNum == MIXER+2:
+            if connector == 2:
                 return 'Input Level 2'
+            if connector == MIXER + 1:
+                return 'Input 1'
+            if connector == MIXER + 2:
+                return 'Input 2'   
 
         if 'Splitter' in self.name:
-            if SPLITTER+paramNum == SPLITTER+1:
+            if connector == 10:
+                return 'Output'
+            if connector == 11:
+                return 'Input'
+            if connector == 1:
                 return 'Output Level 1'
-            elif SPLITTER+paramNum == SPLITTER+2:
-                return 'Output Level 2'      
+            if connector == 2:
+                return 'Output Level 2'   
+            if connector == SPLITTER + 1:
+                return 'Output 1'
+            if connector == SPLITTER + 2:
+                return 'Output 2'   
 
         if 'Pitch' in self.name:
-            if paramNum == 1:
+            if connector == 1:
                 return 'Pitch'
-            elif paramNum == 2:
-                return 'Dry Mix'                          
+            if connector == 2:
+                return 'Dry Mix'   
+
+        if 'Distortion' in self.name:
+            if connector == 1:
+                return 'Gain'  
+
+        if 'Delay' in self.name:
+            if connector == 1:
+                return 'Time'  
+            if connector == 2:
+                return 'Feedback'      
+            if connector == 3:
+                return 'Delay Mix'  
+
+        if 'Reverb' in self.name:
+            if connector == 1:
+                return 'Decay'  
+            if connector == 2:
+                return 'Size'      
+            if connector == 3:
+                return 'Reveb Mix'                                      
         return "TODO"
 
 
-
-        
     def remove_block(self):
         with self.canvas:
             self.canvas.remove(self.rect)
@@ -319,7 +344,7 @@ class Block(Widget):
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block == self.name:
-                    if conLine.end_connector == 1:
+                    if conLine.end_connector == 1: 
                         conLine.move_line(temp[X]+5,temp[Y]+5)  
             self.param1Con.pos = tuple(temp)
 
@@ -780,7 +805,7 @@ class Block(Widget):
                         else: #assign a line as there are none connected to this block
                             self.assign_line(touch,self.name,11)
                     return 11  
-
+        #============================================
         if self.outputExists:
             if touch.pos[X] > self.output.pos[X] and touch.pos[X] < (self.output.pos[X] + self.output.size[X]):
                 if touch.pos[Y] > self.output.pos[Y] and touch.pos[Y] < (self.output.pos[Y] + self.output.size[Y]):
@@ -798,7 +823,7 @@ class Block(Widget):
                         else: #assign a line as there are none connected to this block
                             self.assign_line(touch,self.name,10)
                     return 10  
-
+        #============================================SPLITTER
         if self.nParams == SPLITTER:
             if touch.pos[X] > self.output1.pos[X] and touch.pos[X] < (self.output1.pos[X] + self.output1.size[X]):
                 if touch.pos[Y] > self.output1.pos[Y] and touch.pos[Y] < (self.output1.pos[Y] + self.output1.size[Y]):
@@ -871,7 +896,7 @@ class Block(Widget):
                             else: #assign a line as there are none connected to this block
                                 self.assign_line(touch,self.name,1)
                         return 1 
-
+        #============================================MIXER
         if self.nParams == MIXER:
             if touch.pos[X] > self.input1.pos[X] and touch.pos[X] < (self.input1.pos[X] + self.input1.size[X]):
                 if touch.pos[Y] > self.input1.pos[Y] and touch.pos[Y] < (self.input1.pos[Y] + self.input1.size[Y]):
@@ -945,6 +970,7 @@ class Block(Widget):
                                 self.assign_line(touch,self.name,1)
                         return 1 
 
+        #======================================================================== Other Blocks
         if self.nParams <= MAX_PARAMS:
             #==============Parameter 6   
             if self.nParams == 6:
@@ -1219,10 +1245,10 @@ class Click(Widget):
         if blocks != []:
             for block in blocks:
                 block.move_block(touch,blocks)
-                if block.conLines != []:
-                    for conLine in block.conLines:
-                        if conLine.dragging == DRAGGING:
-                            conLine.drag_line(touch,DRAG_MODE0)
+                # if block.conLines != []: 
+                #     for conLine in block.conLines:
+                #         if conLine.dragging == DRAGGING:
+                #             conLine.drag_line(touch,DRAG_MODE0)
 
     #-------------------------------------------
     def on_touch_up(self,touch):
@@ -1492,14 +1518,15 @@ class FXCoreDesignerApp(App):
         myPos = myMousePos() 
         if blocks is not None:
             for block in blocks:
-                myPos.pos[X] = mousepos[0]
-                myPos.pos[Y] = mousepos[1]
-                readConnector = block.is_inside_connector(myPos,DONT_ASSIGN_LINE)
-                if readConnector != 0:
-                    self.popUpLabel.update_label(mousepos,block.get_param_name(readConnector))
-                    return
-                else:
-                    self.popUpLabel.destroy_label()
+                if block.selected == RELEASED:
+                    myPos.pos[X] = mousepos[0]
+                    myPos.pos[Y] = mousepos[1]
+                    readConnector = block.is_inside_connector(myPos,DONT_ASSIGN_LINE)
+                    if readConnector != 0:
+                        self.popUpLabel.update_label(mousepos,block.get_connector_name(readConnector))
+                        return
+                    else:
+                        self.popUpLabel.destroy_label()
 
                 if block.conLines is not None:
                     for conLine in block.conLines:
@@ -1553,15 +1580,15 @@ class FXCoreDesignerApp(App):
                             new_node = asm_node(conLine.start_block,ser_position,par_position)   
                             asm_string = asm_string + new_node.asm_string
                             asm_nodes.append(new_node)
-                            new_node.add_input(input_node)
-                            input_node.add_output(new_node)
+                            new_node.input = input_node
+                            input_node.output = new_node
                         elif conLine.end_block != block.name:
                             ser_position = ser_position + 1    
                             new_node = asm_node(conLine.end_block,ser_position,par_position)    
                             asm_string = asm_string + new_node.asm_string
                             asm_nodes.append(new_node)
-                            new_node.add_input(input_node)
-                            input_node.add_output(new_node)
+                            new_node.input = input_node
+                            input_node.output = new_node
 
 
                 else:# if not an Input block
@@ -1579,15 +1606,15 @@ class FXCoreDesignerApp(App):
                                             ser_position = ser_position + 1       
                                             new_node = asm_node(conLine.start_block,ser_position,par_position)
                                             asm_string = asm_string + new_node.asm_string
-                                            node.add_output(new_node)
-                                            new_node.add_input(node)
+                                            node.output = new_node
+                                            new_node.input = node
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
                                             
                                         elif conLine.end_connector <= 6:#if this is a control connector
                                             new_node = asm_node(conLine.start_block,ser_position,par_position)
                                             asm_string = asm_string + new_node.asm_string
-                                            new_node.add_output(node)
-                                            node.add_control(conLine.end_connector,new_node)
+                                            new_node.output = node
+                                            node.controls.append(block.get_connector_name(conLine.start_connector))
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
 
                                         
@@ -1602,19 +1629,24 @@ class FXCoreDesignerApp(App):
                                             ser_position = ser_position + 1
                                             new_node = asm_node(conLine.end_block,ser_position,par_position)
                                             asm_string = asm_string + new_node.asm_string
-                                            node.add_output(new_node)
-                                            new_node.add_input(node)
+                                            node.output = new_node
+                                            new_node.input = node
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
 
                                         elif conLine.start_connector <= 6:#if this is a control connector
                                             new_node = asm_node(conLine.end_block,ser_position,par_position)
                                             asm_string = asm_string + new_node.asm_string
-                                            new_node.add_output(node)
-                                            node.add_control(conLine.start_connector,new_node)
+                                            new_node.output = node 
+                                            node.controls.append(block.get_connector_name(conLine.start_connector))
+
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
-        print(asm_string)
+        #print(asm_string)
         
-        # for node in asm_nodes:
+        for node in asm_nodes:
+            if node.controls != []  :
+                for control in node.controls:
+                    print(control)
+                    pass
         #     # if "Input" not in node.name:
         #     #     if "Output" not in node.name:   
         #     #         if "Pot" not in node.name:   
@@ -1668,6 +1700,9 @@ class FXCoreDesignerApp(App):
 class asm_node():
     def __init__(self,name,ser_position,par_position):
         self.name = name
+        self.input = ""
+        self.output = ""
+        self.controls = []
         self.ser_position = ser_position
         self.par_position = par_position
 
@@ -1706,10 +1741,7 @@ class asm_node():
         if "Splitter" in self.name:
             pass
 
-
-
         if "Pitch" in self.name:
-            self.controls = [] 
             self.directive_string = """.equ      shiftbase    -1048576   ; shift of +1 octave
 
 .rn       temp      r0            ; temp reg
@@ -1747,7 +1779,6 @@ adds      acc32, tmprg_temp             ; add result of first shifter"""
 
 
         if "Distortion" in self.name:
-            self.controls = [] 
             directive_string = """
 ; pot0 = Input gain
 ; pot1 = Low-pass frequency control
@@ -1829,7 +1860,6 @@ multrr    acc32, lp"""
 
 
         if "Looper" in self.name:
-            self.controls = [] 
             directive_string = """
 ; sw0    - 0: play back recording forward
 ;          1: playback in reverse
@@ -1980,16 +2010,6 @@ ori       acc32, 1                ; Set acc32[0] for the LED on case
 
 doLED1:
 set       user1|0, acc32           ; set the usr0 output per the acc32 LSB"""
-
-
-    def add_input(self,input_node):
-        self.input = input_node
-
-    def add_output(self,output_node):
-        self.output = output_node
-
-    def add_control(self,connector,control_node):
-        self.controls[connector-1] = control_node #-1 as connector names start at 1 in GUI
 
 
 if __name__ == '__main__':
