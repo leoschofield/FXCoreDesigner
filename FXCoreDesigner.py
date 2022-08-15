@@ -1182,9 +1182,9 @@ class Block(Widget):
             conLine = MyLine(touch,start_block,start_connector)
             self.conLines.append(conLine)
 
-#========================================================================        
-#============================Click=======================================
-#========================================================================
+#============================================================================================================================================================================        
+#=============================================================================Click==========================================================================================
+#============================================================================================================================================================================
 class Click(Widget):
 
     #-------------------------------------------
@@ -1288,9 +1288,7 @@ class Click(Widget):
                                                     conLine.name += (" " + block2.name + " " + str(conLine.end_connector))
                                                     break                
 
-# ========================================================================        
-# ==============================myMousePos================================
-# ========================================================================
+        
 class popUpParamLabel(Widget):
     def __init__(self,**kwargs):
         super(popUpParamLabel, self).__init__(**kwargs)
@@ -1310,25 +1308,21 @@ class popUpParamLabel(Widget):
                 self.paramlabel.text=name
                 self.released = 0
 
-# ========================================================================        
-# ==============================myMousePos================================
-# ========================================================================
 class myMousePos():
     def __init__(self):
         self.pos = [0,0]
 
 
-#========================================================================        
-#===========================FXCoreDesignerApp============================
-#========================================================================
+#============================================================================================================================================================================    
+#=============================================================FXCoreDesignerApp==============================================================================================
+#============================================================================================================================================================================
 class FXCoreDesignerApp(App):
     def build(self):
         #self.isOverlay = 0
         Window.size = (1920, 1080)
         #Window.fullscreen = 'auto'
         Window.bind(mouse_pos=self.on_mouse_pos)
-        Window.bind(on_key_down=self.key_action)
-        #self.my_mouse_pos = myMousePos();    
+        Window.bind(on_key_down=self.key_action)   
         self.popUpLabel = popUpParamLabel()
         self.click = Click() 
         self.layout = GridLayout(cols = 12, row_force_default = True, row_default_height = BUTTON_HEIGHT)
@@ -1564,144 +1558,155 @@ class FXCoreDesignerApp(App):
     def generate_asm(self):
         asm_nodes = []
         asm_string = ""
+        directive_string = ""
         ser_position = 0
         par_position = 0
-        for block in blocks:
+        for block in blocks:#loop through blocks until a start block is found
             if block.conLines != []:
                 if 'Input' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
                     ser_position = 1
                     par_position = par_position + 1
                     input_node = asm_node(block.name,ser_position,par_position)    
                     asm_nodes.append(input_node)#add input to list
-                    asm_string = asm_string + input_node.asm_string #add asm string from node class
-                    for conLine in block.conLines: # continue building graph from connected conline
-                        if conLine.start_block != block.name: #
+                    for conLine in block.conLines: # continue building from connected conline
+                        if conLine.start_block != block.name: 
                             ser_position = ser_position + 1
                             new_node = asm_node(conLine.start_block,ser_position,par_position)   
-                            asm_string = asm_string + new_node.asm_string
                             asm_nodes.append(new_node)
-                            new_node.input = input_node
-                            input_node.output = new_node
+
                         elif conLine.end_block != block.name:
                             ser_position = ser_position + 1    
                             new_node = asm_node(conLine.end_block,ser_position,par_position)    
-                            asm_string = asm_string + new_node.asm_string
                             asm_nodes.append(new_node)
-                            new_node.input = input_node
-                            input_node.output = new_node
-
-
-                else:# if not an Input block
-                    for node in asm_nodes:
-                        if block.name == node.name:#if block has been added already continue adding connected blocks
-                            for conLine in block.conLines: #loop through blocks conlines
-                                if conLine.start_block != block.name:# don't add block thats already added
-                                    already_added = 0
-                                    for node_2 in asm_nodes: # check if node already added to list
-                                        if conLine.start_block == node_2.name:
-                                            already_added = 1
-                                    if already_added == 0: # only add if not already added
-                                        
-                                        if conLine.end_connector == 10: #if this is an output connector
-                                            ser_position = ser_position + 1       
-                                            new_node = asm_node(conLine.start_block,ser_position,par_position)
-                                            asm_string = asm_string + new_node.asm_string
-                                            node.output = new_node
-                                            new_node.input = node
-                                            asm_nodes.append(new_node) # add to list so that graph can be built further
-                                            
-                                        elif conLine.end_connector <= 6:#if this is a control connector
-                                            new_node = asm_node(conLine.start_block,ser_position,par_position)
-                                            asm_string = asm_string + new_node.asm_string
-                                            new_node.output = node
-                                            node.controls.append(block.get_connector_name(conLine.start_connector))
-                                            asm_nodes.append(new_node) # add to list so that graph can be built further
-
-                                        
-                                elif conLine.end_block != block.name:#don't add block thats already added
-                                    already_added = 0
-                                    for node_2 in asm_nodes: # check if node already added to list
-                                        if conLine.end_block == node_2.name:
-                                            already_added = 1
-                                    if already_added == 0: # only add if not already added
-
-                                        if conLine.start_connector == 10:#if this is an output connector
-                                            ser_position = ser_position + 1
-                                            new_node = asm_node(conLine.end_block,ser_position,par_position)
-                                            asm_string = asm_string + new_node.asm_string
-                                            node.output = new_node
-                                            new_node.input = node
-                                            asm_nodes.append(new_node) # add to list so that graph can be built further
-
-                                        elif conLine.start_connector <= 6:#if this is a control connector
-                                            new_node = asm_node(conLine.end_block,ser_position,par_position)
-                                            asm_string = asm_string + new_node.asm_string
-                                            new_node.output = node 
-                                            node.controls.append(block.get_connector_name(conLine.start_connector))
-
-                                            asm_nodes.append(new_node) # add to list so that graph can be built further
-        #print(asm_string)
-        
-        for node in asm_nodes:
-            if node.controls != []  :
-                for control in node.controls:
-                    print(control)
-                    pass
-        #     # if "Input" not in node.name:
-        #     #     if "Output" not in node.name:   
-        #     #         if "Pot" not in node.name:   
-        #     #             if "Constant" not in node.name:   
-        #     #                 print(node.name)
-        #     #                 print(" "+node.input.name)
-        #     #                 print(" "+node.output.name)
-        #     #                 for iteration,control in enumerate(node.controls):
-        #     #                     # print(iteration)
-        #     #                     if control != 0:
-        #     #                         print(control.name)
-        #     #                     else:
-        #     #                         print(control)
-        #     #if node.par_position == 1:
-        #     print(node.name)
-        #     print(node.ser_position)
-        #     print(node.par_position)
-        #     #
-        #     R0_used = 0
-        #     R1_used = 0
-        #     R2_used = 0
-        #     R3_used = 0
-        #     R4_used = 0
-        #     R5_used = 0
-        #     R6_used = 0
-        #     R7_used = 0
-        #     R8_used = 0
-        #     R9_used = 0
-        #     R10_used = 0
-        #     R11_used = 0
-        #     R12_used = 0
-        #     R13_used = 0
-        #     R14_used = 0
-        #     R15_used = 0
-
-        #     ser_position_count = 0
-        #     par_position_count = 0
-
-        #     while par_position_count <= par_position: # par_position is now the max parallel chain number
-        #         par_position_count = par_position_count + 1 #increment parallel chain number
-        #         ser_position_count = 1 #start on first block
-        #         if "Output" and "Mixer" not in node.name:# start new parallel path when output is added or register is saved to add to mixer
+                    
+        #  !!TODO!!  elif "Output" and "Mixer" not in node.name:# start new parallel path when output is added or register is saved to add to mixer
         #             ser_position_count + 1
         #             #todo if mixer save register
+        
+                else:# if not an Input block, continues building
+                    for node in asm_nodes:#build from next node
+                        if node.name == block.name:#if node matches block has been added already then continue and add connected blocks  
+                            for conLine in block.conLines: #loop through blocks connector lines to find connected blocks 
+                                already_added = FALSE
+                                if conLine.start_block != block.name:# don't add the same block again 
+                                    #if 'Input' not in conLine.start_block:       
+                                    if conLine.end_connector == 11: #if this is an input connector
+                                        ser_position = ser_position + 1       
+                                        new_node = asm_node(conLine.start_block,ser_position,par_position)
+                                        for node in asm_nodes:
+                                            if new_node.name == node.name:
+                                             already_added = 1
+                                        if already_added == FALSE:                                                       
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                    elif conLine.end_connector == 10: #if this is an output connector
+                                        ser_position = ser_position + 1       
+                                        new_node = asm_node(conLine.start_block,ser_position,par_position)
+                                        for node in asm_nodes:
+                                            if new_node.name == node.name:
+                                             already_added = 1
+                                        if already_added == FALSE:                                                       
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                    elif conLine.end_connector <= 6:#if this is a control connector
+                                        print("\n\n\n\nconLine.end_connector:",conLine.end_connector,"\n\n")
+                                        node.add_control(conLine.end_connector,1,1)#  !!TODO!! 3rd param should be potNumber from potentiometer block name
+                                    else:
+                                        print("ELSE 1" , conLine.end_connector)
+                                elif conLine.end_block != block.name:# don't add the same block again
+                                    #if 'Input' not in conLine.end_block:       
+                                    if conLine.start_connector == 11: #if this is an input connector
+                                        ser_position = ser_position + 1
+                                        new_node = asm_node(conLine.end_block,ser_position,par_position)
+                                        for node in asm_nodes:
+                                            if new_node.name == node.name:
+                                             already_added = 1
+                                        if already_added == FALSE:                                                       
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                    elif conLine.start_connector == 10: #if this is an output connector
+                                        ser_position = ser_position + 1
+                                        new_node = asm_node(conLine.end_block,ser_position,par_position)
+                                        for node in asm_nodes:
+                                            if new_node.name == node.name:
+                                             already_added = 1
+                                        if already_added == FALSE:                                                       
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                    elif conLine.start_connector <= 6:#if this is a control connector
+                                        print("\n\n\n\nconLine.end_connector:",conLine.start_connector,"\n\n")
+                                        node.add_control(conLine.start_connector,1,1)#   !!TODO!! 3rd param should be potNumber from potentiometer block name
+                                    else:
+                                        print("ELSE 2" , conLine.start_connector)
+
+        #*********************************************
+        for node in asm_nodes:
+            asm_string += node.asm_string
+            print(node.name)
+        
+        print(asm_string)
+        
+        #********************************************* check number of registers used in asm_string doesnt exceed hardware and create directive_string 
+        R0_used = 0
+        R1_used = 0
+        R2_used = 0
+        R3_used = 0
+        R4_used = 0
+        R5_used = 0
+        R6_used = 0
+        R7_used = 0
+        R8_used = 0
+        R9_used = 0
+        R10_used = 0
+        R11_used = 0
+        R12_used = 0
+        R13_used = 0
+        R14_used = 0
+        R15_used = 0
+
         #     f = open("generated.fxc", 'w')
         #     f.write(asm_string)
         #     f.close()    
         #     os.system('FXCoreCmdAsm.exe -h ')
-
-
+        
+#============================================================================================================================================================================
+#============================================================================================================================================================================
+#============================================================================================================================================================================
 class asm_node():
+
+    def swap_strings(self,searchString,startString,paramNum,newString):
+        # print("SWAP STRINGS")
+        createdString = ""
+        p_before =  startString.partition("$"+searchString)[0] #input string before first find string
+        # print("p_before", p_before)
+        p_after =  startString.partition("$"+searchString)[2] #input string after first find string
+        print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!", p_after)
+        stringParam = p_after.partition("$")[0] #search number before for second $
+        p_after2 = p_after.partition("$")[2] # rest of string after second $
+        print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!",stringParam)  
+        if(int(stringParam)==paramNum):    # !!TODO!! error here if 2 or more control params used - fix change recursion tactic which finds the "PARAM2,3,4 etc as this is truncating the ASM string, which is then saved, next time a conenctor is added to that node the bad things happen"
+            createdString = p_before + newString + p_after2
+        else:
+            self.swap_strings(searchString,p_after2,paramNum,newString)#recursion to find correct searchString if its not the one found
+
+        if createdString != "":
+            self.asm_string = createdString
+
+    def add_control(self,paramNum, controlType,val):
+        if controlType == 1: #if using a potentiometer or expression input
+            if val == 1:#val is the potentiometer number (1 here == pot0 on the dev board)
+                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot0_smth")
+            elif val == 2:
+                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot1_smth")
+            elif val == 3:
+                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot2_smth")
+            elif val == 4:  
+                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot3_smth")
+            elif val == 5:
+                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot4_smth")
+            elif val == 6:  
+                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot5_smth")
+        else: #if using a constant, val is the constant's value
+            pass
+
     def __init__(self,name,ser_position,par_position):
         self.name = name
-        self.input = ""
-        self.output = ""
         self.controls = []
         self.ser_position = ser_position
         self.par_position = par_position
@@ -1741,6 +1746,7 @@ class asm_node():
         if "Splitter" in self.name:
             pass
 
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if "Pitch" in self.name:
             self.directive_string = """.equ      shiftbase    -1048576   ; shift of +1 octave
 
@@ -1751,10 +1757,10 @@ class asm_node():
 .mem      pdelay    4096"""
 
             self.asm_string = """; single pitch shift mono in/out based on default program double pitch shifter
-; pot0 = shifter 0
-; pot1 = level
-; pot2 = dry level
-cpy_cs    tmprg_temp, ptrg_pot0_smth         ; read in pot0
+;PARAM1 pot0 = shifter 0 
+;PARAM2 pot1 = level
+;PARAM3 pot2 = dry level
+cpy_cs    tmprg_temp, $PARAM1$        ; read in - pot0 ptrg_pot0_smth
 addsi     tmprg_temp, -0.5              ; ranges -0.5 to 0.5 in acc32
 wrdld     tmprg_temp,shiftbase.u        ; Put upper part of shiftbase into temp
 multrr    acc32, tmprg_temp             ; Multiply the adjusted POT0 value by shiftbase
@@ -1763,21 +1769,20 @@ sls       acc32, 1                ; Do the multiply by shifting left 1 bit
 OK:
 cpy_sc    ramp0_f, acc32          ; Write the result to the ramp0 frequency control
 
-cpy_cs    tmprg_input, in0
-               ; Read channel 0 input
+cpy_cs    tmprg_input, in0 ; Read channel 0 input
 wrdel     pdelay, tmprg_input           ; Write it to the delay
 
 pitch     rmp0|l4096, pdelay      ; Do the shift, result will be in ACC32
-cpy_cs    tmprg_temp, ptrg_pot1_smth         ; level from pot 1
+cpy_cs    tmprg_temp,  $PARAM2$         ; level from pot 1 ptrg_pot1_smth
 multrr    tmprg_temp, acc32             ; multiply it
 cpy_cc    tmprg_temp, acc32             ; and save to temp
 
-cpy_cs    acc32, ptrg_pot2_smth        ; level from pot 2 for dry
+cpy_cs    acc32, $PARAM3$               ; level from pot 2 for dry ptrg_pot2_smth
 multrr    acc32, tmprg_input            ; multiply it
 adds      acc32, tmprg_temp             ; add result of first shifter""" 
 
 
-
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if "Distortion" in self.name:
             directive_string = """
 ; pot0 = Input gain
@@ -1858,7 +1863,7 @@ multrr    tmprg_temp, tmprg_temp
 multrr    acc32, lp""" 
 
 
-
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if "Looper" in self.name:
             directive_string = """
 ; sw0    - 0: play back recording forward
@@ -2011,6 +2016,8 @@ ori       acc32, 1                ; Set acc32[0] for the LED on case
 doLED1:
 set       user1|0, acc32           ; set the usr0 output per the acc32 LSB"""
 
-
+#============================================================================================================================================================================
+#============================================================================================================================================================================
+#============================================================================================================================================================================
 if __name__ == '__main__':
     FXCoreDesignerApp().run()
