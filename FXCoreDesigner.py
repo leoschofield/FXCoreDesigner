@@ -53,6 +53,9 @@ NOT_DRAGGING = 0
 MIXER = 20
 SPLITTER = 30
 
+INPUT = 11
+OUTPUT = 10
+
 MAX_PARAMS = 6
 
 global blocks
@@ -116,9 +119,10 @@ class MyLine(Widget):
 #============================Block=======================================
 #========================================================================
 class Block(Widget):
-    def __init__(self,name,inputConnector,outputConnector,nParams, **kwargs):
+    def __init__(self,name,nameID,inputConnector,outputConnector,nParams, **kwargs):
         super(Block, self).__init__(**kwargs)
         self.name = name
+        self.ID = nameID
         self.Xpos = random.randrange(100, 1500)
         self.Ypos = random.randrange(100, 800)
         self.selected = RELEASED
@@ -193,10 +197,10 @@ class Block(Widget):
                     self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+0), size=(10,10))
 
     def get_connector_name(self,connector):
-        if connector == 10:
+        if connector == OUTPUT:
             return 'Output'
 
-        if connector == 11:
+        if connector == INPUT:
             return 'Input'
 
         if 'Mixer' in self.name:
@@ -210,10 +214,6 @@ class Block(Widget):
                 return 'Input 2'   
 
         if 'Splitter' in self.name:
-            if connector == 10:
-                return 'Output'
-            if connector == 11:
-                return 'Input'
             if connector == 1:
                 return 'Output Level 1'
             if connector == 2:
@@ -1195,7 +1195,7 @@ class Click(Widget):
             temp = name + " " + str(nameCounter)
 
             if blocks == []:
-                block = Block(temp,inputNode,outputNode,nParams)   
+                block = Block(temp,nameCounter,inputNode,outputNode,nParams)   
                 blocks.append(block)
             else:
                 while create_block == 0:
@@ -1219,7 +1219,7 @@ class Click(Widget):
                         else:
                             create_block = 1
                 temp = name + " " + str(nameCounter)
-                block = Block(temp,inputNode,outputNode,nParams)
+                block = Block(temp,nameCounter,inputNode,outputNode,nParams)
                 blocks.append(block)
                 
     #--------------------------------------------
@@ -1288,7 +1288,7 @@ class Click(Widget):
                                                     conLine.name += (" " + block2.name + " " + str(conLine.end_connector))
                                                     break                
 
-        
+
 class popUpParamLabel(Widget):
     def __init__(self,**kwargs):
         super(popUpParamLabel, self).__init__(**kwargs)
@@ -1307,6 +1307,7 @@ class popUpParamLabel(Widget):
                 self.paramlabel.pos=(mousepos[X]-50, mousepos[Y]+20)
                 self.paramlabel.text=name
                 self.released = 0
+
 
 class myMousePos():
     def __init__(self):
@@ -1412,7 +1413,7 @@ class FXCoreDesignerApp(App):
         mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1,MIXER))
         RoutingDrop.add_widget(mixerBtn)
 
-        #--------------------------------
+        #-------------------------------- Buttons For Dropdowns
         IObutton = Button(text ='IO')
         IObutton.bind(on_release = IOdrop.open)
         #
@@ -1438,24 +1439,22 @@ class FXCoreDesignerApp(App):
         
         #--------------------------------
         SaveButton = Button(text ='Save Patch')
-        #SaveButton.bind(on_release = lambda none: self.clear_screen())
-
+        #SaveButton.bind(on_release = lambda none: self.
         #--------------------------------
         LoadButton = Button(text ='Load Patch')
-        #ClearButton.bind(on_release = lambda none: self.clear_screen())
-
+        #LoadButton.bind(on_release = lambda none: self.
         #--------------------------------
         RunButton = Button(text ='Run From RAM')
-        #ClearButton.bind(on_release = lambda none: self.clear_screen())
+        #RunButton.bind(on_release = lambda none: self.
 
         #--------------------------------
         ProgButton = Button(text ='Load to Flash')
-        #ClearButton.bind(on_release = lambda none: self.clear_screen())
+        #ProgButton.bind(on_release = lambda none: self.
 
         #--------------------------------
         AboutButton = Button(text ='About')
-        popup = Popup(title='FXCore DSP Patch Designer - Leo Schofield 2022',
-        content=Label(text='Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
+        popup = Popup(title='FXCoreDesigner - Leo Schofield 2022',
+        content=Label(text='Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple lines are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
         size_hint=(None, None), size=(400,0))
 
         AboutButton.bind(on_release = lambda none: popup.open())
@@ -1527,8 +1526,6 @@ class FXCoreDesignerApp(App):
                         if conLine.dragging == DRAGGING:# when first dragging the line keep hold of it until clicked in block or deleted
                             conLine.drag_line(mousepos,DRAG_MODE1)
                             
-
-
     #-------------------------------------------clear_screen
     def clear_screen(self):
         box = BoxLayout(orientation = 'vertical', padding = (10))
@@ -1590,50 +1587,54 @@ class FXCoreDesignerApp(App):
                                 already_added = FALSE
                                 if conLine.start_block != block.name:# don't add the same block again 
                                     #if 'Input' not in conLine.start_block:       
-                                    if conLine.end_connector == 11: #if this is an input connector
-                                        ser_position = ser_position + 1       
-                                        new_node = asm_node(conLine.start_block,ser_position,par_position)
-                                        for node in asm_nodes:
-                                            if new_node.name == node.name:
-                                             already_added = 1
-                                        if already_added == FALSE:                                                       
-                                            asm_nodes.append(new_node) # add to list so that graph can be built further
-                                    elif conLine.end_connector == 10: #if this is an output connector
-                                        ser_position = ser_position + 1       
-                                        new_node = asm_node(conLine.start_block,ser_position,par_position)
-                                        for node in asm_nodes:
-                                            if new_node.name == node.name:
-                                             already_added = 1
-                                        if already_added == FALSE:                                                       
-                                            asm_nodes.append(new_node) # add to list so that graph can be built further
-                                    elif conLine.end_connector <= 6:#if this is a control connector
-                                        print("\n\n\n\nconLine.end_connector:",conLine.end_connector,"\n\n")
-                                        node.add_control(conLine.end_connector,1,1)#  !!TODO!! 3rd param should be potNumber from potentiometer block name
-                                    else:
-                                        print("ELSE 1" , conLine.end_connector)
-                                elif conLine.end_block != block.name:# don't add the same block again
-                                    #if 'Input' not in conLine.end_block:       
                                     if conLine.start_connector == 11: #if this is an input connector
-                                        ser_position = ser_position + 1
-                                        new_node = asm_node(conLine.end_block,ser_position,par_position)
-                                        for node in asm_nodes:
+                                        ser_position = ser_position + 1       
+                                        new_node = asm_node(conLine.start_block,ser_position,par_position)
+                                        for node in asm_nodes:#check new node hasnt already been added
                                             if new_node.name == node.name:
-                                             already_added = 1
+                                             already_added = TRUE
                                         if already_added == FALSE:                                                       
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
                                     elif conLine.start_connector == 10: #if this is an output connector
-                                        ser_position = ser_position + 1
-                                        new_node = asm_node(conLine.end_block,ser_position,par_position)
-                                        for node in asm_nodes:
+                                        ser_position = ser_position + 1       
+                                        new_node = asm_node(conLine.start_block,ser_position,par_position)
+                                        for node in asm_nodes:#check new node hasnt already been added
                                             if new_node.name == node.name:
-                                             already_added = 1
+                                             already_added = TRUE
                                         if already_added == FALSE:                                                       
                                             asm_nodes.append(new_node) # add to list so that graph can be built further
-                                    elif conLine.start_connector <= 6:#if this is a control connector
-                                        print("\n\n\n\nconLine.end_connector:",conLine.start_connector,"\n\n")
-                                        node.add_control(conLine.start_connector,1,1)#   !!TODO!! 3rd param should be potNumber from potentiometer block name
+                                    elif conLine.start_connector == 1:#if this is a control connector
+                                        for block2 in blocks:# find the block which matches the connector's start block name
+                                            if conLine.start_block == block2.name:
+                                                node.add_control(conLine.end_connector,1,block2.ID)#   !!TODO!! 3rd param should be potNumber from potentiometer block name
                                     else:
-                                        print("ELSE 2" , conLine.start_connector)
+                                        print("ELSE 1" , conLine.start_connector)
+
+                                elif conLine.end_block != block.name:# don't add the same block again
+                                    #if 'Input' not in conLine.end_block:       
+                                    if conLine.end_connector == 11: #if this is an input connector
+                                        ser_position = ser_position + 1
+                                        new_node = asm_node(conLine.end_block,ser_position,par_position)
+                                        for node in asm_nodes:#check new node hasnt already been added
+                                            if new_node.name == node.name:
+                                             already_added = TRUE
+                                        if already_added == FALSE:                                                       
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                    elif conLine.end_connector == 10: #if this is an output connector
+                                        ser_position = ser_position + 1
+                                        new_node = asm_node(conLine.end_block,ser_position,par_position)
+                                        for node in asm_nodes:#check new node hasnt already been added
+                                            if new_node.name == node.name:
+                                             already_added = TRUE
+                                        if already_added == FALSE:                                                       
+                                            asm_nodes.append(new_node) # add to list so that graph can be built further
+                                    elif conLine.end_connector == 1:#if this is a control connector (POT, etc)
+                                        # print("\n\n\n\nconLine.end_connector:",conLine.end_block,conLine.end_connector,"\n\n")
+                                        for block2 in blocks:# find the block which matches the connector's end block name
+                                            if conLine.end_block == block2.name:
+                                                node.add_control(conLine.start_connector,1,block2.ID)
+                                    else:
+                                        print("ELSE 2" , conLine.end_connector)
 
         #*********************************************
         for node in asm_nodes:
@@ -1669,24 +1670,29 @@ class FXCoreDesignerApp(App):
 #============================================================================================================================================================================
 #============================================================================================================================================================================
 class asm_node():
-
     def swap_strings(self,searchString,startString,paramNum,newString):
+        # if self.intialString_lock == 0:
+        #     self.intialString_lock = 1
+        #     intialString = searchString
         # print("SWAP STRINGS")
         createdString = ""
         p_before =  startString.partition("$"+searchString)[0] #input string before first find string
         # print("p_before", p_before)
         p_after =  startString.partition("$"+searchString)[2] #input string after first find string
-        print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!", p_after)
-        stringParam = p_after.partition("$")[0] #search number before for second $
+        # print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!", p_after)
+        stringParam = p_after.partition("$")[0] # search for number before second $
         p_after2 = p_after.partition("$")[2] # rest of string after second $
-        print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!",stringParam)  
-        if(int(stringParam)==paramNum):    # !!TODO!! error here if 2 or more control params used - fix change recursion tactic which finds the "PARAM2,3,4 etc as this is truncating the ASM string, which is then saved, next time a conenctor is added to that node the bad things happen"
-            createdString = p_before + newString + p_after2
-        else:
-            self.swap_strings(searchString,p_after2,paramNum,newString)#recursion to find correct searchString if its not the one found
-
+        # print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!",stringParam)  
+        if stringParam != "":
+            if int(stringParam)==paramNum:    # !!TODO!! error here if 2 or more control params used - fix change recursion tactic which finds the "PARAM2,3,4 etc as this is truncating the ASM string, which is then saved, next time a conenctor is added to that node the bad things happen"
+                createdString = p_before + newString + p_after2
+            else:
+                self.swap_strings(searchString,p_after2,paramNum,newString)#recursion to find correct searchString if its not the one found
+        else: #got to the end of the string so start over
+            self.swap_strings(searchString,self.asm_string,paramNum,newString)#recursion with initial string
         if createdString != "":
             self.asm_string = createdString
+        # self.intialString_lock = 0
 
     def add_control(self,paramNum, controlType,val):
         if controlType == 1: #if using a potentiometer or expression input
@@ -1710,8 +1716,9 @@ class asm_node():
         self.controls = []
         self.ser_position = ser_position
         self.par_position = par_position
-
+        # self.intialString_lock = 0
         if "Input" in self.name:
+            self.directive_string = ""
             if "1" in self.name:
                 self.asm_string = "cpy_cs    acc32, in0\n"
             if "2" in self.name:
@@ -1722,6 +1729,7 @@ class asm_node():
                 self.asm_string = "cpy_cs    acc32, in3\n"
 
         if "Output" in self.name:
+            self.directive_string = ""
             if "1" in self.name:
                 self.asm_string = "cpy_cs    out0, acc32\n"
             if "2" in self.name:
