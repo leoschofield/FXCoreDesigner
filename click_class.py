@@ -54,11 +54,7 @@ class Click(Widget):
                             create_block = 1
                 temp = name + " " + str(nameCounter)
                 block = Block(temp,nameCounter,inputNode,outputNode,nParams)
-                print("NEW BLOCK")
-                print(block)
                 blocks.append(block)
-                print(blocks)
-                print("\n")
                 
     #--------------------------------------------
     def detect_collisions(self, touch, moving):
