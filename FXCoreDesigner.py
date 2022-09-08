@@ -1,4 +1,4 @@
-# LeoSchofield 01/01/2022
+# Leo Schofield 01/01/2022
 from kivy.config import Config
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.app import App
