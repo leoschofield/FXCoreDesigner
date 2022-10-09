@@ -24,7 +24,7 @@ class Click(Widget):
     #-------------------------------------------
     def assign_block(self,name,inputNode,outputNode,nParams):
         with self.canvas:
-            nameCounter = 1
+            nameCounter = 0
             create_block = 0
             temp = name + " " + str(nameCounter)
 
@@ -102,22 +102,21 @@ class Click(Widget):
                                             (conLine.start_connector == 1 and (block1.inputExists == 0) and newConnector <=6):
                                                 if block2.conLines != []: # block2 has lines?
                                                     for conLine2 in block2.conLines:
-                                                        if conLine2.start_block == block2.name: #only check the connections that start on block 2
+                                                        if conLine2.start_block.name == block2.name: #only check the connections that start on block 2
                                                             if conLine2.start_connector == newConnector:
                                                                 return #found line that is connected here so break out so cursor keeps hold of line
-                                                        elif conLine2.end_block == block2.name:#...or end on block 2 
+                                                        elif conLine2.end_block.name == block2.name:#...or end on block 2 
                                                             if conLine2.end_connector == newConnector:
                                                                 return #found line that is connected here so break out so that cursor keeps hold of line              
                                                     conLine.dragging = NOT_DRAGGING
-                                                    conLine.end_block=block2.name
-                                                    block2.conLines.append(conLine)# add the newly connected line to the list of lines
+                                                    conLine.end_block=block2
                                                     conLine.end_connector = newConnector
                                                     conLine.name += (" " + block2.name + " " + str(conLine.end_connector))
-
+                                                    block2.conLines.append(conLine)# add the newly connected line to the list of lines    
                                                 else: #block 2 has no lines            
                                                     conLine.dragging = NOT_DRAGGING
-                                                    conLine.end_block=block2.name
-                                                    block2.conLines.append(conLine)# add the newly connected line to the list of lines
+                                                    conLine.end_block=block2
                                                     conLine.end_connector = newConnector
                                                     conLine.name += (" " + block2.name + " " + str(conLine.end_connector))
+                                                    block2.conLines.append(conLine)# add the newly connected line to the list of lines
                                                     break       

@@ -2,6 +2,7 @@ from kivy.uix.button import Label
 from kivy.uix.widget import Widget
 from kivy.graphics import Rectangle, Color
 from line_class import MyLine
+from asm_node_class import asm_node
 from config import blocks
 import random
 
@@ -122,54 +123,19 @@ class Block(Widget):
 
         if connector == INPUT:
             return 'Input'
+            
+        if connector == MIXER + 1:
+            return 'Input 1'
+        if connector == MIXER + 2:
+            return 'Input 2'   
 
-        if 'Mixer' in self.name:
-            if connector == 1:
-                return 'Input Level 1'
-            if connector == 2:
-                return 'Input Level 2'
-            if connector == MIXER + 1:
-                return 'Input 1'
-            if connector == MIXER + 2:
-                return 'Input 2'   
-
-        if 'Splitter' in self.name:
-            if connector == 1:
-                return 'Output Level 1'
-            if connector == 2:
-                return 'Output Level 2'   
-            if connector == SPLITTER + 1:
-                return 'Output 1'
-            if connector == SPLITTER + 2:
-                return 'Output 2'   
-
-        if 'Pitch' in self.name:
-            if connector == 1:
-                return 'Pitch'
-            if connector == 2:
-                return 'Dry Mix'   
-
-        if 'Distortion' in self.name:
-            if connector == 1:
-                return 'Gain'  
-
-        if 'Delay' in self.name:
-            if connector == 1:
-                return 'Time'  
-            if connector == 2:
-                return 'Feedback'      
-            if connector == 3:
-                return 'Delay Mix'  
-
-        if 'Reverb' in self.name:
-            if connector == 1:
-                return 'Decay'  
-            if connector == 2:
-                return 'Size'      
-            if connector == 3:
-                return 'Reveb Mix'                                      
-        return "TODO"
-
+        if connector == SPLITTER + 1:
+            return 'Output 1'
+        if connector == SPLITTER + 2:
+            return 'Output 2'   
+        else:
+            temp_node = asm_node(self)
+            return temp_node.get_connector_name(connector)
 
     def remove_block(self):
         with self.canvas:
@@ -227,12 +193,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 20
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
-                    if conLine.start_connector == 11:
-                        conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
-                    if conLine.end_connector == 11:
-                        conLine.move_line(temp[X]+5,temp[Y]+5) 
+                if conLine.start_block.name == self.name:
+                    conLine.move_line(temp[X]+5,temp[Y]+5) 
+                elif conLine.end_block.name == self.name:
+                    conLine.move_line(temp[X]+5,temp[Y]+5)
             self.input.pos = tuple(temp)
 
         #========================================Output Connector
@@ -243,10 +207,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 20
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 10:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 10:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.output.pos = tuple(temp)
@@ -260,10 +224,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 1: 
                         conLine.move_line(temp[X]+5,temp[Y]+5)  
             self.param1Con.pos = tuple(temp)
@@ -275,10 +239,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
@@ -290,10 +254,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 30
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 31:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 31:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.output1.pos = tuple(temp)
@@ -305,10 +269,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 10
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 32:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 32:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.output2.pos = tuple(temp)
@@ -321,10 +285,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5)  
             self.param1Con.pos = tuple(temp)
@@ -336,10 +300,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
@@ -351,10 +315,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 30
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 21:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 21:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.input1.pos = tuple(temp)
@@ -366,10 +330,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 10
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 22:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 22:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.input2.pos = tuple(temp)
@@ -382,10 +346,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
@@ -397,10 +361,10 @@ class Block(Widget):
             if moveY:    
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
@@ -412,10 +376,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 3:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 3:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param3Con.pos = tuple(temp)
@@ -427,10 +391,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 4:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 4:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param4Con.pos = tuple(temp)
@@ -442,10 +406,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 5:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 5:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param5Con.pos = tuple(temp)
@@ -457,10 +421,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 6:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 6:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param6Con.pos = tuple(temp)
@@ -474,10 +438,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
@@ -489,10 +453,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
@@ -504,10 +468,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 3:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 3:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param3Con.pos = tuple(temp)
@@ -519,10 +483,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 4:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 4:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param4Con.pos = tuple(temp)
@@ -534,10 +498,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 5:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 5:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param5Con.pos = tuple(temp)    
@@ -552,10 +516,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
@@ -567,10 +531,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
@@ -582,10 +546,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 3:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 3:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param3Con.pos = tuple(temp)
@@ -597,10 +561,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 4:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 4:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param4Con.pos = tuple(temp)
@@ -614,10 +578,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
@@ -629,10 +593,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
@@ -644,10 +608,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 3:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 3:
                         conLine.move_line(temp[X]+5,temp[Y]+5)  
             self.param3Con.pos = tuple(temp)
@@ -661,10 +625,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5)  
             self.param1Con.pos = tuple(temp)
@@ -676,10 +640,10 @@ class Block(Widget):
             if moveY:
                 temp[Y] = touch.pos[1] + 40
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 2:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param2Con.pos = tuple(temp)
@@ -696,10 +660,10 @@ class Block(Widget):
                 else:
                     temp[Y] = touch.pos[1] + 0
             for conLine in self.conLines: #move connected lines
-                if conLine.start_block == self.name:
+                if conLine.start_block.name == self.name:
                     if conLine.start_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
-                elif conLine.end_block == self.name:
+                elif conLine.end_block.name == self.name:
                     if conLine.end_connector == 1:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
             self.param1Con.pos = tuple(temp)
@@ -715,15 +679,15 @@ class Block(Widget):
                     if allow_assign_line:
                         if self.conLines != []: # if there are conlines
                             for conLine in self.conLines:
-                                if conLine.start_block == self.name: #line starts in this block
+                                if conLine.start_block.name == self.name: #line starts in this block
                                     if conLine.start_connector == 11: #dont assign a new line if there is one on this connector   
                                         return 11 
-                                elif conLine.end_block == self.name: #line ends in this block
+                                elif conLine.end_block.name == self.name: #line ends in this block
                                     if conLine.end_connector == 11: #dont assign a new line if there is one on this connector   
                                         return 11  
-                            self.assign_line(touch,self.name,11)                  
+                            self.assign_line(touch,11)                  
                         else: #assign a line as there are none connected to this block
-                            self.assign_line(touch,self.name,11)
+                            self.assign_line(touch,11)
                     return 11  
         #============================================
         if self.outputExists:
@@ -733,15 +697,15 @@ class Block(Widget):
                     if allow_assign_line:
                         if self.conLines != []: # if there are conlines
                             for conLine in self.conLines:
-                                if conLine.start_block == self.name: #line starts in this block
+                                if conLine.start_block.name == self.name: #line starts in this block
                                     if conLine.start_connector == 10: #dont assign a new line if there is one on this connector   
                                         return 10  
-                                elif conLine.end_block == self.name: #line ends in this block
+                                elif conLine.end_block.name == self.name: #line ends in this block
                                     if conLine.end_connector == 10: #dont assign a new line if there is one on this connector   
                                         return 10  
-                            self.assign_line(touch,self.name,10)                  
+                            self.assign_line(touch,10)                  
                         else: #assign a line as there are none connected to this block
-                            self.assign_line(touch,self.name,10)
+                            self.assign_line(touch,10)
                     return 10  
         #============================================SPLITTER
         if self.nParams == SPLITTER:
@@ -751,15 +715,15 @@ class Block(Widget):
                     if allow_assign_line:
                         if self.conLines != []: # if there are conlines
                             for conLine in self.conLines:
-                                if conLine.start_block == self.name: #line starts in this block
+                                if conLine.start_block.name == self.name: #line starts in this block
                                     if conLine.start_connector == 31: #dont assign a new line if there is one on this connector   
                                         return 31  
-                                elif conLine.end_block == self.name: #line ends in this block
+                                elif conLine.end_block.name == self.name: #line ends in this block
                                     if conLine.end_connector == 31: #dont assign a new line if there is one on this connector   
                                         return 31  
-                            self.assign_line(touch,self.name,31)                  
+                            self.assign_line(touch,31)                  
                         else: #assign a line as there are none connected to this block
-                            self.assign_line(touch,self.name,31)
+                            self.assign_line(touch,31)
                     return 31
 
             if touch.pos[X] > self.output2.pos[X] and touch.pos[X] < (self.output2.pos[X] + self.output2.size[X]):
@@ -768,15 +732,15 @@ class Block(Widget):
                     if allow_assign_line:
                         if self.conLines != []: # if there are conlines
                             for conLine in self.conLines:
-                                if conLine.start_block == self.name: #line starts in this block
+                                if conLine.start_block.name == self.name: #line starts in this block
                                     if conLine.start_connector == 32: #dont assign a new line if there is one on this connector   
                                         return 32 
-                                elif conLine.end_block == self.name: #line ends in this block
+                                elif conLine.end_block.name == self.name: #line ends in this block
                                     if conLine.end_connector == 32: #dont assign a new line if there is one on this connector   
                                         return 32  
-                            self.assign_line(touch,self.name,32)                  
+                            self.assign_line(touch,32)                  
                         else: #assign a line as there are none connected to this block
-                            self.assign_line(touch,self.name,32)
+                            self.assign_line(touch,32)
                     return 32      
             
           #==============Parameter 2 
@@ -787,15 +751,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 2: #dont assign a new line if there is one on this connector   
                                             return 2  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 2: #dont assign a new line if there is one on this connector   
                                             return 2 
-                                self.assign_line(touch,self.name,2)                  
+                                self.assign_line(touch,2)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,2)
+                                self.assign_line(touch,2)
                         return 2     
 
             #==============Parameter 1 
@@ -806,15 +770,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 1: #dont assign a new line if there is one on this connector   
                                             return 1  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 1: #dont assign a new line if there is one on this connector   
                                             return 1 
-                                self.assign_line(touch,self.name,1)                  
+                                self.assign_line(touch,1)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,1)
+                                self.assign_line(touch,1)
                         return 1 
         #============================================MIXER
         if self.nParams == MIXER:
@@ -824,15 +788,15 @@ class Block(Widget):
                     if allow_assign_line:
                         if self.conLines != []: # if there are conlines
                             for conLine in self.conLines:
-                                if conLine.start_block == self.name: #line starts in this block
+                                if conLine.start_block.name == self.name: #line starts in this block
                                     if conLine.start_connector == 21: #dont assign a new line if there is one on this connector   
                                         return 21 
-                                elif conLine.end_block == self.name: #line ends in this block
+                                elif conLine.end_block.name == self.name: #line ends in this block
                                     if conLine.end_connector == 21: #dont assign a new line if there is one on this connector   
                                         return 21  
-                            self.assign_line(touch,self.name,21)                  
+                            self.assign_line(touch,21)                  
                         else: #assign a line as there are none connected to this block
-                            self.assign_line(touch,self.name,21)
+                            self.assign_line(touch,21)
                     return 21
 
             if touch.pos[X] > self.input2.pos[X] and touch.pos[X] < (self.input2.pos[X] + self.input2.size[X]):
@@ -841,15 +805,15 @@ class Block(Widget):
                     if allow_assign_line:
                         if self.conLines != []: # if there are conlines
                             for conLine in self.conLines:
-                                if conLine.start_block == self.name: #line starts in this block
+                                if conLine.start_block.name == self.name: #line starts in this block
                                     if conLine.start_connector == 22: #dont assign a new line if there is one on this connector   
                                         return 22
-                                elif conLine.end_block == self.name: #line ends in this block
+                                elif conLine.end_block.name == self.name: #line ends in this block
                                     if conLine.end_connector == 22: #dont assign a new line if there is one on this connector   
                                         return 22  
-                            self.assign_line(touch,self.name,22)                  
+                            self.assign_line(touch,22)                  
                         else: #assign a line as there are none connected to this block
-                            self.assign_line(touch,self.name,22)
+                            self.assign_line(touch,22)
                     return 22
             
             #==============Parameter 2 
@@ -860,15 +824,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 2: #dont assign a new line if there is one on this connector   
                                             return 2  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 2: #dont assign a new line if there is one on this connector   
                                             return 2 
-                                self.assign_line(touch,self.name,2)                  
+                                self.assign_line(touch,2)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,2)
+                                self.assign_line(touch,2)
                         return 2     
 
             #==============Parameter 1 
@@ -879,15 +843,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 1: #dont assign a new line if there is one on this connector   
                                             return 1  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 1: #dont assign a new line if there is one on this connector   
                                             return 1 
-                                self.assign_line(touch,self.name,1)                  
+                                self.assign_line(touch,1)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,1)
+                                self.assign_line(touch,1)
                         return 1 
 
         #======================================================================== Other Blocks
@@ -900,15 +864,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 6: #dont assign a new line if there is one on this connector   
                                             return 6  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 6: #dont assign a new line if there is one on this connector   
                                             return 6  
-                                self.assign_line(touch,self.name,6)                  
+                                self.assign_line(touch,6)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,6)
+                                self.assign_line(touch,6)
                         return 6  
 
             #==============Parameter 5
@@ -919,15 +883,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 5: #dont assign a new line if there is one on this connector   
                                             return 5  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 5: #dont assign a new line if there is one on this connector   
                                             return 5  
-                                self.assign_line(touch,self.name,5)                  
+                                self.assign_line(touch,5)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,5)
+                                self.assign_line(touch,5)
                         return 5
 
             #==============Parameter 4              
@@ -938,15 +902,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 4: #dont assign a new line if there is one on this connector   
                                             return 4  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 4: #dont assign a new line if there is one on this connector   
                                             return 4  
-                                self.assign_line(touch,self.name,4)                  
+                                self.assign_line(touch,4)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,4)
+                                self.assign_line(touch,4)
                         return 4
 
             #==============Parameter 3 
@@ -957,15 +921,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 3: #dont assign a new line if there is one on this connector   
                                             return 3  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 3: #dont assign a new line if there is one on this connector   
                                             return 3 
-                                self.assign_line(touch,self.name,3)                  
+                                self.assign_line(touch,3)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,3)
+                                self.assign_line(touch,3)
                         return 3 
             
             #==============Parameter 2 
@@ -976,15 +940,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 2: #dont assign a new line if there is one on this connector   
                                             return 2  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 2: #dont assign a new line if there is one on this connector   
                                             return 2 
-                                self.assign_line(touch,self.name,2)                  
+                                self.assign_line(touch,2)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,2)
+                                self.assign_line(touch,2)
                         return 2     
 
             #==============Parameter 1 
@@ -995,15 +959,15 @@ class Block(Widget):
                         if allow_assign_line:
                             if self.conLines != []: # if there are conlines
                                 for conLine in self.conLines:
-                                    if conLine.start_block == self.name: #line starts in this block
+                                    if conLine.start_block.name == self.name: #line starts in this block
                                         if conLine.start_connector == 1: #dont assign a new line if there is one on this connector   
                                             return 1  
-                                    elif conLine.end_block == self.name: #line ends in this block
+                                    elif conLine.end_block.name == self.name: #line ends in this block
                                         if conLine.end_connector == 1: #dont assign a new line if there is one on this connector   
                                             return 1 
-                                self.assign_line(touch,self.name,1)                  
+                                self.assign_line(touch,1)                  
                             else: #assign a line as there are none connected to this block
-                                self.assign_line(touch,self.name,1)
+                                self.assign_line(touch,1)
                         return 1 
         return 0   
 
@@ -1097,7 +1061,7 @@ class Block(Widget):
         return NO_COLLISION                
 
  #------------------------------------------- assign_line
-    def assign_line(self,touch, start_block, start_connector):
+    def assign_line(self,touch, start_connector):
         with self.canvas:
-            conLine = MyLine(touch,start_block,start_connector)
+            conLine = MyLine(touch,self,start_connector)
             self.conLines.append(conLine)

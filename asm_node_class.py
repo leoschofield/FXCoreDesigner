@@ -1,6 +1,5 @@
-#============================================================================================================================================================================
-#============================================================================================================================================================================
-#============================================================================================================================================================================
+
+
 class asm_node():
     def swap_strings(self,searchString,startString,paramNum,newString):
         createdString = ""
@@ -20,65 +19,93 @@ class asm_node():
 
     def add_control(self,paramNum, controlType,val):
         if controlType == 1: #if using a potentiometer or expression input
-            if val == 1:#val is the potentiometer number (1 here == pot0 on the dev board)
+            if val == 0:#val is the potentiometer number (1 here == pot0 on the dev board)
                 self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot0_smth")
-            elif val == 2:
+            elif val == 1:
                 self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot1_smth")
-            elif val == 3:
+            elif val == 2:
                 self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot2_smth")
-            elif val == 4:  
+            elif val == 3:  
                 self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot3_smth")
-            elif val == 5:
+            elif val == 4:
                 self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot4_smth")
-            elif val == 6:  
+            elif val == 5:  
                 self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot5_smth")
         else: #if using a constant, val is the constant's value
             pass
 
-    def __init__(self,name,ser_position,par_position):
-        self.name = name
+    def get_connector_name(self, connector):
+        if connector == 1:
+            return self.connector1
+        if connector == 2:
+            return self.connector2
+        if connector == 3:
+            return self.connector3      
+        if connector == 4:
+            return self.connector4
+        if connector == 5:
+            return self.connector5
+        if connector == 6:
+            return self.connector6
+
+
+    def __init__(self,block):
+        self.name = block.name
+        self.block = block
         self.controls = []
-        self.ser_position = ser_position
-        self.par_position = par_position
         if "Input" in self.name:
             self.directive_string = ""
+            if "0" in self.name:
+                self.asm_string = "\ncpy_cs    acc32, in0\n"
             if "1" in self.name:
-                self.asm_string = "cpy_cs    acc32, in0\n"
+                self.asm_string = "\ncpy_cs    acc32, in1\n"     
             if "2" in self.name:
-                self.asm_string = "cpy_cs    acc32, in1\n"     
+                self.asm_string = "\ncpy_cs    acc32, in2\n"
             if "3" in self.name:
-                self.asm_string = "cpy_cs    acc32, in2\n"
-            if "4" in self.name:
-                self.asm_string = "cpy_cs    acc32, in3\n"
+                self.asm_string = "\ncpy_cs    acc32, in3\n"
 
         if "Output" in self.name:
             self.directive_string = ""
+            if "0" in self.name:
+                self.asm_string = "\ncpy_cs    out0, acc32\n"
             if "1" in self.name:
-                self.asm_string = "cpy_cs    out0, acc32\n"
+                self.asm_string = "\ncpy_cs    out1, acc32\n"
             if "2" in self.name:
-                self.asm_string = "cpy_cs    out1, acc32\n"
+                self.asm_string = "\ncpy_cs    out2, acc32\n"
             if "3" in self.name:
-                self.asm_string = "cpy_cs    out2, acc32\n"
-            if "4" in self.name:
-                self.asm_string = "cpy_cs    out3, acc32\n"
+                self.asm_string = "\ncpy_cs    out3, acc32\n"
 
         if "Pot" in self.name:
+            self.connector1 = ""
             pass
 
         if "Switch" in self.name:
+            self.connector1 = ""
             pass
             
         if "Constant" in self.name:
+            self.connector1 = ""
+            pass
+              
+        if "Tap Tempo" in self.name:
+            self.connector1 = ""
             pass
   
         if "Mixer" in self.name:
-            pass
+            self.connector1 = 'Input Level 1'
+            self.connector2 = 'Input Level 2'
 
         if "Splitter" in self.name:
-            pass
+            self.connector1 = 'Output Level 1'
+            self.connector2 = 'Output Level 2' 
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#////////////////////////////////////////  PITCH SHIFT  ///////////////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if "Pitch" in self.name:
+            self.connector1 = 'Pitch'
+            self.connector2 = 'Level'
+            self.connector3 = 'Dry Level'
             self.directive_string = """.equ      shiftbase    -1048576   ; shift of +1 octave
 
 .rn       temp      r0            ; temp reg
@@ -87,7 +114,8 @@ class asm_node():
 ; Define the delay block for the pitch delay
 .mem      pdelay    4096"""
 
-            self.asm_string = """; single pitch shift mono in/out based on default program double pitch shifter
+            self.asm_string = """\n\n
+; single pitch shift mono in/out based on default program double pitch shifter
 ;PARAM1 pot0 = shifter 0 
 ;PARAM2 pot1 = level
 ;PARAM3 pot2 = dry level
@@ -114,8 +142,14 @@ adds      acc32, tmprg_temp             ; add result of first shifter"""
 
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////  DISTORTION  ///////////////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if "Distortion" in self.name:
-            directive_string = """
+            self.connector1 = 'Gain'
+            self.connector2 = 'Low Pass Freq'
+            self.connector3 = 'Low Pass Q'
+            self.connector4 = 'Output Level'
+            self.directive_string = """
 ; pot0 = Input gain
 ; pot1 = Low-pass frequency control
 ; pot2 = Low-pass Q control
@@ -131,7 +165,7 @@ adds      acc32, tmprg_temp             ; add result of first shifter"""
 .rn       kf        r7
 .rn       kq        r8
 """
-            self.asm_string = """
+            self.asm_string = """\n\n
 ; gain
 cpy_cs    tmprg_temp, in0
 cpy_cs    tmprg_temp2, ptrg_pot0_smth
@@ -195,8 +229,10 @@ multrr    acc32, lp"""
 
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#/////////////////////////////////////////////  LOOPER  ///////////////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if "Looper" in self.name:
-            directive_string = """
+            self.directive_string = """
 ; sw0    - 0: play back recording forward
 ;          1: playback in reverse
 ; tap    - press to record, release to play
@@ -221,7 +257,8 @@ multrr    acc32, lp"""
 .creg    ptr       0
 .creg    length    0x100          ; Any value > 0 can be used as a default
 """
-    asm_string = """; first check for a forced playback state where user recorded longer than
+            self.asm_string = """\n\n
+; first check for a forced playback state where user recorded longer than
 ; the 32K samples, special state as we need to ignore certain things
 andi     status, 0x0002           ; are we in a forced playback state?
 jz       acc32, normal            ; no so either a record or playback
@@ -346,3 +383,111 @@ ori       acc32, 1                ; Set acc32[0] for the LED on case
 
 doLED1:
 set       user1|0, acc32           ; set the usr0 output per the acc32 LSB"""
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#//////////////////////////////////////// CHORUS  ///////////////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if "Chorus" in self.name:
+            self.directive_string = """; Chorus - Mono in/out
+; pot0 = rate
+; pot1 = depth
+; pot2 = level
+; pot3 = 
+; pot4 = 
+; pot5 =  
+
+.equ    fs          48000
+.equ    flow        .2
+.equ    fhigh       10
+.equ    pi          3.14159
+.equ    clow        (2^31 - 1) * (2*pi*flow)/fs
+.equ    chigh       (2^31 - 1) * (2*pi*fhigh)/fs
+.equ    cdiff       chigh - clow
+
+.mem    delay       1024
+
+.rn     temp        r0
+.rn     voice1      r1
+.rn     voice2      r2
+.rn     voice3      r3
+.rn     bright      r4 """
+
+            self.asm_string = """
+cpy_cs  temp, pot0_smth           ; read in frequency control pot
+wrdld   acc32, cdiff.u            ; load difference between low and high frequency
+ori     acc32, cdiff.l
+multrr  temp, acc32               ; pot0 * cdiff
+cpy_cc  temp, acc32
+wrdld   acc32, clow.u             ; load low freq coeff
+ori     acc32, clow.l
+adds    acc32, temp               ; add low freq
+cpy_sc  lfo0_f, acc32             ; write to lfo0 frequency control
+
+cpy_cs  temp, pot1_smth           ; read in depth control pot
+wrdld   acc32, 400
+multrr  temp, acc32
+cpy_cc  r15, acc32
+
+cpy_cs  temp, in0
+wrdel   delay, temp
+
+; voice 1
+chr     lfo0|sin delay+1400
+cpy_cc  voice1, acc32
+
+; voice 2
+chr     lfo0|cos delay+256
+cpy_cc  voice2, acc32
+
+; voice 3
+chr     lfo0|sin|neg delay+16
+cpy_cc  voice3, acc32
+
+; voice 4
+chr     lfo0|cos|neg delay+768
+
+; sum the voices
+adds    acc32, voice3
+adds    acc32, voice2
+adds    acc32, voice1
+
+; get effects level pot and scale effect
+cpy_cs  temp, pot2_smth
+multrr  acc32, temp
+
+; add in dry
+cpy_cs  temp, in0
+adds    acc32, temp
+
+; write it
+cpy_sc  out0, acc32
+cpy_sc  out1, acc32
+
+
+; The PWM value becomes updated every 256 samples translating to a
+; PWM frequency of 125Hz @32k with 8 bit resolution.
+; While this is not exactly a high resolution PWM it might still
+; good enough for generating basic control voltages in some applications.
+; For driving the LEDs in this case it is perfectly enough.
+cpy_cs    acc32, samplecnt        ; Get the sample counter
+andi      acc32, 0xFF             ; Mask b[7:0]
+jnz       acc32, doPWM            ;
+
+; Reload new PWM value from LFO0_s into "bright"
+cpy_cs    temp, lfo0_s            ; read in sin wave ranges -1.0 to +1.0 (well, almost)
+sra       temp, 1                 ; /2 to +/- 1/2
+addsi     acc32, 0.5              ; ranges 0 to 1
+sra       acc32, 23               ; shift the PWM value in place
+cpy_cc    bright, acc32           ; save it
+
+doPWM:
+; Performing the decrement prior to driving the LED makes sure
+; that the LED can go completly off.
+addi      bright, -1              ; suntract 1 from on time
+cpy_cc    bright, acc32           ; Save updated "bright"
+xor       acc32, acc32            ; Clear acc32 for the LED off case
+jneg      bright, doLED           ;
+ori       acc32, 1                ; Set acc32[0] for the LED on case
+
+doLED:
+set       user0|0, acc32           ; set the usr1 output per the acc32 LSB"""
