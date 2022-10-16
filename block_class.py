@@ -117,6 +117,8 @@ class Block(Widget):
                 else: # if a potentiometer or constant block
                     self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+0), size=(10,10))
 
+                    
+    #-------------------------------------------
     def get_connector_name(self,connector):
         if connector == OUTPUT:
             return 'Output'
@@ -137,6 +139,8 @@ class Block(Widget):
             temp_node = asm_node(self)
             return temp_node.get_connector_name(connector)
 
+
+    #-------------------------------------------
     def remove_block(self):
         with self.canvas:
             self.canvas.remove(self.rect)
@@ -183,6 +187,107 @@ class Block(Widget):
             elif self.nParams == 1:
                 self.canvas.remove(self.param1Con)
             self.canvas.ask_update()
+
+    #------------------------------------------- move_block
+    def move_block(self,touch):
+        if self.selected == SELECTED:
+            if touch.pos[X] > 20:
+                if touch.pos[X] + self.rect.size[X] < 1650: 
+                    if touch.pos[Y] > 20:
+                        if touch.pos[Y] + self.rect.size[Y] < 1000: 
+                            if len(blocks) == 1:#if only this block is in the list - move block                    
+                                self.rect.pos = touch.pos
+                                self.label.pos[X] = touch.pos[X]
+                                self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                                self.move_connectors(touch,1,1)
+                                
+                            else:  # check for block-block collisions  
+                                for secondBlock in blocks:              
+                                    if self.label.text != secondBlock.label.text: # dont compare a block with itself
+                                        if self.is_collision(secondBlock):
+                                            NO_UP = 0
+                                            NO_DOWN = 0
+                                            NO_LEFT = 0
+                                            NO_RIGHT = 0
+                                            ALLOW_X = 0
+                                            ALLOW_Y = 0
+                                            #restrict movement based on relative position of colliding blocks
+                                            if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:
+                                                NO_LEFT = 1
+                                            if self.rect.pos[X] < secondBlock.rect.pos[X] - THRESH:
+                                                NO_RIGHT = 1
+                                            if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:
+                                                NO_DOWN = 1
+                                            if self.rect.pos[Y] < secondBlock.rect.pos[Y] - THRESH:
+                                                NO_UP = 1
+                                            #check movement and movement restrictions    
+                                            if touch.pos[X] < self.rect.pos[X]: # left movement
+                                                if not NO_LEFT:
+                                                    ALLOW_X = 1
+                                            else: # right movement
+                                                if not NO_RIGHT:
+                                                    ALLOW_X = 1
+                                            if touch.pos[Y] > self.rect.pos[Y]: # up movement
+                                                if not NO_UP:
+                                                    ALLOW_Y = 1
+                                            else: # down movement
+                                                if not NO_DOWN:
+                                                    ALLOW_Y = 1   
+                                            #move the block if allowed
+                                            temp = list(self.rect.pos)
+                                            if ALLOW_X:
+                                                temp[X] = touch.pos[0]
+                                                self.label.pos[X] = touch.pos[X]
+                                            if ALLOW_Y:
+                                                temp[Y] = touch.pos[1]
+                                                self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                                            self.rect.pos = tuple(temp)
+                                            self.move_connectors(touch,ALLOW_X,ALLOW_Y)  
+                                            return
+                                else: # no collisions - move block            
+                                    self.rect.pos = touch.pos
+                                    self.label.pos[X] = touch.pos[X]
+                                    self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
+                                    self.move_connectors(touch,1,1)
+
+
+    #------------------------------------------- release_block
+    def release_block(self,touch):
+        self.selected = RELEASED 
+
+
+    #------------------------------------------- is_touch_detected
+    def is_touch_detected(self,touch,moving):
+        if touch.pos[X] > self.rect.pos[X] and touch.pos[X] < (self.rect.pos[X] + self.rect.size[X]):
+            if touch.pos[Y] > self.rect.pos[Y] and touch.pos[Y] < (self.rect.pos[Y] + self.rect.size[Y]):
+                if moving == STILL:
+                    self.selected = SELECTED
+                    self.is_inside_connector(touch,ASSIGN_LINE) #assign a line if inside a connector
+                    return 1 
+        return 0            
+                    
+
+    #------------------------------------------- is_collision
+    def is_collision(self,secondBlock):
+        if self.rect.pos[X] < secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:        
+            if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] - THRESH:
+                if self.rect.pos[Y] < secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:        
+                    if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] - THRESH:
+                        return COLLISION
+
+                # if self.name is not None:
+        #     if self.collide_widget(secondBlock):
+        #         return COLLISION
+        return NO_COLLISION                
+
+
+    #------------------------------------------- assign_line
+    def assign_line(self,touch, start_connector):
+        with self.canvas:
+            conLine = MyLine(touch,self,start_connector)
+            self.conLines.append(conLine)
+
+
     #------------------------------------------- move connectors and lines
     def move_connectors(self,touch,moveX,moveY):
         #========================================Input Connector
@@ -970,98 +1075,3 @@ class Block(Widget):
                                 self.assign_line(touch,1)
                         return 1 
         return 0   
-
-    #------------------------------------------- move_block
-    def move_block(self,touch):
-        if self.selected == SELECTED:
-            if touch.pos[X] > 20:
-                if touch.pos[X] + self.rect.size[X] < 1650: 
-                    if touch.pos[Y] > 20:
-                        if touch.pos[Y] + self.rect.size[Y] < 1000: 
-                            if len(blocks) == 1:#if only this block is in the list - move block                    
-                                self.rect.pos = touch.pos
-                                self.label.pos[X] = touch.pos[X]
-                                self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
-                                self.move_connectors(touch,1,1)
-                                
-                            else:  # check for block-block collisions  
-                                for secondBlock in blocks:              
-                                    if self.label.text != secondBlock.label.text: # dont compare a block with itself
-                                        if self.is_collision(secondBlock):
-                                            NO_UP = 0
-                                            NO_DOWN = 0
-                                            NO_LEFT = 0
-                                            NO_RIGHT = 0
-                                            ALLOW_X = 0
-                                            ALLOW_Y = 0
-                                            #restrict movement based on relative position of colliding blocks
-                                            if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:
-                                                NO_LEFT = 1
-                                            if self.rect.pos[X] < secondBlock.rect.pos[X] - THRESH:
-                                                NO_RIGHT = 1
-                                            if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:
-                                                NO_DOWN = 1
-                                            if self.rect.pos[Y] < secondBlock.rect.pos[Y] - THRESH:
-                                                NO_UP = 1
-                                            #check movement and movement restrictions    
-                                            if touch.pos[X] < self.rect.pos[X]: # left movement
-                                                if not NO_LEFT:
-                                                    ALLOW_X = 1
-                                            else: # right movement
-                                                if not NO_RIGHT:
-                                                    ALLOW_X = 1
-                                            if touch.pos[Y] > self.rect.pos[Y]: # up movement
-                                                if not NO_UP:
-                                                    ALLOW_Y = 1
-                                            else: # down movement
-                                                if not NO_DOWN:
-                                                    ALLOW_Y = 1   
-                                            #move the block if allowed
-                                            temp = list(self.rect.pos)
-                                            if ALLOW_X:
-                                                temp[X] = touch.pos[0]
-                                                self.label.pos[X] = touch.pos[X]
-                                            if ALLOW_Y:
-                                                temp[Y] = touch.pos[1]
-                                                self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
-                                            self.rect.pos = tuple(temp)
-                                            self.move_connectors(touch,ALLOW_X,ALLOW_Y)  
-                                            return
-                                else: # no collisions - move block            
-                                    self.rect.pos = touch.pos
-                                    self.label.pos[X] = touch.pos[X]
-                                    self.label.pos[Y] = touch.pos[Y] - (self.rect.size[Y]/2)
-                                    self.move_connectors(touch,1,1)
-
-    #------------------------------------------- release_block
-    def release_block(self,touch):
-        self.selected = RELEASED 
-
-    #------------------------------------------- is_touch_detected
-    def is_touch_detected(self,touch,moving):
-        if touch.pos[X] > self.rect.pos[X] and touch.pos[X] < (self.rect.pos[X] + self.rect.size[X]):
-            if touch.pos[Y] > self.rect.pos[Y] and touch.pos[Y] < (self.rect.pos[Y] + self.rect.size[Y]):
-                if moving == STILL:
-                    self.selected = SELECTED
-                    self.is_inside_connector(touch,ASSIGN_LINE) #assign a line if inside a connector
-                    return 1 
-        return 0            
-                    
-    #------------------------------------------- is_collision
-    def is_collision(self,secondBlock):
-        if self.rect.pos[X] < secondBlock.rect.pos[X] + BLOCK_WIDTH + THRESH:        
-            if self.rect.pos[X] + BLOCK_WIDTH > secondBlock.rect.pos[X] - THRESH:
-                if self.rect.pos[Y] < secondBlock.rect.pos[Y] + BLOCK_HEIGHT + THRESH:        
-                    if self.rect.pos[Y] + BLOCK_HEIGHT > secondBlock.rect.pos[Y] - THRESH:
-                        return COLLISION
-
-                # if self.name is not None:
-        #     if self.collide_widget(secondBlock):
-        #         return COLLISION
-        return NO_COLLISION                
-
- #------------------------------------------- assign_line
-    def assign_line(self,touch, start_connector):
-        with self.canvas:
-            conLine = MyLine(touch,self,start_connector)
-            self.conLines.append(conLine)

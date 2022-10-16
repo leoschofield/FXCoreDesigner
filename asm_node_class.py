@@ -1,4 +1,8 @@
-
+class control_node():
+    def __init__(self,param_num, control_type,val):
+        self.param_num = param_num
+        self.control_type = control_type
+        self.val = val
 
 class asm_node():
     def swap_strings(self,searchString,startString,paramNum,newString):
@@ -17,22 +21,29 @@ class asm_node():
         if createdString != "":
             self.asm_string = createdString
 
-    def add_control(self,paramNum, controlType,val):
-        if controlType == 1: #if using a potentiometer or expression input
-            if val == 0:#val is the potentiometer number (1 here == pot0 on the dev board)
-                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot0_smth")
-            elif val == 1:
-                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot1_smth")
-            elif val == 2:
-                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot2_smth")
-            elif val == 3:  
-                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot3_smth")
-            elif val == 4:
-                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot4_smth")
-            elif val == 5:  
-                self.swap_strings("PARAM", self.asm_string, paramNum,"ptrg_pot5_smth")
-        else: #if using a constant, val is the constant's value
-            pass
+    def add_control(self,param_num, control_type,val):
+        temp_control = control_node(param_num, control_type,val)
+        self.controls.append(temp_control)
+
+    def add_controls_to_asm(self):
+        if self.controls != []:
+            for control in self.controls:
+
+                if control.control_type == 1: #if using a potentiometer or expression input
+                    if control.val == 0:#val is the potentiometer number (1 here == pot0 on the dev board)
+                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot0_smth")
+                    elif control.val == 1:
+                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot1_smth")
+                    elif control.val == 2:
+                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot2_smth")
+                    elif control.val == 3:
+                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot3_smth")
+                    elif control.val == 4:
+                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot4_smth")
+                    elif control.val == 5:  
+                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot5_smth")
+                else: #if using a constant, val is the constant's value
+                    pass
 
     def get_connector_name(self, connector):
         if connector == 1:
