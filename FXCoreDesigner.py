@@ -301,7 +301,6 @@ class FXCoreDesignerApp(App):
 
     #-------------------------------------------
     def recursive_add_nodes(self,node,prev_node=0):
-        print("NODE",node.block.name)
         if prev_node == 0: # input block condition:
             for conline in node.block.conLines:      
                 if conline.end_block.name != node.block.name:#dont add an existing block
@@ -317,25 +316,25 @@ class FXCoreDesignerApp(App):
                 if conline.start_block.name == node.block.name:#if a new line ends on the current block
                     if conline.end_block.name != prev_node.block.name:#dont add an existing line
                         new_node = asm_node(conline.end_block)   
-                        if conline.start_connector == 1: 
+                        if conline.start_connector == 1: #control connector
                             node.add_control(conline.end_connector,1,conline.end_block.ID)
-                        elif conline.end_connector == 1:    
+                        elif conline.end_connector == 1: #control connector   
                             node.add_control(conline.start_connector,1,conline.end_block.ID)        
                         else:
                             self.asm_nodes.append(new_node)
-                            if "Output" not in new_node.block.name:
+                            if "Output" not in new_node.block.name: #stop recursion on output blocks
                                 self.recursive_add_nodes(new_node,node)
                         
                 elif conline.end_block.name == node.block.name: #if a new line ends on the current block
                     if conline.start_block.name != prev_node.block.name:#dont add an existing line
                         new_node = asm_node(conline.start_block)   
-                        if conline.start_connector == 1: 
+                        if conline.start_connector == 1: #control connector  
                             node.add_control(conline.end_connector,1,conline.start_block.ID)
-                        elif conline.end_connector == 1:  
+                        elif conline.end_connector == 1: #control connector  
                             node.add_control(conline.start_connector,1,conline.start_block.ID)        
                         else:
                             self.asm_nodes.append(new_node)
-                            if "Output" not in new_node.block.name:
+                            if "Output" not in new_node.block.name: #stop recursion on output blocks
                                 self.recursive_add_nodes(new_node,node)
 
     #-------------------------------------------generate_asm
@@ -346,9 +345,10 @@ class FXCoreDesignerApp(App):
         for block in blocks:#loop through blocks until a start block is found
             if block.conLines != []:
                 if 'Input' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
-                        input_node = asm_node(block)    
-                        self.asm_nodes.append(input_node)#add input to list
-                        self.recursive_add_nodes(input_node)               
+                    input_node = asm_node(block)    
+                    self.asm_nodes.append(input_node)#add input to list
+                    self.recursive_add_nodes(input_node)  
+
         for node in self.asm_nodes:
             print(node.name)
             node.add_controls_to_asm()
