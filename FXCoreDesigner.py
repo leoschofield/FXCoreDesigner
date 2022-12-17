@@ -65,6 +65,24 @@ class myMousePos():
 
 class FXCoreDesignerApp(App):
     def build(self):
+        self.registers_used = {
+        "R0": 0,
+        "R1": 0,
+        "R3":  0,
+        "R4":  0,
+        "R5":  0,
+        "R6":  0,
+        "R7":  0,
+        "R8":  0,
+        "R9":  0,
+        "R10":  0,
+        "R11":  0,
+        "R12":  0,
+        "R13":  0,
+        "R14":  0,
+        "R15":  0
+        }
+
         #self.isOverlay = 0
         Window.size = (1920, 1080)
         #Window.fullscreen = 'auto'
@@ -300,41 +318,113 @@ class FXCoreDesignerApp(App):
         popup.dismiss()
 
     #-------------------------------------------
+    def get_free_register(self):
+        if self.registers_used["R0"] == 0:
+            return 0
+        elif self.registers_used["R1"] == 0:
+            return 1
+        elif self.registers_used["R2"] == 0:
+            return 2
+        elif self.registers_used["R3"] == 0:
+            return 3
+        elif self.registers_used["R4"] == 0:
+            return 4
+        elif self.registers_used["R5"] == 0:
+            return 5
+        elif self.registers_used["R6"] == 0:
+            return 6
+        elif self.registers_used["R7"] == 0:
+            return 7     
+        elif self.registers_used["R8"] == 0:
+            return 8      
+        elif self.registers_used["R9"] == 0:
+            return 9
+        elif self.registers_used["R10"] == 0:
+            return 10
+        elif self.registers_used["R11"] == 0:
+            return 11
+        elif self.registers_used["R12"] == 0:
+            return 12
+        elif self.registers_used["R13"] == 0:
+            return 13
+        elif self.registers_used["R14"] == 0:
+            return 14
+        elif self.registers_used["R15"] == 0:
+            return 15
+        return None
+
+    #-------------------------------------------
     def recursive_add_nodes(self,node,prev_node=0):
         if prev_node == 0: # input block condition:
             for conline in node.block.conLines:      
                 if conline.end_block.name != node.block.name:#dont add an existing block
-                    new_node = asm_node(conline.end_block)   
-                    self.asm_nodes.append(new_node)
-                    self.recursive_add_nodes(new_node,node)   
+                    if conline.end_connector == (MIXER+1) or conline.end_connector == (MIXER+2): 
+                        save_reg = self.get_free_register()
+                        self.registers_used["R"+str(save_reg)] = 1
+                        new_node = asm_node(conline.end_block,save_reg) 
+                        self.asm_nodes.append(new_node)
+                        self.recursive_add_nodes(new_node,node)
+
+                    else:
+                        new_node = asm_node(conline.end_block)
+                        self.asm_nodes.append(new_node)
+                        if "Output" or "Splitter" not in new_node.block.name: # stop recursion if output or splitter
+                            self.recursive_add_nodes(new_node,node)
+
                 elif conline.start_block.name != node.block.name:#dont add an existing block
-                    new_node = asm_node(conline.start_block)   
-                    self.asm_nodes.append(new_node)
-                    self.recursive_add_nodes(new_node,node)
+                    if conline.start_connector == (MIXER+1) or conline.start_connector == (MIXER+2):
+                        save_reg = self.get_free_register()
+                        self.registers_used["R"+str(save_reg)] = 1
+                        new_node = asm_node(conline.start_block,save_reg)   
+                        self.asm_nodes.append(new_node)
+                        self.recursive_add_nodes(new_node,node)
+
+                    else:
+                        new_node = asm_node(conline.start_block)   
+                        self.asm_nodes.append(new_node)
+                        if "Output" or "Splitter" not in new_node.block.name: #stop recursion
+                            self.recursive_add_nodes(new_node,node)
         else:
             for conline in node.block.conLines:
-                if conline.start_block.name == node.block.name:#if a new line ends on the current block
-                    if conline.end_block.name != prev_node.block.name:#dont add an existing line
-                        new_node = asm_node(conline.end_block)   
-                        if conline.start_connector == 1: #control connector
-                            node.add_control(conline.end_connector,1,conline.end_block.ID)
-                        elif conline.end_connector == 1: #control connector   
-                            node.add_control(conline.start_connector,1,conline.end_block.ID)        
-                        else:
+                if conline.start_block.name == node.block.name:#if a new line starts on the current block
+                    if conline.end_block.name != prev_node.block.name:#dont add an existing block                          
+                        # if conline.start_connector == 1: #control connector
+                        #     node.add_control(conline.end_connector,1,conline.end_block.ID)
+
+                        if conline.end_connector == 1: #control connector   
+                            node.add_control(conline.start_connector,1,conline.end_block.ID)     
+                          
+                        elif conline.end_connector == (MIXER+1) or conline.end_connector == (MIXER+2): 
+                            save_reg = self.get_free_register()
+                            self.registers_used["R"+str(save_reg)] = 1
+                            new_node = asm_node(conline.end_block,save_reg) 
                             self.asm_nodes.append(new_node)
-                            if "Output" not in new_node.block.name: #stop recursion on output blocks
+                            self.recursive_add_nodes(new_node,node)
+
+                        else:
+                            new_node = asm_node(conline.end_block)
+                            self.asm_nodes.append(new_node)
+                            if "Output" or "Splitter" not in new_node.block.name: # stop recursion if output or splitter
                                 self.recursive_add_nodes(new_node,node)
                         
                 elif conline.end_block.name == node.block.name: #if a new line ends on the current block
-                    if conline.start_block.name != prev_node.block.name:#dont add an existing line
-                        new_node = asm_node(conline.start_block)   
+                    if conline.start_block.name != prev_node.block.name:#dont add an existing block
                         if conline.start_connector == 1: #control connector  
-                            node.add_control(conline.end_connector,1,conline.start_block.ID)
-                        elif conline.end_connector == 1: #control connector  
-                            node.add_control(conline.start_connector,1,conline.start_block.ID)        
-                        else:
+                            node.add_control(conline.end_connector,1,conline.start_block.ID)  
+                        # elif conline.end_connector == 1: #control connector  
+                        #     node.add_control(conline.start_connector,1,conline.start_block.ID) 
+                        
+                        elif conline.start_connector == (MIXER+1) or conline.start_connector == (MIXER+2):
+                            save_reg = self.get_free_register()
+                            self.registers_used["R"+str(save_reg)] = 1
+                            new_node = asm_node(conline.start_block,save_reg)   
                             self.asm_nodes.append(new_node)
-                            if "Output" not in new_node.block.name: #stop recursion on output blocks
+                            self.recursive_add_nodes(new_node,node)
+
+                        else:
+                            new_node = asm_node(conline.start_block)   
+                            self.asm_nodes.append(new_node)
+                            if "Output" or "Splitter" not in new_node.block.name: #stop recursion
                                 self.recursive_add_nodes(new_node,node)
 
     #-------------------------------------------generate_asm
@@ -342,6 +432,23 @@ class FXCoreDesignerApp(App):
         self.asm_nodes = []
         asm_string = ""
         directive_string = ""
+        self.registers_used["R0"] = 0
+        self.registers_used["R1"] = 0
+        self.registers_used["R2"] = 0
+        self.registers_used["R3"] = 0
+        self.registers_used["R4"] = 0
+        self.registers_used["R5"] = 0
+        self.registers_used["R6"] = 0
+        self.registers_used["R7"] = 0
+        self.registers_used["R8"] = 0
+        self.registers_used["R9"] = 0
+        self.registers_used["R10"] = 0
+        self.registers_used["R11"] = 0
+        self.registers_used["R12"] = 0
+        self.registers_used["R13"] = 0
+        self.registers_used["R14"] = 0
+        self.registers_used["R15"] = 0
+
         for block in blocks:#loop through blocks until a start block is found
             if block.conLines != []:
                 if 'Input' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
@@ -356,23 +463,7 @@ class FXCoreDesignerApp(App):
         print(asm_string) 
         
         #********************************************* TODO check number of registers used in asm_string doesnt exceed hardware and create directive_string 
-        R0_used = 0
-        R1_used = 0
-        R2_used = 0
-        R3_used = 0
-        R4_used = 0
-        R5_used = 0
-        R6_used = 0
-        R7_used = 0
-        R8_used = 0
-        R9_used = 0
-        R10_used = 0
-        R11_used = 0
-        R12_used = 0
-        R13_used = 0
-        R14_used = 0
-        R15_used = 0
-
+     
         #     f = open("generated.fxc", 'w')
         #     f.write(asm_string)
         #     f.close()    

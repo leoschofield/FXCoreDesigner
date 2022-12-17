@@ -59,8 +59,7 @@ class asm_node():
         if connector == 6:
             return self.connector6
 
-
-    def __init__(self,block):
+    def __init__(self,block,spare_register = None):
         self.name = block.name
         self.block = block
         self.controls = []
@@ -104,11 +103,16 @@ class asm_node():
   
         if "Mixer" in self.name:
             self.connector1 = 'Input Level 1'
-            self.connector2 = 'Input Level 2'
+            self.connector2 = 'Input Level 2'    
+            self.asm_string = ""
+            if spare_register is not None:
+                self.asm_string = "\ncpy_cs    " +"r"+str(spare_register) +", acc32\n"
+            print(self.asm_string)
 
         if "Splitter" in self.name:
             self.connector1 = 'Output Level 1'
-            self.connector2 = 'Output Level 2' 
+            self.connector2 = 'Output Level 2'
+            self.asm_string = ""
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #////////////////////////////////////////  PITCH SHIFT  ///////////////////////////////////////////////////////////////
@@ -125,32 +129,30 @@ class asm_node():
 ; Define the delay block for the pitch delay
 .mem      pdelay    4096"""
 
-            self.asm_string = """\n\n
+            self.asm_string = """\n
 ; single pitch shift mono in/out based on default program double pitch shifter
-;PARAM1 pot0 = shifter 0 
-;PARAM2 pot1 = level
-;PARAM3 pot2 = dry level
-cpy_cs    tmprg_temp, $PARAM1$        ; read in - pot0 ptrg_pot0_smth
-addsi     tmprg_temp, -0.5              ; ranges -0.5 to 0.5 in acc32
-wrdld     tmprg_temp,shiftbase.u        ; Put upper part of shiftbase into temp
-multrr    acc32, tmprg_temp             ; Multiply the adjusted POT0 value by shiftbase
-jgez      acc32, OK               ; If positive jump over the multiply by 2
-sls       acc32, 1                ; Do the multiply by shifting left 1 bit
+;PARAM1 shifter 0 
+;PARAM2 level
+;PARAM3 dry level
+cpy_cs    temp, $PARAM1$          ; read in - pot0 ptrg_pot0_smth
+addsi     temp, -0.5              ; ranges -0.5 to 0.5 in acc32
+wrdld     temp,shiftbase.u        ; Put upper part of shiftbase into temp
+multrr    acc32, temp             ; Multiply the adjusted POT0 value by shiftbase
+jgez      acc32, OK                     ; If positive jump over the multiply by 2
+sls       acc32, 1                      ; Do the multiply by shifting left 1 bit
 OK:
-cpy_sc    ramp0_f, acc32          ; Write the result to the ramp0 frequency control
+cpy_sc    ramp0_f, acc32                ; Write the result to the ramp0 frequency control
 
-cpy_cs    tmprg_input, in0 ; Read channel 0 input
 wrdel     pdelay, tmprg_input           ; Write it to the delay
 
-pitch     rmp0|l4096, pdelay      ; Do the shift, result will be in ACC32
-cpy_cs    tmprg_temp,  $PARAM2$         ; level from pot 1 ptrg_pot1_smth
-multrr    tmprg_temp, acc32             ; multiply it
-cpy_cc    tmprg_temp, acc32             ; and save to temp
+pitch     rmp0|l4096, pdelay            ; Do the shift, result will be in ACC32
+cpy_cs    temp,  $PARAM2$         ; level from pot 1 ptrg_pot1_smth
+multrr    temp, acc32             ; multiply it
+cpy_cc    temp, acc32             ; and save to temp
 
 cpy_cs    acc32, $PARAM3$               ; level from pot 2 for dry ptrg_pot2_smth
 multrr    acc32, tmprg_input            ; multiply it
 adds      acc32, tmprg_temp             ; add result of first shifter""" 
-
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////  DISTORTION  ///////////////////////////////////////////////////////////////
@@ -178,11 +180,11 @@ adds      acc32, tmprg_temp             ; add result of first shifter"""
 """
             self.asm_string = """\n\n
 ; gain
-cpy_cs    tmprg_temp, in0
-cpy_cs    tmprg_temp2, ptrg_pot0_smth
-multrr    tmprg_temp, tmprg_temp2
+cpy_cs    temp, in0
+cpy_cs    temp, ptrg_pot0_smth
+multrr    temp, temp2
 sls       acc32, 4
-adds      tmprg_temp, acc32
+adds      temp, acc32
 cpy_cc    tmprg_in, acc32
 
 ; adjust pot1 for f control
