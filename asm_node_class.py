@@ -1,3 +1,6 @@
+MIXER = 20
+SPLITTER = 30
+
 class control_node():
     def __init__(self,param_num, control_type,val):
         self.param_num = param_num
@@ -5,7 +8,7 @@ class control_node():
         self.val = val
 
 class asm_node():
-    def swap_strings(self,searchString,startString,paramNum,newString):
+    def swap_param_strings(self,searchString,startString,paramNum,newString):
         createdString = ""
         p_before =  startString.partition("$"+searchString)[0] #input string before first find string
         p_after =  startString.partition("$"+searchString)[2] #input string after first find string
@@ -15,11 +18,19 @@ class asm_node():
             if int(stringParam)==paramNum:    # !!TODO!! error here if 2 or more control params used - fix change recursion tactic which finds the "PARAM2,3,4 etc as this is truncating the ASM string, which is then saved, next time a conenctor is added to that node the bad things happen"
                 createdString = p_before + newString + p_after2
             else:
-                self.swap_strings(searchString,p_after2,paramNum,newString)#recursion to find correct searchString if its not the one found
+                self.swap_param_strings(searchString,p_after2,paramNum,newString)#recursion to find correct searchString if its not the one found
         else: #got to the end of the string so start over
-            self.swap_strings(searchString,self.asm_string,paramNum,newString)#recursion with initial string
+            self.swap_param_strings(searchString,self.asm_string,paramNum,newString)#recursion with initial string
         if createdString != "":
             self.asm_string = createdString
+
+    def unique_substrings(self, long_string, substring):
+        substrings = long_string.split(' ')
+        unique_substrings = set()
+        for string in substrings:
+            if substring in string:
+                unique_substrings.add(string)
+        return list(unique_substrings)
 
     def add_control(self,param_num, control_type,val):
         temp_control = control_node(param_num, control_type,val)
@@ -28,22 +39,38 @@ class asm_node():
     def add_controls_to_asm(self):
         if self.controls != []:
             for control in self.controls:
-
                 if control.control_type == 1: #if using a potentiometer or expression input
-                    if control.val == 0:#val is the potentiometer number (1 here == pot0 on the dev board)
-                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot0_smth")
+                    if control.val == 0:#val is the potentiometer number, param_num is the number given to the parameter in the asm
+                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot0_smth")
                     elif control.val == 1:
-                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot1_smth")
+                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot1_smth")
                     elif control.val == 2:
-                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot2_smth")
+                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot2_smth")
                     elif control.val == 3:
-                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot3_smth")
+                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot3_smth")
                     elif control.val == 4:
-                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot4_smth")
+                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot4_smth")
                     elif control.val == 5:  
-                        self.swap_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot5_smth")
+                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot5_smth")
                 else: #if using a constant, val is the constant's value
                     pass
+
+    def add_registers_to_asm(self):
+        substrings = self.unique_substrings(self.asm_string,"$REG")
+        for substring in substrings:
+            print("SUBSTRING",substring,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            free_reg = self.get_free_register()
+            free_reg = "r"+str(free_reg)
+            print("FREE REG" ,free_reg, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.registers_used[free_reg] = 1
+            self.asm_string = self.asm_string.replace(substring,free_reg)
+
+        if self.registers_used != {}:
+            for key in self.registers_used:
+                if self.registers_used[key] == 1:
+                    self.registers_used[key] = 0
+
+        print(self.registers_used, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
     def get_connector_name(self, connector):
         if connector == 1:
@@ -59,10 +86,49 @@ class asm_node():
         if connector == 6:
             return self.connector6
 
-    def __init__(self,block,spare_register = None):
+    def get_free_register(self):
+        if self.registers_used["r0"] == 0:
+            return 0
+        elif self.registers_used["r1"] == 0:
+            return 1
+        elif self.registers_used["r2"] == 0:
+            return 2
+        elif self.registers_used["r3"] == 0:
+            return 3
+        elif self.registers_used["r4"] == 0:
+            return 4
+        elif self.registers_used["r5"] == 0:
+            return 5
+        elif self.registers_used["r6"] == 0:
+            return 6
+        elif self.registers_used["r7"] == 0:
+            return 7     
+        elif self.registers_used["r8"] == 0:
+            return 8      
+        elif self.registers_used["r9"] == 0:
+            return 9
+        elif self.registers_used["r10"] == 0:
+            return 10
+        elif self.registers_used["r11"] == 0:
+            return 11
+        elif self.registers_used["r12"] == 0:
+            return 12
+        elif self.registers_used["r13"] == 0:
+            return 13
+        elif self.registers_used["r14"] == 0:
+            return 14
+        elif self.registers_used["r15"] == 0:
+            return 15
+        return None
+
+    def __init__(self,block,free_registers = {},usage_state = 0,connector = 0,free_register = None):
+        
         self.name = block.name
         self.block = block
         self.controls = []
+        self.usage_state = usage_state
+        self.registers_used = free_registers
+
         if "Input" in self.name:
             self.directive_string = ""
             if "0" in self.name:
@@ -105,14 +171,31 @@ class asm_node():
             self.connector1 = 'Input Level 1'
             self.connector2 = 'Input Level 2'    
             self.asm_string = ""
-            if spare_register is not None:
-                self.asm_string = "\ncpy_cs    " +"r"+str(spare_register) +", acc32\n"
-            print(self.asm_string)
+            if self.usage_state == 1:
+                if free_register is not None:
+                    self.asm_string =  "\ncpy_cc    " +"r"+str(free_register) +", acc32     ;mixer state 1\n" # save the input from acc32 in the free register 
+            elif self.usage_state == 2:
+                free_register2 = self.get_free_register()
+                self.asm_string +=     "\ncpy_cc    r" + str(free_register2) + ", acc32     ;mixer state 2\n" # copy from previous block acc32 output to free_register
+
+                if connector == MIXER + 1: # previous block using mixer input 1
+                    self.asm_string +=  "multrr    r" + str(free_register2) + ", $PARAM1$\n"  # multiply with input 1 level val and save in acc32
+                    self.asm_string +=  "cpy_cc    r" + str(free_register2) + ", acc32\n"     # copy acc32 back to the spare register
+                    self.asm_string +=  "multrr    r" + str(free_register)  + ", $PARAM2$\n"  # multiply with input 2 level val and save in acc32
+                    self.asm_string +=  "cpy_cc    r" + str(free_register)  + ", acc32\n"     # copy acc32 back to the spare register  
+                elif connector == MIXER + 2: # previous block using mixer input 2   
+                    self.asm_string +=  "multrr    r" + str(free_register)  + ", $PARAM1$\n"  # multiply with input 1 level val and save in acc32
+                    self.asm_string +=  "cpy_cc    r" + str(free_register)  + ", acc32\n"     # copy acc32 back to the spare register
+                    self.asm_string +=  "multrr    r" + str(free_register2) + ", $PARAM2$\n"  # multiply with input 2 level val and save in acc32
+                    self.asm_string +=  "cpy_cc    r" + str(free_register2) + ", acc32\n"     # copy acc32 back to the spare register  
+                self.asm_string +=      "adds      r" + str(free_register)  + ", r" + str(free_register2) + "\n" #perform the weighted sum and save in acc32
+
 
         if "Splitter" in self.name:
             self.connector1 = 'Output Level 1'
             self.connector2 = 'Output Level 2'
             self.asm_string = ""
+
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #////////////////////////////////////////  PITCH SHIFT  ///////////////////////////////////////////////////////////////
@@ -121,53 +204,46 @@ class asm_node():
             self.connector1 = 'Pitch'
             self.connector2 = 'Level'
             self.connector3 = 'Dry Level'
-            self.directive_string = """.equ      shiftbase    -1048576   ; shift of +1 octave
-
-.rn       temp      r0            ; temp reg
-.rn       input     r1            ; input
-
-; Define the delay block for the pitch delay
-.mem      pdelay    4096"""
-
+            self.directive_string = """\n
+.equ      shiftbase    -1048576   ; shift of +1 octave
+.mem      pdelay    4096          ; Define the delay block for the pitch delay
+\n"""
             self.asm_string = """\n
-; single pitch shift mono in/out based on default program double pitch shifter
-;PARAM1 shifter 0 
-;PARAM2 level
-;PARAM3 dry level
-cpy_cs    temp, $PARAM1$          ; read in - pot0 ptrg_pot0_smth
-addsi     temp, -0.5              ; ranges -0.5 to 0.5 in acc32
-wrdld     temp,shiftbase.u        ; Put upper part of shiftbase into temp
-multrr    acc32, temp             ; Multiply the adjusted POT0 value by shiftbase
-jgez      acc32, OK                     ; If positive jump over the multiply by 2
-sls       acc32, 1                      ; Do the multiply by shifting left 1 bit
+cpy_cs    $REG_temp$ , $PARAM1$    ; read in pot0
+addsi     $REG_temp$ , -0.5        ; ranges -0.5 to 0.5 in acc32
+wrdld     $REG_temp$ , shiftbase.u ; Put upper part of shiftbase into temp
+multrr    acc32, $REG_temp$       ; Multiply the adjusted POT0 value by shiftbase
+jgez      acc32, OK               ; If positive jump over the multiply by 2
+sls       acc32, 1                ; Do the multiply by shifting left 1 bit
 OK:
-cpy_sc    ramp0_f, acc32                ; Write the result to the ramp0 frequency control
+cpy_sc    ramp0_f, acc32          ; Write the result to the ramp0 frequency control
 
-wrdel     pdelay, tmprg_input           ; Write it to the delay
+cpy_cs    $REG_input$ , in0        ; Read channel 0 input
+wrdel     pdelay, $REG_input$     ; Write it to the delay
 
-pitch     rmp0|l4096, pdelay            ; Do the shift, result will be in ACC32
-cpy_cs    temp,  $PARAM2$         ; level from pot 1 ptrg_pot1_smth
-multrr    temp, acc32             ; multiply it
-cpy_cc    temp, acc32             ; and save to temp
+pitch     rmp0|l4096, pdelay      ; Do the shift, result will be in ACC32
+cpy_cs    $REG_temp$ , $PARAM2$    ; level from pot 1
+multrr    $REG_temp$ , acc32       ; multiply it
+cpy_cc    $REG_temp$ , acc32       ; and save to temp
 
-cpy_cs    acc32, $PARAM3$               ; level from pot 2 for dry ptrg_pot2_smth
-multrr    acc32, tmprg_input            ; multiply it
-adds      acc32, tmprg_temp             ; add result of first shifter""" 
+cpy_cs    acc32, $PARAM3$         ; level from pot 2 for dry
+multrr    acc32, $REG_input$      ; multiply it
+adds      acc32, $REG_temp$       ; add result of first shifter
+\n"""
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////  DISTORTION  ///////////////////////////////////////////////////////////////
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# pot0 = Input gain
+# pot1 = Low-pass frequency control
+# pot2 = Low-pass Q control
+# pot3 = Output level
         if "Distortion" in self.name:
             self.connector1 = 'Gain'
             self.connector2 = 'Low Pass Freq'
             self.connector3 = 'Low Pass Q'
             self.connector4 = 'Output Level'
-            self.directive_string = """
-; pot0 = Input gain
-; pot1 = Low-pass frequency control
-; pot2 = Low-pass Q control
-; pot3 = Output level
-
+            self.directive_string = """\n
 .rn       temp      r0
 .rn       temp2     r1
 .rn       in        r2
@@ -176,7 +252,7 @@ adds      acc32, tmprg_temp             ; add result of first shifter"""
 .rn       bp        r5
 .rn       lp        r6
 .rn       kf        r7
-.rn       kq        r8
+.rn       kq        r8\n
 """
             self.asm_string = """\n\n
 ; gain

@@ -33,13 +33,8 @@ class MyLine(Widget):
         with self.canvas:
             if start_connector >= 10:#green line for inputs/outputs etc
                 Color(0.00, 0.60, 0.00, OPAQUE)
-            else: 
-                if "Pot" in self.start_block.name:
-                    Color(0.50, 0.00, 0.70, OPAQUE) 
-                elif "Switch" in self.start_block.name:
-                    Color(0.00, 0.00, 0.70, OPAQUE) 
-                elif "Tap Tempo" in self.start_block.name:
-                    Color(0.70, 0.00, 0.20, OPAQUE) 
+            elif start_connector <= 10: #
+                Color(0.70, 0.00, 0.20, OPAQUE) 
             self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=2.5, cap='round', joint='none')
         
     def drag_line(self, touch,mode):

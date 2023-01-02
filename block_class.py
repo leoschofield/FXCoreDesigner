@@ -52,7 +52,7 @@ class Block(Widget):
         self.conLines = []
         self.inputExists = 0 
         self.outputExists = 0
-
+        self.usageState = 0
         with self.canvas:
             Color(0.4,0.4,0.4,OPAQUE, mode="rgba")
 
