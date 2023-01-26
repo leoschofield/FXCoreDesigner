@@ -9,20 +9,8 @@ class control_node():
 
 class asm_node():
     def swap_param_strings(self,searchString,startString,paramNum,newString):
-        createdString = ""
-        p_before =  startString.partition("$"+searchString)[0] #input string before first find string
-        p_after =  startString.partition("$"+searchString)[2] #input string after first find string
-        stringParam = p_after.partition("$")[0] # search for number before second $
-        p_after2 = p_after.partition("$")[2] # rest of string after second $
-        if stringParam != "":
-            if int(stringParam)==paramNum:    # !!TODO!! error here if 2 or more control params used - fix change recursion tactic which finds the "PARAM2,3,4 etc as this is truncating the ASM string, which is then saved, next time a conenctor is added to that node the bad things happen"
-                createdString = p_before + newString + p_after2
-            else:
-                self.swap_param_strings(searchString,p_after2,paramNum,newString)#recursion to find correct searchString if its not the one found
-        else: #got to the end of the string so start over
-            self.swap_param_strings(searchString,self.asm_string,paramNum,newString)#recursion with initial string
-        if createdString != "":
-            self.asm_string = createdString
+        pattern = "$" + searchString + str(paramNum)  + "$"
+        self.asm_string =  startString.replace(pattern,newString)
 
     def unique_substrings(self, long_string, substring):
         substrings = long_string.split(' ')
@@ -58,10 +46,8 @@ class asm_node():
     def add_registers_to_asm(self):
         substrings = self.unique_substrings(self.asm_string,"$REG")
         for substring in substrings:
-            print("SUBSTRING",substring,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             free_reg = self.get_free_register()
             free_reg = "r"+str(free_reg)
-            print("FREE REG" ,free_reg, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             self.registers_used[free_reg] = 1
             self.asm_string = self.asm_string.replace(substring,free_reg)
 
@@ -70,7 +56,6 @@ class asm_node():
                 if self.registers_used[key] == 1:
                     self.registers_used[key] = 0
 
-        print(self.registers_used, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
     def get_connector_name(self, connector):
         if connector == 1:
@@ -121,7 +106,7 @@ class asm_node():
             return 15
         return None
 
-    def __init__(self,block,free_registers = {},usage_state = 0,connector = 0,free_register = None):
+    def __init__(self,block,free_registers = {}, usage_state = 0, free_register = None, connector = 0,):
         
         self.name = block.name
         self.block = block
@@ -143,13 +128,13 @@ class asm_node():
         if "Output" in self.name:
             self.directive_string = ""
             if "0" in self.name:
-                self.asm_string = "\ncpy_cs    out0, acc32\n"
+                self.asm_string = "\ncpy_cs    out0, acc32;      Output 0\n"
             if "1" in self.name:
-                self.asm_string = "\ncpy_cs    out1, acc32\n"
+                self.asm_string = "\ncpy_cs    out1, acc32;      Output 1\n"
             if "2" in self.name:
-                self.asm_string = "\ncpy_cs    out2, acc32\n"
+                self.asm_string = "\ncpy_cs    out2, acc32;      Output 21\n"
             if "3" in self.name:
-                self.asm_string = "\ncpy_cs    out3, acc32\n"
+                self.asm_string = "\ncpy_cs    out3, acc32;      Output 3\n"
 
         if "Pot" in self.name:
             self.connector1 = ""
@@ -179,9 +164,9 @@ class asm_node():
                 self.asm_string +=     "\ncpy_cc    r" + str(free_register2) + ", acc32     ;mixer state 2\n" # copy from previous block acc32 output to free_register
 
                 if connector == MIXER + 1: # previous block using mixer input 1
-                    self.asm_string +=  "multrr    r" + str(free_register2) + ", $PARAM1$\n"  # multiply with input 1 level val and save in acc32
+                    self.asm_string +=  "multrr    r" + str(free_register2) + ", $PARAM1$; in 1 level\n"  # multiply with input 1 level val and save in acc32
                     self.asm_string +=  "cpy_cc    r" + str(free_register2) + ", acc32\n"     # copy acc32 back to the spare register
-                    self.asm_string +=  "multrr    r" + str(free_register)  + ", $PARAM2$\n"  # multiply with input 2 level val and save in acc32
+                    self.asm_string +=  "multrr    r" + str(free_register)  + ", $PARAM2$; in 2 level\n"  # multiply with input 2 level val and save in acc32
                     self.asm_string +=  "cpy_cc    r" + str(free_register)  + ", acc32\n"     # copy acc32 back to the spare register  
                 elif connector == MIXER + 2: # previous block using mixer input 2   
                     self.asm_string +=  "multrr    r" + str(free_register)  + ", $PARAM1$\n"  # multiply with input 1 level val and save in acc32
@@ -192,9 +177,12 @@ class asm_node():
 
 
         if "Splitter" in self.name:
-            self.connector1 = 'Output Level 1'
-            self.connector2 = 'Output Level 2'
             self.asm_string = ""
+            if self.usage_state == 1:
+                self.asm_string +=  "\ncpy_cc    r" + str(free_register)  + ", acc32     ;splitter state 1\n" #copy acc32 from input to the free register
+            if self.usage_state == 2:
+                self.asm_string +=  "\ncpy_cc    acc32, r" + str(free_register)  + "     ;splitter state 2\n"#copy the spare register to acc32 for output
+
 
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

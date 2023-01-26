@@ -40,6 +40,9 @@ SPLITTER = 30
 
 INPUT = 11
 OUTPUT = 10
+
+NUM_COLUMNS = 11
+
 class popUpParamLabel(Widget):
     def __init__(self,**kwargs):
         super(popUpParamLabel, self).__init__(**kwargs)
@@ -91,7 +94,7 @@ class FXCoreDesignerApp(App):
         Window.bind(on_key_down=self.key_action)   
         self.popUpLabel = popUpParamLabel()
         self.click = Click() 
-        self.layout = GridLayout(cols = 12, row_force_default = True, row_default_height = BUTTON_HEIGHT)
+        self.layout = GridLayout(cols = NUM_COLUMNS, row_force_default = True, row_default_height = BUTTON_HEIGHT)
         
         #--------------------------------IOdrop
         IOdrop = DropDown()
@@ -140,15 +143,15 @@ class FXCoreDesignerApp(App):
         looperBtn.bind(on_release = lambda none: self.click.assign_block('Looper',1,1,2))
         FXdrop.add_widget(looperBtn)
         #--------------------------------AnalysisDrop
-        AnalysisDrop = DropDown()
+        # AnalysisDrop = DropDown()
         #
-        FFTBtn = Button(text ='FFT', size_hint_y = None, height = BUTTON_HEIGHT)
-        FFTBtn.bind(on_release = lambda  none: self.click.assign_block('FFT',1,1,2))
-        AnalysisDrop.add_widget(FFTBtn)
+        # FFTBtn = Button(text ='FFT', size_hint_y = None, height = BUTTON_HEIGHT)
+        # FFTBtn.bind(on_release = lambda  none: self.click.assign_block('FFT',1,1,2))
+        # AnalysisDrop.add_widget(FFTBtn)
         #
-        envelopeFollowerBtn = Button(text ='Envelope', size_hint_y = None, height = BUTTON_HEIGHT)
-        envelopeFollowerBtn.bind(on_release = lambda  none: self.click.assign_block('Envelope',1,1,1))
-        AnalysisDrop.add_widget(envelopeFollowerBtn)
+        # envelopeFollowerBtn = Button(text ='Envelope', size_hint_y = None, height = BUTTON_HEIGHT)
+        # envelopeFollowerBtn.bind(on_release = lambda  none: self.click.assign_block('Envelope',1,1,1))
+        # AnalysisDrop.add_widget(envelopeFollowerBtn)
         
         #--------------------------------ControlsDrop
         ControlsDrop = DropDown()
@@ -187,8 +190,8 @@ class FXCoreDesignerApp(App):
         FXbutton = Button(text ='FX')
         FXbutton.bind(on_release = FXdrop.open)
         #
-        AnalysisButton = Button(text ='Analysis')
-        AnalysisButton.bind(on_release = AnalysisDrop.open)
+        # AnalysisButton = Button(text ='Analysis')
+        # AnalysisButton.bind(on_release = AnalysisDrop.open)
         #
         ControlsButton = Button(text ='Controls')
         ControlsButton.bind(on_release = ControlsDrop.open)
@@ -220,7 +223,7 @@ class FXCoreDesignerApp(App):
 
         #--------------------------------
         AboutButton = Button(text ='About')
-        popup = Popup(title='FXCoreDesigner - Leo Schofield 2022',
+        popup = Popup(title='FXCoreDesigner v0.1 - Leo Schofield 2023',
         content=Label(text='                             Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple lines are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
         size_hint=(None, None), size=(400,0))
 
@@ -229,7 +232,7 @@ class FXCoreDesignerApp(App):
         #---------------------------------------------
         self.layout.add_widget(IObutton)
         self.layout.add_widget(FXbutton)
-        self.layout.add_widget(AnalysisButton)
+        # self.layout.add_widget(AnalysisButton)
         self.layout.add_widget(ControlsButton)
         self.layout.add_widget(RoutingButton)
         self.layout.add_widget(CodeButton)
@@ -354,160 +357,268 @@ class FXCoreDesignerApp(App):
 
     #-------------------------------------------
     def recursive_add_nodes(self,node,prev_node=0):
+        if prev_node != 0:
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NODE", node.block.name, "PREV NODE",prev_node.block.name )
+        else:
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NODE", node.block.name)
         if prev_node == 0: # input block condition:
-
-            for conline in node.block.conLines: # loop through block connector lines      
+            node.block.conLines.sort(key=lambda x: x.end_connector)#sort list by conline end connector so that control blocks come first
+            node.block.conLines.sort(key=lambda x: x.start_connector)#sort list again by conline start connector
+            for conline in node.block.conLines: # loop through block connector lines  
+                print("CONLINE START NAME ",conline.start_block.name,"CONLINE END NAME ", conline.end_block.name,"node  ", node.block.name)
+                print("CONLINE START CON ",conline.start_connector,"CONLINE end Con ", conline.end_connector)
                 #*****************************************************************************
                 if conline.end_block.name != node.block.name:#if conline end isnt this block
+
+                    if 'Splitter' in node.block.name:
+                        if(conline.start_connector == SPLITTER + 1): #dont allow the first splitter path to be processed
+                            continue
+
                     if "Mixer" in conline.end_block.name: # mixer block
-                        node.add_controls_to_asm() # leaving the current node so add its controls
-                        node.add_registers_to_asm()
-                        self.asm_string += node.asm_string
                         if conline.end_block.usageState == 0: # if this is the first time using this mixer
                             conline.end_block.usageState = 1  # now set it as used
+                            node.add_controls_to_asm() # leaving the current node so add its controls
+                            node.add_registers_to_asm()
+                            self.asm_string += node.asm_string
                             save_reg = self.get_free_register() # get the next free register
                             self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
-                            new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,conline.end_connector,save_reg) 
+                            new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,save_reg,conline.end_connector) 
                             self.asm_nodes.append(new_node)
                             self.asm_string += new_node.asm_string
+                            break
 
                         elif conline.end_block.usageState == 1: # this mixer has previously been used in another path
                             conline.end_block.usageState = 2 # second path using this mixer
+                            node.add_controls_to_asm() # leaving the current node so add its controls
+                            node.add_registers_to_asm()
+                            self.asm_string += node.asm_string
                             for reg in range(0, 15): # loop through registers r0-r15
                                 if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
-                                    new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,conline.end_connector,reg) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
+                                    new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                     self.registers_used["r"+str(reg)] = 0 # free register
-                                    conline.end_block.usageState = 0 # free block for next code generate
                                     self.asm_nodes.append(new_node)
+                                    conline.end_block.usageState = 3 
                                     self.recursive_add_nodes(new_node,node)
-                    else:
+                                    
+                    elif "Splitter" in conline.end_block.name: # mixer block
+                        if conline.end_block.usageState == 0: # if this is the first time using this splitter
+                            conline.end_block.usageState = 1  # now set it as used
+                            node.add_controls_to_asm() # leaving the current node so add its controls
+                            node.add_registers_to_asm()
+                            self.asm_string += node.asm_string
+                            save_reg = self.get_free_register() # get the next free register
+                            self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
+                            new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,save_reg,conline.end_connector) 
+                            self.asm_nodes.append(new_node)
+                            self.recursive_add_nodes(new_node,node)
+                        else:
+                            continue   
+                                                       
+                    elif conline.end_connector != OUTPUT and conline.end_connector != SPLITTER + 1 and conline.end_connector != SPLITTER + 2: # dont go up a path
                         node.add_controls_to_asm() # leaving the current node so add its controls
                         node.add_registers_to_asm()
                         self.asm_string += node.asm_string
                         new_node = asm_node(conline.end_block,self.registers_used)
                         self.asm_nodes.append(new_node)
-                        if "Splitter" not in new_node.block.name and "Output" not in new_node.block.name:
+                        if "Output" not in new_node.block.name:
                             self.recursive_add_nodes(new_node,node)
                         else:
+                            print("OUTPUT!!!!!!!!!!!!!!!!!!!!")
                             self.asm_string += new_node.asm_string
+                            break
                         
                 #*****************************************************************************
                 elif conline.start_block.name != node.block.name:#if conline start isnt this block
+
+                    if 'Splitter' in node.block.name:
+                        if(conline.end_connector == SPLITTER + 1): #dont allow the first splitter path to be processed
+                            continue
+
                     if "Mixer" in conline.start_block.name:
-                        node.add_controls_to_asm() # leaving the current node so add its controls
-                        node.add_registers_to_asm()
-                        self.asm_string += node.asm_string
                         if conline.start_block.usageState == 0: # if this is the first time using this mixer
                             conline.start_block.usageState = 1  # now set it as used
+                            node.add_controls_to_asm() # leaving the current node so add its controls
+                            node.add_registers_to_asm()
+                            self.asm_string += node.asm_string
                             save_reg = self.get_free_register() # get the next free register
                             self.registers_used["r"+str(save_reg)] = conline.start_block.name # set the free register as now used by this block
                             new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,conline.start_connector,save_reg)
                             self.asm_nodes.append(new_node)
                             self.asm_string += new_node.asm_string
+                            break
 
                         elif conline.start_block.usageState == 1: # this mixer has previously been used in another path
                             conline.start_block.usageState = 2 # second path using this mixer
+                            node.add_controls_to_asm() # leaving the current node so add its controls
+                            node.add_registers_to_asm()
+                            self.asm_string += node.asm_string
                             for reg in range(0, 15): #loop through registers r0-r15
                                 if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
-                                    new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,conline.start_connector,reg) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
+                                    new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                     self.registers_used["r"+str(reg)] = 0 # free register
-                                    conline.start_block.usageState = 0 # free block for next code generate
                                     self.asm_nodes.append(new_node)
                                     self.recursive_add_nodes(new_node,node)
-                    else:
+
+                    elif 'Splitter' in conline.start_block.name:
+                        if conline.start_block.usageState == 0: # first time using this splitter
+                            conline.start_block.usageState = 1  # now set it as used
+                            node.add_controls_to_asm() # leaving the current node so add its controls
+                            node.add_registers_to_asm()
+                            self.asm_string += node.asm_string
+                            save_reg = self.get_free_register() # get the next free register
+                            self.registers_used["r"+str(save_reg)] = conline.start_block.name # set the free register as now used by this block
+                            new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,save_reg,conline.start_connector)
+                            self.asm_nodes.append(new_node)
+                            self.recursive_add_nodes(new_node,node)
+                        else:
+                            continue
+
+                    elif conline.start_connector != OUTPUT and conline.start_connector != SPLITTER + 1 and conline.start_connector != SPLITTER + 2: # dont go up a path
                         node.add_controls_to_asm() # leaving the current node so add its controls
                         node.add_registers_to_asm()
                         self.asm_string += node.asm_string
                         new_node = asm_node(conline.start_block,self.registers_used)   
                         self.asm_nodes.append(new_node) 
-                        if "Splitter" not in new_node.block.name and "Output" not in new_node.block.name:
+                        if "Output" not in new_node.block.name:
                             self.recursive_add_nodes(new_node,node)
                         else:
+                            print("OUTPUT!!!!!!!!!!!!!!!!!!!!")
                             self.asm_string += new_node.asm_string
+                            break
                         
         #========================================================= current block is not an input block                    
         else:
-            node.block.conLines.sort(key=lambda x: x.end_connector)#sort list by conline end connector so that control blocks come first
-            node.block.conLines.sort(key=lambda x: x.start_connector)#sort list again by conline start connector
+            node.block.conLines.sort(key=lambda x: x.end_connector)# sort list by conline end connector so that control blocks come first
+            node.block.conLines.sort(key=lambda x: x.start_connector)# sort list again by conline start connector
 
             for conline in node.block.conLines: # loop through block connector lines
+                print("CONLINE START NAME ",conline.start_block.name,"CONLINE end NAME ", conline.end_block.name)
+                print("CONLINE START CON ",conline.start_connector,"CONLINE end Con ", conline.end_connector)
                 #*****************************************************************************
                 if conline.start_block.name == node.block.name:#if a new line starts on the current iteration block
-                    if conline.end_block.name != prev_node.block.name:#dont add the previous block                          
+                    if conline.end_block.name != prev_node.block.name:#dont add the previous block   
+
+                        if 'Splitter' in node.block.name:
+                            if(conline.start_connector == SPLITTER + 2):#dont allow the second splitter path to be processed
+                                continue
+
                         if conline.end_connector == 1: #control connector   
                             node.add_control(conline.start_connector,1,conline.end_block.ID)     
 
                         elif "Mixer" in conline.end_block.name: # mixer block
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
                             if conline.end_block.usageState == 0: # if this is the first time using this mixer
                                 conline.end_block.usageState = 1  # now set it as used
+                                node.add_controls_to_asm() # leaving the current node so add its controls
+                                node.add_registers_to_asm()
+                                self.asm_string += node.asm_string
                                 save_reg = self.get_free_register() # get the next free register
                                 self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
-                                new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,conline.end_connector,save_reg) 
+                                new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,save_reg,conline.end_connector) 
                                 self.asm_nodes.append(new_node)
                                 self.asm_string += new_node.asm_string
+                                break
 
                             elif conline.end_block.usageState == 1: # this mixer has previously been used in another path
                                 conline.end_block.usageState = 2 # second path using this mixer
+                                node.add_controls_to_asm() # leaving the current node so add its controls
+                                node.add_registers_to_asm()
+                                self.asm_string += node.asm_string
                                 for reg in range(0, 15): # loop through registers r0-r15
                                     if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
-                                        new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,conline.end_connector,reg) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
+                                        new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                         self.registers_used["r"+str(reg)] = 0 # free register
-                                        conline.end_block.usageState = 0 # free block for next code generation
                                         self.asm_nodes.append(new_node)    
                                         self.recursive_add_nodes(new_node,node)
-                                        
-                        elif conline.end_connector != OUTPUT: # dont go back up a path
+
+                        elif "Splitter" in conline.end_block.name: # splitter block
+                            if conline.end_block.usageState == 0: # if this is the first time using this splitter
+                                conline.end_block.usageState = 1  # now set it as used
+                                node.add_controls_to_asm() # leaving the current node so add its controls
+                                node.add_registers_to_asm()
+                                self.asm_string += node.asm_string
+                                save_reg = self.get_free_register() # get the next free register
+                                self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
+                                new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,save_reg,conline.end_connector) 
+                                self.asm_nodes.append(new_node)
+                                self.recursive_add_nodes(new_node,node)
+                            else:
+                                continue
+
+                        elif conline.end_connector != OUTPUT and conline.end_connector != SPLITTER + 1 and conline.end_connector != SPLITTER + 2: # dont go up a path
                             node.add_controls_to_asm() # leaving the current node so add its controls
                             node.add_registers_to_asm()
                             self.asm_string += node.asm_string
                             new_node = asm_node(conline.end_block,self.registers_used)
                             self.asm_nodes.append(new_node)
-                            if "Splitter" not in new_node.block.name and "Output" not in new_node.block.name:
+                            if "Output" not in new_node.block.name:
                                 self.recursive_add_nodes(new_node,node)
                             else:
+                                print("OUTPUT!!!!!!!!!!!!!!!!!!!!")
                                 self.asm_string += new_node.asm_string
+                                break
 
                 #*****************************************************************************
                 elif conline.end_block.name == node.block.name: #if a new line ends on the current iteration block
                     if conline.start_block.name != prev_node.block.name:#dont add the previous block
+
+                        if 'Splitter' in node.block.name:
+                            if(conline.end_connector == SPLITTER + 2):#dont allow the second splitter path to be processed
+                                break   
+                            
                         if conline.start_connector == 1: # control connector  
                             node.add_control(conline.end_connector,1,conline.start_block.ID)  
                             
                         elif "Mixer" in conline.start_block.name:
-                            node.add_controls_to_asm()
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
                             if conline.start_block.usageState == 0: # if this is the first time using this mixer
                                 conline.start_block.usageState = 1  # now set it as used
+                                node.add_controls_to_asm()
+                                node.add_registers_to_asm()
+                                self.asm_string += node.asm_string
                                 save_reg = self.get_free_register() # get the next free register
                                 self.registers_used["r"+str(save_reg)] = conline.start_block.name # set the free register as now used by this block
-                                new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,conline.start_connector,save_reg)
+                                new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,save_reg,conline.start_connector)
                                 self.asm_nodes.append(new_node)
                                 self.asm_string += new_node.asm_string
+                                break
 
                             elif conline.start_block.usageState == 1: # this mixer has previously been used in another path
                                 conline.start_block.usageState = 2 # second path using this mixer
+                                node.add_controls_to_asm()
+                                node.add_registers_to_asm()
+                                self.asm_string += node.asm_string
                                 for reg in range(0, 15): #loop through registers r0-r15
                                     if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
-                                        new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,conline.start_connector,reg) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
+                                        new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                         self.registers_used["r"+str(reg)] = 0 # free register
-                                        conline.start_block.usageState = 0 # free block for next code generate
                                         self.asm_nodes.append(new_node)
                                         self.recursive_add_nodes(new_node,node)
 
-                        elif conline.start_connector != OUTPUT: # dont go back up a path
+                        elif "Splitter" in conline.start_block.name:
+                            if conline.start_block.usageState == 0: # if this is the first time using this splitter
+                                conline.start_block.usageState = 1  # now set it as used
+                                node.add_controls_to_asm()
+                                node.add_registers_to_asm()
+                                self.asm_string += node.asm_string
+                                save_reg = self.get_free_register() # get the next free register
+                                self.registers_used["r"+str(save_reg)] = conline.start_block.name # set the free register as now used by this block
+                                new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,save_reg,conline.start_connector)
+                                self.asm_nodes.append(new_node)
+                                self.recursive_add_nodes(new_node,node)
+                            else:
+                                continue
+
+                        elif conline.start_connector != OUTPUT and conline.start_connector != SPLITTER + 1 and conline.start_connector != SPLITTER + 2: #dont go up a path 
                             node.add_controls_to_asm() # leaving the current node so add its controls
                             node.add_registers_to_asm()
                             self.asm_string += node.asm_string
                             new_node = asm_node(conline.start_block,self.registers_used)   
                             self.asm_nodes.append(new_node)
-                            if "Splitter" not in new_node.block.name and "Output" not in new_node.block.name:
+                            if "Output" not in new_node.block.name:
                                 self.recursive_add_nodes(new_node,node)
                             else:
+                                print("OUTPUT!!!!!!!!!!!!!!!!!!!!")
                                 self.asm_string += new_node.asm_string
+                                break
 
     #-------------------------------------------generate_asm
     def generate_asm(self):
@@ -532,11 +643,28 @@ class FXCoreDesignerApp(App):
         self.registers_used["r15"] = 0
 
         for block in blocks:#loop through blocks until a start block is found
+            print("!!!!!!!!!!!!!!!!", block.name)
             if block.conLines != []:
-                if 'Input' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
-                    input_node = asm_node(block)    
-                    self.asm_nodes.append(input_node) # add input node to list
-                    self.recursive_add_nodes(input_node) # start recursion  
+                if 'Input' in block.name or 'Splitter' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
+                    print("HERE")
+                    if 'Splitter' in block.name: #if a splitter it has to be used already to start a graph
+                        if block.usageState == 0:
+                            continue
+                        elif block.usageState == 1:
+                            block.usageState = 2
+                            for reg in range(0, 15): #loop through registers r0-r15
+                                if self.registers_used["r"+str(reg)] == block.name: # find register used by splitter previously
+                                    input_node = asm_node(block,self.registers_used,block.usageState,reg)
+                                    self.registers_used["r"+str(reg)] = 0
+                                    self.asm_nodes.append(input_node) # add input node to list
+                                    self.recursive_add_nodes(input_node) # start recursion  
+                    else:
+                        input_node = asm_node(block)    
+                        self.asm_nodes.append(input_node) # add input node to list
+                        self.recursive_add_nodes(input_node) # start recursion  
+
+        for block in blocks:
+            block.usageState = 0
 
         for node in self.asm_nodes:
             print(node.name)
