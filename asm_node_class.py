@@ -24,6 +24,15 @@ class asm_node():
         temp_control = control_node(param_num, control_type,val)
         self.controls.append(temp_control)
 
+    def swap_pots_with_constants(self):
+        new_lines = []
+        for line in self.asm_string.split("\n"):
+            if "$PARAM" in line:
+                new_lines.append("wrdld     $REG_temp$, 0.5*32767    ;load value 0.5 into parameter register")
+            else:
+                new_lines.append(line)
+        self.asm_string = "\n".join(new_lines)
+
     def add_controls_to_asm(self):
         if self.controls != []:
             for control in self.controls:
@@ -42,6 +51,7 @@ class asm_node():
                         self.swap_param_strings("PARAM", self.asm_string, control.param_num,"ptrg_pot5_smth")
                 else: #if using a constant, val is the constant's value
                     pass
+        self.swap_pots_with_constants()
 
     def add_registers_to_asm(self):
         substrings = self.unique_substrings(self.asm_string,"$REG")
@@ -245,7 +255,7 @@ adds      acc32, $REG_temp$       ; add result of first shifter
             self.asm_string = """\n\n
 ; gain
 cpy_cs    temp, in0
-cpy_cs    temp, ptrg_pot0_smth
+cpy_cs    temp, $PARAM1$
 multrr    temp, temp2
 sls       acc32, 4
 adds      temp, acc32
@@ -253,14 +263,14 @@ cpy_cc    tmprg_in, acc32
 
 ; adjust pot1 for f control
 ; kf needs to range from 0.086 to about 0.95 
-cpy_cs    tmprg_temp, ptrg_pot1_smth
+cpy_cs    tmprg_temp, $PARAM2$
 multri    tmprg_temp, 0.864             ; Coefficient is high end - low end
 addsi     acc32, 0.086            ; add in the low end
 cpy_cc    tmprg_kf, acc32
 
 ; adjust pot2 for Q control
 ; range from about 0.8 to 0.05 for damping
-cpy_cs    acc32, ptrg_pot2_smth        ; Read in pot1
+cpy_cs    acc32, $PARAM3$        ; Read in pot1
 addsi     acc32, -1.0             ; acc32 ranges -1 to 0
 multri    acc32, 0.75             ; acc32 ranges -0.75 to 0
 neg       acc32                   ; acc32 ranges 0.75 to 0
@@ -300,7 +310,7 @@ multrr    tmprg_kf, tmprg_hp                  ; Kf * HP
 adds      tmprg_bp, acc32               ; + BP
 cpy_cc    tmprg_bp, acc32               ; Save to BP
 
-cpy_cs    tmprg_temp, ptrg_pot3_smth         ; Adjust output level
+cpy_cs    tmprg_temp, $PARAM4$         ; Adjust output level
 multrr    tmprg_temp, tmprg_temp
 multrr    acc32, lp""" 
 

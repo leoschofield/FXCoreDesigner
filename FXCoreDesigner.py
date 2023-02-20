@@ -357,16 +357,10 @@ class FXCoreDesignerApp(App):
 
     #-------------------------------------------
     def recursive_add_nodes(self,node,prev_node=0):
-        if prev_node != 0:
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NODE", node.block.name, "PREV NODE",prev_node.block.name )
-        else:
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NODE", node.block.name)
         if prev_node == 0: # input block condition:
             node.block.conLines.sort(key=lambda x: x.end_connector)#sort list by conline end connector so that control blocks come first
             node.block.conLines.sort(key=lambda x: x.start_connector)#sort list again by conline start connector
-            for conline in node.block.conLines: # loop through block connector lines  
-                print("CONLINE START NAME ",conline.start_block.name,"CONLINE END NAME ", conline.end_block.name,"node  ", node.block.name)
-                print("CONLINE START CON ",conline.start_connector,"CONLINE end Con ", conline.end_connector)
+            for conline in node.block.conLines: # loop through block connector lines 
                 #*****************************************************************************
                 if conline.end_block.name != node.block.name:#if conline end isnt this block
 
@@ -423,15 +417,14 @@ class FXCoreDesignerApp(App):
                         if "Output" not in new_node.block.name:
                             self.recursive_add_nodes(new_node,node)
                         else:
-                            print("OUTPUT!!!!!!!!!!!!!!!!!!!!")
                             self.asm_string += new_node.asm_string
                             break
                         
                 #*****************************************************************************
-                elif conline.start_block.name != node.block.name:#if conline start isnt this block
+                elif conline.start_block.name != node.block.name: # if conline start isnt this block
 
                     if 'Splitter' in node.block.name:
-                        if(conline.end_connector == SPLITTER + 1): #dont allow the first splitter path to be processed
+                        if(conline.end_connector == SPLITTER + 1): # dont allow the first splitter path to be processed
                             continue
 
                     if "Mixer" in conline.start_block.name:
@@ -482,7 +475,6 @@ class FXCoreDesignerApp(App):
                         if "Output" not in new_node.block.name:
                             self.recursive_add_nodes(new_node,node)
                         else:
-                            print("OUTPUT!!!!!!!!!!!!!!!!!!!!")
                             self.asm_string += new_node.asm_string
                             break
                         
@@ -492,8 +484,7 @@ class FXCoreDesignerApp(App):
             node.block.conLines.sort(key=lambda x: x.start_connector)# sort list again by conline start connector
 
             for conline in node.block.conLines: # loop through block connector lines
-                print("CONLINE START NAME ",conline.start_block.name,"CONLINE end NAME ", conline.end_block.name)
-                print("CONLINE START CON ",conline.start_connector,"CONLINE end Con ", conline.end_connector)
+
                 #*****************************************************************************
                 if conline.start_block.name == node.block.name:#if a new line starts on the current iteration block
                     if conline.end_block.name != prev_node.block.name:#dont add the previous block   
@@ -553,7 +544,6 @@ class FXCoreDesignerApp(App):
                             if "Output" not in new_node.block.name:
                                 self.recursive_add_nodes(new_node,node)
                             else:
-                                print("OUTPUT!!!!!!!!!!!!!!!!!!!!")
                                 self.asm_string += new_node.asm_string
                                 break
 
@@ -616,7 +606,6 @@ class FXCoreDesignerApp(App):
                             if "Output" not in new_node.block.name:
                                 self.recursive_add_nodes(new_node,node)
                             else:
-                                print("OUTPUT!!!!!!!!!!!!!!!!!!!!")
                                 self.asm_string += new_node.asm_string
                                 break
 
@@ -643,10 +632,8 @@ class FXCoreDesignerApp(App):
         self.registers_used["r15"] = 0
 
         for block in blocks:#loop through blocks until a start block is found
-            print("!!!!!!!!!!!!!!!!", block.name)
             if block.conLines != []:
                 if 'Input' in block.name or 'Splitter' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
-                    print("HERE")
                     if 'Splitter' in block.name: #if a splitter it has to be used already to start a graph
                         if block.usageState == 0:
                             continue
