@@ -14,6 +14,7 @@ from click_class import Click
 from asm_node_class import asm_node
 from config import blocks 
 import os
+import re
 
 BUTTON_HEIGHT = 30
 
@@ -70,7 +71,7 @@ class myMousePos():
 class FXCoreDesignerApp(App):
     def build(self):
         self.registers_used = {
-        "r0": 0,
+
         "r1": 0,
         "r3":  0,
         "r4":  0,
@@ -321,9 +322,7 @@ class FXCoreDesignerApp(App):
 
     #-------------------------------------------
     def get_free_register(self):
-        if self.registers_used["r0"] == 0:
-            return 0
-        elif self.registers_used["r1"] == 0:
+        if self.registers_used["r1"] == 0:
             return 1
         elif self.registers_used["r2"] == 0:
             return 2
@@ -386,7 +385,7 @@ class FXCoreDesignerApp(App):
                             node.add_controls_to_asm() # leaving the current node so add its controls
                             node.add_registers_to_asm()
                             self.asm_string += node.asm_string
-                            for reg in range(0, 15): # loop through registers r0-r15
+                            for reg in range(0, 15): # loop through registers r1-r15
                                 if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                     new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                     self.registers_used["r"+str(reg)] = 0 # free register
@@ -445,7 +444,7 @@ class FXCoreDesignerApp(App):
                             node.add_controls_to_asm() # leaving the current node so add its controls
                             node.add_registers_to_asm()
                             self.asm_string += node.asm_string
-                            for reg in range(0, 15): #loop through registers r0-r15
+                            for reg in range(1, 15): #loop through registers r0-r15
                                 if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
                                     new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                     self.registers_used["r"+str(reg)] = 0 # free register
@@ -514,7 +513,7 @@ class FXCoreDesignerApp(App):
                                 node.add_controls_to_asm() # leaving the current node so add its controls
                                 node.add_registers_to_asm()
                                 self.asm_string += node.asm_string
-                                for reg in range(0, 15): # loop through registers r0-r15
+                                for reg in range(1, 15): # loop through registers r1-r15
                                     if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                         new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                         self.registers_used["r"+str(reg)] = 0 # free register
@@ -609,12 +608,46 @@ class FXCoreDesignerApp(App):
                                 self.asm_string += new_node.asm_string
                                 break
 
+    def process_nodes(self,obj_list):
+        # Create a dictionary to store the count of each substring
+        substr_count = {}
+        # Loop through the objects and update the directive and asm strings
+        for obj in obj_list:
+            for attr in ['directive_string', 'asm_string']:
+                # Find all substrings that start with $EQU_ or $MEM_ and end with $
+                matches = re.findall(r'(\$EQU_|\$MEM_)(.*?)(\$)', getattr(obj, attr))
+                for match in matches:
+                    # Remove the $ signs from the substring
+                    substring = match[1].replace('$', '')
+                    # Check if the substring is already in the count dictionary
+                    if substring in substr_count:
+                        # If so, increment the count and update the substring with the new count
+                        substr_count[substring] += 1
+                        new_value = f"{match[0]}{substring}_{substr_count[substring]}"
+                    else:
+                        # If not, add the substring to the count dictionary with a count of 1
+                        substr_count[substring] = 1
+                        new_value = f"{match[0]}{substring}"
+                    # Replace the old substring with the new substring in the directive or asm string
+                    setattr(obj, attr, getattr(obj, attr).replace(match[0] + match[1] + match[2], new_value))
+
+        # Concatenate all the directive strings and asm strings into two new strings
+        directive_str = ''.join([obj.directive_string for obj in obj_list])
+        asm_str = ''.join([obj.asm_string for obj in obj_list])
+        # Remove any remaining $ signs from the directive and asm strings
+        directive_str = directive_str.replace('$EQU_', '')
+        directive_str = directive_str.replace('$MEM_', '')
+        asm_str = asm_str.replace('$EQU_', '')
+        asm_str = asm_str.replace('$MEM_', '')
+        final_string = asm_str + "\n" + directive_str
+        return final_string
+
+
     #-------------------------------------------generate_asm
     def generate_asm(self):
         self.asm_nodes = []
         self.asm_string = ""
         self.directive_string = ""
-        self.registers_used["r0"] = 0
         self.registers_used["r1"] = 0
         self.registers_used["r2"] = 0
         self.registers_used["r3"] = 0
@@ -639,7 +672,7 @@ class FXCoreDesignerApp(App):
                             continue
                         elif block.usageState == 1:
                             block.usageState = 2
-                            for reg in range(0, 15): #loop through registers r0-r15
+                            for reg in range(1, 15): #loop through registers r0-r15
                                 if self.registers_used["r"+str(reg)] == block.name: # find register used by splitter previously
                                     input_node = asm_node(block,self.registers_used,block.usageState,reg)
                                     self.registers_used["r"+str(reg)] = 0
@@ -655,11 +688,10 @@ class FXCoreDesignerApp(App):
 
         for node in self.asm_nodes:
             print(node.name)
-            
-        print(self.asm_string) 
+        # final_string = self.process_nodes(self.asm_nodes)
+        # print(final_string)
+        print(self.asm_string)
         
-        #********************************************* TODO check number of registers used in asm_string doesnt exceed hardware and create directive_string 
-     
         #     f = open("generated.fxc", 'w')
         #     f.write(asm_string)
         #     f.close()    

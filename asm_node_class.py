@@ -82,9 +82,7 @@ class asm_node():
             return self.connector6
 
     def get_free_register(self):
-        if self.registers_used["r0"] == 0:
-            return 0
-        elif self.registers_used["r1"] == 0:
+        if self.registers_used["r1"] == 0:
             return 1
         elif self.registers_used["r2"] == 0:
             return 2
@@ -127,24 +125,24 @@ class asm_node():
         if "Input" in self.name:
             self.directive_string = ""
             if "0" in self.name:
-                self.asm_string = "\ncpy_cs    acc32, in0\n"
+                self.asm_string = "\ncpy_cs    r0, in0;       Input 0\n"
             if "1" in self.name:
-                self.asm_string = "\ncpy_cs    acc32, in1\n"     
+                self.asm_string = "\ncpy_cs    r0, in1;       Input 1\n"     
             if "2" in self.name:
-                self.asm_string = "\ncpy_cs    acc32, in2\n"
+                self.asm_string = "\ncpy_cs    r0, in2;       Input 2\n"
             if "3" in self.name:
-                self.asm_string = "\ncpy_cs    acc32, in3\n"
+                self.asm_string = "\ncpy_cs    r0, in3;       Input 3\n"
 
         if "Output" in self.name:
             self.directive_string = ""
             if "0" in self.name:
-                self.asm_string = "\ncpy_cs    out0, acc32;      Output 0\n"
+                self.asm_string = "\ncpy_sc    out0, r0;      Output 0\n"
             if "1" in self.name:
-                self.asm_string = "\ncpy_cs    out1, acc32;      Output 1\n"
+                self.asm_string = "\ncpy_sc    out1, r0;      Output 1\n"
             if "2" in self.name:
-                self.asm_string = "\ncpy_cs    out2, acc32;      Output 21\n"
+                self.asm_string = "\ncpy_sc    out2, r0;      Output 21\n"
             if "3" in self.name:
-                self.asm_string = "\ncpy_cs    out3, acc32;      Output 3\n"
+                self.asm_string = "\ncpy_sc    out3, r0;      Output 3\n"
 
         if "Pot" in self.name:
             self.connector1 = ""
@@ -203,31 +201,33 @@ class asm_node():
             self.connector2 = 'Level'
             self.connector3 = 'Dry Level'
             self.directive_string = """\n
-.equ      shiftbase    -1048576   ; shift of +1 octave
-.mem      pdelay    4096          ; Define the delay block for the pitch delay
-\n"""
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.equ      $EQU_shiftbase$    -1048576   ; shift of +1 octave
+.mem      $MEM_pdelay$    4096          ; Define the delay block for the pitch delay
+"""
             self.asm_string = """\n
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 cpy_cs    $REG_temp$ , $PARAM1$    ; read in pot0
 addsi     $REG_temp$ , -0.5        ; ranges -0.5 to 0.5 in acc32
-wrdld     $REG_temp$ , shiftbase.u ; Put upper part of shiftbase into temp
+wrdld     $REG_temp$ , $EQU_shiftbase$.u ; Put upper part of shiftbase into temp
 multrr    acc32, $REG_temp$       ; Multiply the adjusted POT0 value by shiftbase
 jgez      acc32, OK               ; If positive jump over the multiply by 2
 sls       acc32, 1                ; Do the multiply by shifting left 1 bit
 OK:
 cpy_sc    ramp0_f, acc32          ; Write the result to the ramp0 frequency control
 
-cpy_cs    $REG_input$ , in0        ; Read channel 0 input
-wrdel     pdelay, $REG_input$     ; Write it to the delay
+cpy_cc    $REG_input$ ,r0        ; Read channel 0 input
+wrdel     $MEM_pdelay$, $REG_input$     ; Write it to the delay
 
-pitch     rmp0|l4096, pdelay      ; Do the shift, result will be in ACC32
+pitch     rmp0|l4096, $MEM_pdelay$      ; Do the shift, result will be in ACC32
 cpy_cs    $REG_temp$ , $PARAM2$    ; level from pot 1
 multrr    $REG_temp$ , acc32       ; multiply it
 cpy_cc    $REG_temp$ , acc32       ; and save to temp
 
 cpy_cs    acc32, $PARAM3$         ; level from pot 2 for dry
-multrr    acc32, $REG_input$      ; multiply it
-adds      acc32, $REG_temp$       ; add result of first shifter
-\n"""
+multrr    r0, $REG_input$      ; multiply it
+adds      r0, $REG_temp$       ; add result of first shifter
+"""
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////  DISTORTION  ///////////////////////////////////////////////////////////////
