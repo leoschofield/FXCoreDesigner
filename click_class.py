@@ -44,7 +44,7 @@ class Click(Widget):
                                         if nameCounter > 4:
                                             return
                                     if name == 'Pot':
-                                        if nameCounter > 6:
+                                        if nameCounter > 5:
                                             return       
                                     if name == 'Tap Tempo':
                                         if nameCounter > 1:

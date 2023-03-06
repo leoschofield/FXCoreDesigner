@@ -1,0 +1,17 @@
+If param going to acc32 tag it in comment with ;@pot to acc32@
+
+Tags like $REG_temp$ must have a space before commas 
+
+Parameter tags start at 1 and must be in the form $PAMAM1$ , $PARAM2$ exactly (parameter tags replaces pot registers eg "pot0_smth")
+
+All register names should be renamed like temp -> $REG_temp$ do not add them to the directive as registers are handled automatically
+
+Input to blocks are received from r0 outputs must be passed to r0, currently no support for stereo blocks
+
+Names for .equ and .mems must wrapped with a pair of dollar signs e.g. shiftbase.u -> $shiftbase$.u
+
+Names for goto labels must be wrapped in dollars OK: -> $OK$: 
+
+refences to ramps lfos etc must be wrapped in dollars e.g. rmp0|l4096 -> $rmp$|l4096 ,  ramp0_f -> $ramp$_f
+
+Dollar signs $ and at signs @ must only be used when tagging, and the correct rules must be followed when tagging

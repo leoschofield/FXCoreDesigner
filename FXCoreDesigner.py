@@ -42,7 +42,7 @@ SPLITTER = 30
 INPUT = 11
 OUTPUT = 10
 
-NUM_COLUMNS = 11
+NUM_COLUMNS = 10
 
 class popUpParamLabel(Widget):
     def __init__(self,**kwargs):
@@ -63,7 +63,6 @@ class popUpParamLabel(Widget):
                 self.paramlabel.text=name
                 self.released = 0
 
-
 class myMousePos():
     def __init__(self):
         self.pos = [0,0]
@@ -71,7 +70,6 @@ class myMousePos():
 class FXCoreDesignerApp(App):
     def build(self):
         self.registers_used = {
-
         "r1": 0,
         "r3":  0,
         "r4":  0,
@@ -111,23 +109,23 @@ class FXCoreDesignerApp(App):
         #--------------------------------FXdrop
         FXdrop = DropDown()
         #
-        reverbBtn = Button(text ='Reverb', size_hint_y = None, height = BUTTON_HEIGHT)
-        reverbBtn.bind(on_release = lambda none: self.click.assign_block('Reverb',1,1,6))
-        FXdrop.add_widget(reverbBtn)
-        #
-        delayBtn = Button(text ='Delay', size_hint_y = None, height = BUTTON_HEIGHT)
-        delayBtn.bind(on_release = lambda none: self.click.assign_block('Delay',1,1,5))
-        FXdrop.add_widget(delayBtn)
+        # reverbBtn = Button(text ='Reverb', size_hint_y = None, height = BUTTON_HEIGHT)
+        # reverbBtn.bind(on_release = lambda none: self.click.assign_block('Reverb',1,1,6))
+        # FXdrop.add_widget(reverbBtn)
+        # #
+        # delayBtn = Button(text ='Delay', size_hint_y = None, height = BUTTON_HEIGHT)
+        # delayBtn.bind(on_release = lambda none: self.click.assign_block('Delay',1,1,5))
+        # FXdrop.add_widget(delayBtn)
 
-        #Chorus
-        chorusBtn = Button(text ='Chorus', size_hint_y = None, height = BUTTON_HEIGHT)
-        chorusBtn.bind(on_release = lambda none: self.click.assign_block('Chorus',1,1,4))
-        FXdrop.add_widget(chorusBtn)
+        # #Chorus
+        # chorusBtn = Button(text ='Chorus', size_hint_y = None, height = BUTTON_HEIGHT)
+        # chorusBtn.bind(on_release = lambda none: self.click.assign_block('Chorus',1,1,4))
+        # FXdrop.add_widget(chorusBtn)
 
-        #Tremelo
-        tremoloBtn = Button(text ='Tremelo', size_hint_y = None, height = BUTTON_HEIGHT)
-        tremoloBtn.bind(on_release = lambda none: self.click.assign_block('Tremelo',1,1,3))
-        FXdrop.add_widget(tremoloBtn)
+        # #Tremelo
+        # tremoloBtn = Button(text ='Tremelo', size_hint_y = None, height = BUTTON_HEIGHT)
+        # tremoloBtn.bind(on_release = lambda none: self.click.assign_block('Tremelo',1,1,3))
+        # FXdrop.add_widget(tremoloBtn)
 
         #Distortion
         distBtn = Button(text ='Distortion', size_hint_y = None, height = BUTTON_HEIGHT)
@@ -139,10 +137,11 @@ class FXCoreDesignerApp(App):
         pitchBtn.bind(on_release = lambda none: self.click.assign_block('Pitch',1,1,3))
         FXdrop.add_widget(pitchBtn)
 
-        #Looper
-        looperBtn = Button(text ='Looper', size_hint_y = None, height = BUTTON_HEIGHT)
-        looperBtn.bind(on_release = lambda none: self.click.assign_block('Looper',1,1,2))
-        FXdrop.add_widget(looperBtn)
+        # #Looper
+        # looperBtn = Button(text ='Looper', size_hint_y = None, height = BUTTON_HEIGHT)
+        # looperBtn.bind(on_release = lambda none: self.click.assign_block('Looper',1,1,2))
+        # FXdrop.add_widget(looperBtn)
+
         #--------------------------------AnalysisDrop
         # AnalysisDrop = DropDown()
         #
@@ -161,17 +160,17 @@ class FXCoreDesignerApp(App):
         PotentiomenterBtn.bind(on_release = lambda  none: self.click.assign_block('Pot',0,0,1))
         ControlsDrop.add_widget(PotentiomenterBtn)
         #
-        ConstantBtn = Button(text ='Constant', size_hint_y = None, height = BUTTON_HEIGHT)
-        ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
-        ControlsDrop.add_widget(ConstantBtn)
-        #
-        TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
-        TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Tap Tempo',0,0,1))
-        ControlsDrop.add_widget(TapTempoBtn)
-        #
-        ToggleBtn = Button(text ='Switch', size_hint_y = None, height = BUTTON_HEIGHT)
-        ToggleBtn.bind(on_release = lambda  none: self.click.assign_block('Switch',0,0,1))
-        ControlsDrop.add_widget(ToggleBtn)
+        # ConstantBtn = Button(text ='Constant', size_hint_y = None, height = BUTTON_HEIGHT)
+        # ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
+        # ControlsDrop.add_widget(ConstantBtn)
+        # #
+        # TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
+        # TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Tap Tempo',0,0,1))
+        # ControlsDrop.add_widget(TapTempoBtn)
+        # #
+        # ToggleBtn = Button(text ='Switch', size_hint_y = None, height = BUTTON_HEIGHT)
+        # ToggleBtn.bind(on_release = lambda  none: self.click.assign_block('Switch',0,0,1))
+        # ControlsDrop.add_widget(ToggleBtn)
 
         #--------------------------------Routingdrop
         RoutingDrop = DropDown()
@@ -215,7 +214,7 @@ class FXCoreDesignerApp(App):
         LoadButton = Button(text ='Load Patch')
         #LoadButton.bind(on_release = lambda none: self.
         #--------------------------------
-        RunButton = Button(text ='Run From RAM')
+        # RunButton = Button(text ='Run From RAM')
         #RunButton.bind(on_release = lambda none: self.
 
         #--------------------------------
@@ -240,7 +239,7 @@ class FXCoreDesignerApp(App):
         self.layout.add_widget(SaveButton)
         self.layout.add_widget(LoadButton)
         self.layout.add_widget(ClearButton)
-        self.layout.add_widget(RunButton)
+        # self.layout.add_widget(RunButton)
         self.layout.add_widget(ProgButton)
         self.layout.add_widget(AboutButton)
         self.layout.add_widget(self.popUpLabel)
@@ -354,17 +353,44 @@ class FXCoreDesignerApp(App):
             return 15
         return None
 
+    def replace_substrings(self, d, s):
+        for k, v in d.items():
+            k2 = '$' + k + '$'
+            s = s.replace(k2, k + str(v - 1))
+        return s
+
+    def add_dicts(self, dict1, dict2):
+        for key in dict2.keys():
+            dict1[key] = dict1.get(key, 0) + dict2[key]
+        return dict1
+
+    def find_names(self, string):
+        names_dict = {}
+        start_index = 0
+        while True:
+            start_index = string.find('$', start_index)
+            if start_index == -1:
+                break
+            end_index = string.find('$', start_index + 1)
+            if end_index == -1:
+                break
+            name = string[start_index+1:end_index].split(' ')[0]
+            if name not in names_dict:
+                names_dict[name] = 1
+            start_index = end_index + 1
+        return names_dict
+
     #-------------------------------------------
     def recursive_add_nodes(self,node,prev_node=0):
         if prev_node == 0: # input block condition:
-            node.block.conLines.sort(key=lambda x: x.end_connector)#sort list by conline end connector so that control blocks come first
-            node.block.conLines.sort(key=lambda x: x.start_connector)#sort list again by conline start connector
+            node.block.conLines.sort(key=lambda x: x.end_connector) # sort list by conline end connector so that control blocks come first
+            node.block.conLines.sort(key=lambda x: x.start_connector) # sort list again by conline start connector
             for conline in node.block.conLines: # loop through block connector lines 
                 #*****************************************************************************
-                if conline.end_block.name != node.block.name:#if conline end isnt this block
+                if conline.end_block.name != node.block.name: # if conline end isnt this block
 
                     if 'Splitter' in node.block.name:
-                        if(conline.start_connector == SPLITTER + 1): #dont allow the first splitter path to be processed
+                        if(conline.start_connector == SPLITTER + 1): # dont allow the first splitter path to be processed
                             continue
 
                     if "Mixer" in conline.end_block.name: # mixer block
@@ -410,7 +436,11 @@ class FXCoreDesignerApp(App):
                     elif conline.end_connector != OUTPUT and conline.end_connector != SPLITTER + 1 and conline.end_connector != SPLITTER + 2: # dont go up a path
                         node.add_controls_to_asm() # leaving the current node so add its controls
                         node.add_registers_to_asm()
-                        self.asm_string += node.asm_string
+                        
+                        dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) # count occuraces of names so that unique names can be created with replace_substrings
+                        self.asm_string += self.replace_substrings(dict,node.asm_string)
+                        self.directive_string += self.replace_substrings(dict,node.directive_string)
+
                         new_node = asm_node(conline.end_block,self.registers_used)
                         self.asm_nodes.append(new_node)
                         if "Output" not in new_node.block.name:
@@ -468,7 +498,11 @@ class FXCoreDesignerApp(App):
                     elif conline.start_connector != OUTPUT and conline.start_connector != SPLITTER + 1 and conline.start_connector != SPLITTER + 2: # dont go up a path
                         node.add_controls_to_asm() # leaving the current node so add its controls
                         node.add_registers_to_asm()
-                        self.asm_string += node.asm_string
+
+                        dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) # count occuraces of names so that unique names can be created with replace_substrings
+                        self.asm_string += self.replace_substrings(dict,node.asm_string)
+                        self.directive_string += self.replace_substrings(dict,node.directive_string)
+
                         new_node = asm_node(conline.start_block,self.registers_used)   
                         self.asm_nodes.append(new_node) 
                         if "Output" not in new_node.block.name:
@@ -537,7 +571,11 @@ class FXCoreDesignerApp(App):
                         elif conline.end_connector != OUTPUT and conline.end_connector != SPLITTER + 1 and conline.end_connector != SPLITTER + 2: # dont go up a path
                             node.add_controls_to_asm() # leaving the current node so add its controls
                             node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
+
+                            dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) # count occuraces of names so that unique names can be created with replace_substrings
+                            self.asm_string += self.replace_substrings(dict,node.asm_string)
+                            self.directive_string += self.replace_substrings(dict,node.directive_string)
+
                             new_node = asm_node(conline.end_block,self.registers_used)
                             self.asm_nodes.append(new_node)
                             if "Output" not in new_node.block.name:
@@ -598,8 +636,12 @@ class FXCoreDesignerApp(App):
 
                         elif conline.start_connector != OUTPUT and conline.start_connector != SPLITTER + 1 and conline.start_connector != SPLITTER + 2: #dont go up a path 
                             node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
+                            node.add_registers_to_asm()        
+                            
+                            dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) # count occuraces of names so that unique names can be created with replace_substrings
+                            self.asm_string += self.replace_substrings(dict,node.asm_string)
+                            self.directive_string += self.replace_substrings(dict,node.directive_string)
+    
                             new_node = asm_node(conline.start_block,self.registers_used)   
                             self.asm_nodes.append(new_node)
                             if "Output" not in new_node.block.name:
@@ -608,46 +650,13 @@ class FXCoreDesignerApp(App):
                                 self.asm_string += new_node.asm_string
                                 break
 
-    def process_nodes(self,obj_list):
-        # Create a dictionary to store the count of each substring
-        substr_count = {}
-        # Loop through the objects and update the directive and asm strings
-        for obj in obj_list:
-            for attr in ['directive_string', 'asm_string']:
-                # Find all substrings that start with $EQU_ or $MEM_ and end with $
-                matches = re.findall(r'(\$EQU_|\$MEM_)(.*?)(\$)', getattr(obj, attr))
-                for match in matches:
-                    # Remove the $ signs from the substring
-                    substring = match[1].replace('$', '')
-                    # Check if the substring is already in the count dictionary
-                    if substring in substr_count:
-                        # If so, increment the count and update the substring with the new count
-                        substr_count[substring] += 1
-                        new_value = f"{match[0]}{substring}_{substr_count[substring]}"
-                    else:
-                        # If not, add the substring to the count dictionary with a count of 1
-                        substr_count[substring] = 1
-                        new_value = f"{match[0]}{substring}"
-                    # Replace the old substring with the new substring in the directive or asm string
-                    setattr(obj, attr, getattr(obj, attr).replace(match[0] + match[1] + match[2], new_value))
-
-        # Concatenate all the directive strings and asm strings into two new strings
-        directive_str = ''.join([obj.directive_string for obj in obj_list])
-        asm_str = ''.join([obj.asm_string for obj in obj_list])
-        # Remove any remaining $ signs from the directive and asm strings
-        directive_str = directive_str.replace('$EQU_', '')
-        directive_str = directive_str.replace('$MEM_', '')
-        asm_str = asm_str.replace('$EQU_', '')
-        asm_str = asm_str.replace('$MEM_', '')
-        final_string = asm_str + "\n" + directive_str
-        return final_string
-
-
     #-------------------------------------------generate_asm
     def generate_asm(self):
         self.asm_nodes = []
         self.asm_string = ""
         self.directive_string = ""
+        self.main_names_dict = {}
+
         self.registers_used["r1"] = 0
         self.registers_used["r2"] = 0
         self.registers_used["r3"] = 0
@@ -672,7 +681,7 @@ class FXCoreDesignerApp(App):
                             continue
                         elif block.usageState == 1:
                             block.usageState = 2
-                            for reg in range(1, 15): #loop through registers r0-r15
+                            for reg in range(1, 15): #loop through registers r1-r15
                                 if self.registers_used["r"+str(reg)] == block.name: # find register used by splitter previously
                                     input_node = asm_node(block,self.registers_used,block.usageState,reg)
                                     self.registers_used["r"+str(reg)] = 0
@@ -686,16 +695,16 @@ class FXCoreDesignerApp(App):
         for block in blocks:
             block.usageState = 0
 
-        for node in self.asm_nodes:
-            print(node.name)
-        # final_string = self.process_nodes(self.asm_nodes)
-        # print(final_string)
-        print(self.asm_string)
+        # for node in self.asm_nodes:
+        #     print(node.name)
+
+        final_string = self.directive_string + self.asm_string 
+        print(final_string)
         
-        #     f = open("generated.fxc", 'w')
-        #     f.write(asm_string)
-        #     f.close()    
-        #     os.system('FXCoreCmdAsm.exe -h ')
+        f = open("generated.fxc", 'w')
+        f.write(final_string)
+        f.close()    
+        # os.system('FXCoreCmdAsm.exe -h ')
         
 if __name__ == '__main__':
     FXCoreDesignerApp().run()
