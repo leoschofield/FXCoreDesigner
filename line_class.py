@@ -31,10 +31,10 @@ class MyLine(Widget):
         self.name = "line_"+start_block.name +"_"+str(start_connector)
         self.removed = 0
         with self.canvas:
-            if start_connector >= 10:#green line for inputs/outputs etc
-                Color(0.00, 0.60, 0.00, OPAQUE)
-            elif start_connector <= 10: #
-                Color(0.70, 0.00, 0.20, OPAQUE) 
+            if start_connector >= 10: # blue line for inputs/outputs etc
+                Color(0.00, 0.00, 1.00, OPAQUE)
+            elif start_connector <= 10: # purple line for potentiometers
+                Color(0.50, 0.00, 1.00, OPAQUE) 
             self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=2.5, cap='round', joint='none')
         
     def drag_line(self, touch,mode):

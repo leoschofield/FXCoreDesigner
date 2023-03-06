@@ -187,32 +187,34 @@ class asm_node():
             self.connector1 = 'Input Level 1'
             self.connector2 = 'Input Level 2'    
             self.asm_string = ""
+            self.directive_string = ""
             if self.usage_state == 1:
                 if free_register is not None:
-                    self.asm_string =  "\ncpy_cc    " +"r"+str(free_register) +" , acc32     ;mixer state 1\n" # save the input from acc32 in the free register 
+                    self.asm_string =  "\ncpy_cc    " +"r"+str(free_register) +" , r0     ;mixer state 1\n" # save the input from r0 in the free register 
             elif self.usage_state == 2:
                 free_register2 = self.get_free_register()
-                self.asm_string +=     "\ncpy_cc    r" + str(free_register2) + " , acc32     ;mixer state 2\n" # copy from previous block acc32 output to free_register
+                self.asm_string +=     "\ncpy_cc    r" + str(free_register2) + " , r0     ;mixer state 2\n" # copy from previous block r0 output to free_register
 
                 if connector == MIXER + 1: # previous block using mixer input 1
-                    self.asm_string +=  "multrr    r" + str(free_register2) + " , $PARAM1$; in 1 level\n"  # multiply with input 1 level val and save in acc32
+                    self.asm_string +=  "multrr    r" + str(free_register2) + " , $PARAM1$ ; in 1 level\n"  # multiply with input 1 level val and save in acc32
                     self.asm_string +=  "cpy_cc    r" + str(free_register2) + " , acc32\n"     # copy acc32 back to the spare register
-                    self.asm_string +=  "multrr    r" + str(free_register)  + " , $PARAM2$; in 2 level\n"  # multiply with input 2 level val and save in acc32
+                    self.asm_string +=  "multrr    r" + str(free_register)  + " , $PARAM2$ ; in 2 level\n"  # multiply with input 2 level val and save in acc32
                     self.asm_string +=  "cpy_cc    r" + str(free_register)  + " , acc32\n"     # copy acc32 back to the spare register  
                 elif connector == MIXER + 2: # previous block using mixer input 2   
-                    self.asm_string +=  "multrr    r" + str(free_register)  + " , $PARAM1$\n"  # multiply with input 1 level val and save in acc32
+                    self.asm_string +=  "multrr    r" + str(free_register)  + " , $PARAM1$  ; in 1 level\n"  # multiply with input 1 level val and save in acc32
                     self.asm_string +=  "cpy_cc    r" + str(free_register)  + " , acc32\n"     # copy acc32 back to the spare register
-                    self.asm_string +=  "multrr    r" + str(free_register2) + " , $PARAM2$\n"  # multiply with input 2 level val and save in acc32
+                    self.asm_string +=  "multrr    r" + str(free_register2) + " , $PARAM2$  ; in 2 level\n"  # multiply with input 2 level val and save in acc32
                     self.asm_string +=  "cpy_cc    r" + str(free_register2) + " , acc32\n"     # copy acc32 back to the spare register  
-                self.asm_string +=      "adds      r" + str(free_register)  + " , r" + str(free_register2) + "\n" #perform the weighted sum and save in acc32
-
+                self.asm_string +=      "adds      r" + str(free_register)  + " , r" + str(free_register2) + " ;perfom addition and save in acc32\n" #perform the weighted sum and save in acc32
+                self.asm_string +=      "cpy_cc    r0 , acc32"
 
         if "Splitter" in self.name:
             self.asm_string = ""
+            self.directive_string = ""
             if self.usage_state == 1:
-                self.asm_string +=  "\ncpy_cc    r" + str(free_register)  + " , acc32     ;splitter state 1\n" #copy acc32 from input to the free register
+                self.asm_string +=  "\ncpy_cc    r" + str(free_register)  + " , r0     ;splitter state 1\n" #copy acc32 from input to the free register
             if self.usage_state == 2:
-                self.asm_string +=  "\ncpy_cc    acc32 , r" + str(free_register)  + "     ;splitter state 2\n"#copy the spare register to acc32 for output
+                self.asm_string +=  "\ncpy_cc    r0 , r" + str(free_register)  + "     ;splitter state 2\n"#copy the spare register to acc32 for output
 
 
 

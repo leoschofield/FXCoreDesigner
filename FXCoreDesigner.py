@@ -411,7 +411,7 @@ class FXCoreDesignerApp(App):
                             node.add_controls_to_asm() # leaving the current node so add its controls
                             node.add_registers_to_asm()
                             self.asm_string += node.asm_string
-                            for reg in range(0, 15): # loop through registers r1-r15
+                            for reg in range(1, 15): # loop through registers r1-r15
                                 if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                     new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                     self.registers_used["r"+str(reg)] = 0 # free register
@@ -613,7 +613,7 @@ class FXCoreDesignerApp(App):
                                 node.add_controls_to_asm()
                                 node.add_registers_to_asm()
                                 self.asm_string += node.asm_string
-                                for reg in range(0, 15): #loop through registers r0-r15
+                                for reg in range(1, 15): #loop through registers r0-r15
                                     if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
                                         new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                         self.registers_used["r"+str(reg)] = 0 # free register
@@ -695,8 +695,8 @@ class FXCoreDesignerApp(App):
         for block in blocks:
             block.usageState = 0
 
-        # for node in self.asm_nodes:
-        #     print(node.name)
+        for node in self.asm_nodes:
+            print(node.name)
 
         final_string = self.directive_string + self.asm_string 
         print(final_string)
