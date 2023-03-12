@@ -11,11 +11,12 @@ class control_node():
 
 class asm_node():
 
+    #--------------------------------------------
     def swap_param_strings(self,search_string,start_string,param_num,new_string):
         pattern = "$" + search_string + str(param_num)  + "$"
         self.asm_string =  start_string.replace(pattern,new_string)
 
-
+    #--------------------------------------------
     def unique_substrings(self, long_string, substring):
         substrings = long_string.split(' ')
         unique_substrings = set()
@@ -24,22 +25,43 @@ class asm_node():
                 unique_substrings.add(string)
         return list(unique_substrings)
 
-
+    #--------------------------------------------
     def add_control(self,param_num, control_type,val):
         temp_control = control_node(param_num, control_type,val)
         self.controls.append(temp_control)
 
+    def add_constant(self, control):
+        # Split the long string into individual lines
+        lines = self.asm_string.split("\n")
+        print("PARAM" + str(control.param_num))
+        # Loop over the lines and look for lines that contain the substring and value
+        for i in range(len(lines)):
+            if "PARAM" + str(control.param_num) in lines[i]:
+                if  "@pot to acc32@" in lines[i]:
+                    lines[i] = "wrdld    acc32, " + str(control.val) + "*32767 ;load constant into parameter register"
+                else:
+                    new_line = "wrdld    REPLACE_ME , " + str(control.val) + "*32767    ;load value 0.5 into parameter register"
+                    start_index = lines[i].find('$REG')
+                    end_index = lines[i].find('$', start_index + 1)
+                    if start_index >= 0 and end_index > start_index:
+                        substring = lines[i][start_index:end_index + 1]
+                        print("SUBSTRING", substring)
+                        lines[i] = new_line.replace("REPLACE_ME",substring)
 
+        # Join the lines back together into a single string
+        self.asm_string = "\n".join(lines)
+
+    #--------------------------------------------
     def swap_pots_with_constants(self):
         new_lines = []
         for line in self.asm_string.split("\n"):
             if  "@pot to acc32@" in line:  
                 if "$PARAM" in line:
-                    new_lines.append("wrdld     acc32 , 0.5*32767    ;load value 0.5 into parameter register")
+                    new_lines.append("wrdld    acc32 , 0.5*32767    ;load value 0.5 into parameter register")
                 else:
                     new_lines.append(line)
             elif "$PARAM" in line:
-                    new_line = "wrdld     REPLACE_ME , 0.5*32767    ;load value 0.5 into parameter register"
+                    new_line = "wrdld    REPLACE_ME , 0.5*32767    ;load value 0.5 into parameter register"
                     start_index = line.find('$REG')
                     end_index = line.find('$', start_index + 1)
                     if start_index >= 0 and end_index > start_index:
@@ -52,7 +74,7 @@ class asm_node():
                 new_lines.append(line)
         self.asm_string = "\n".join(new_lines)
 
-
+    #--------------------------------------------
     def add_controls_to_asm(self):
         if self.controls != []:
             for control in self.controls:
@@ -69,12 +91,13 @@ class asm_node():
                         self.swap_param_strings("PARAM", self.asm_string, control.param_num,"pot4_smth")
                     elif control.val == 5:  
                         self.swap_param_strings("PARAM", self.asm_string, control.param_num,"pot5_smth")
-                else: # if using a constant, val is the constant's value
-                    # TODO: Constants, Buttons, Switches
+                elif control.control_type == 2: # if using a constant, val is the constant's value
+                    self.add_constant(control)
+                else: # TODO Buttons, Switches etc
                     pass
         self.swap_pots_with_constants()
 
-    #-------------------------------------------- add_registers_to_asm - 
+    #-------------------------------------------- add_registers_to_asm 
     def add_registers_to_asm(self):
         substrings = self.unique_substrings(self.asm_string,"$REG")
         for substring in substrings:
@@ -88,7 +111,7 @@ class asm_node():
                 if self.registers_used[key] == 1:
                     self.registers_used[key] = 0
 
-
+    #--------------------------------------------
     def get_connector_name(self, connector):
         if connector == 1:
             return self.connector1
@@ -103,7 +126,7 @@ class asm_node():
         if connector == 6:
             return self.connector6
 
-
+    #--------------------------------------------
     def get_free_register(self):
         if self.registers_used["r1"] == 0:
             print("r1!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -152,6 +175,7 @@ class asm_node():
             return 15
         return None
   
+    #--------------------------------------------
     def __init__(self,block,free_registers = {}, usage_state = 0, free_register = None, connector = 0,):
         
         self.name = block.name

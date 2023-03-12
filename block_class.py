@@ -53,6 +53,7 @@ class Block(Widget):
         self.inputExists = 0 
         self.outputExists = 0
         self.usageState = 0
+        self.constant = 0
         with self.canvas:
             Color(0.4,0.4,0.4,OPAQUE, mode="rgba")
 

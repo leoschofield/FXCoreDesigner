@@ -10,6 +10,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.dropdown import DropDown
 from kivy.uix.popup import Popup
 from kivy.core.window import Window
+from kivy.uix.slider import Slider
 from click_class import Click
 from asm_node_class import asm_node
 from config import blocks 
@@ -85,7 +86,8 @@ class FXCoreDesignerApp(App):
         "r14":  0,
         "r15":  0
         }
-
+        self.block_latch = None
+        
         #self.isOverlay = 0
         Window.size = (1920, 1080)
         #Window.fullscreen = 'auto'
@@ -160,9 +162,9 @@ class FXCoreDesignerApp(App):
         PotentiomenterBtn.bind(on_release = lambda  none: self.click.assign_block('Pot',0,0,1))
         ControlsDrop.add_widget(PotentiomenterBtn)
         #
-        # ConstantBtn = Button(text ='Constant', size_hint_y = None, height = BUTTON_HEIGHT)
-        # ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
-        # ControlsDrop.add_widget(ConstantBtn)
+        ConstantBtn = Button(text ='Constant', size_hint_y = None, height = BUTTON_HEIGHT)
+        ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
+        ControlsDrop.add_widget(ConstantBtn)
         # #
         # TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
         # TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Tap Tempo',0,0,1))
@@ -247,7 +249,6 @@ class FXCoreDesignerApp(App):
     
         return self.layout
 
-
    #------------------------------------------- mouse hover event
     def key_action(self, *args):
         global blocks
@@ -274,6 +275,35 @@ class FXCoreDesignerApp(App):
                                 line.dragging = NOT_DRAGGING
                                 block.conLines.remove(line)
                                 line.remove_line()
+        if args[3] == 'c':
+            self.change_constant()    
+
+  #-------------------------------------------
+    def change_constant2(self,val):
+        for block in blocks:
+            if block.name == self.block_latch:
+                block.constant = round(val,2)
+        self.block_latch = None        
+
+  #-------------------------------------------
+    def change_constant(self):
+        if self.hover == 1:
+
+            box = BoxLayout(orientation = 'vertical', padding = (10))
+            btn1 = Button(text = "Save") 
+            btn2 = Button(text = "Exit")  
+            slider = Slider(min=0, max=1, value=0.5)
+            box.add_widget(slider)
+            box.add_widget(btn1)
+            box.add_widget(btn2)
+            popup = Popup(title="Change Constant Value", title_size= (30), 
+                    title_align = 'center', content = box,
+                    size_hint=(None, None), size=(400, 400),
+                    auto_dismiss = True)
+            btn1.bind(on_press = lambda none : self.change_constant2(slider.value)) 
+            btn2.bind(on_press = popup.dismiss) 
+            popup.open()
+
   #------------------------------------------- mouse hover event
     def on_mouse_pos(self, window, mousepos):
         myPos = myMousePos() 
@@ -285,9 +315,15 @@ class FXCoreDesignerApp(App):
                     myPos.pos[Y] = mousepos[1]
                     readConnector = block.is_inside_connector(myPos,DONT_ASSIGN_LINE)
                     if readConnector != 0:
+                        if "Constant" in block.name:
+                            self.block_latch = block.name
+                            self.hover = 1
+                            self.popUpLabel.update_label(mousepos,str(block.constant))
+                            return
                         self.popUpLabel.update_label(mousepos,block.get_connector_name(readConnector))
                         return
                     else:
+                        self.hover = 0
                         self.popUpLabel.destroy_label()
 
                 if block.conLines != []:
@@ -318,6 +354,20 @@ class FXCoreDesignerApp(App):
         self.click = Click()
         self.layout.add_widget(self.click)
         popup.dismiss()
+
+    #-------------------------------------------    
+    def error_trap(self,error):
+        
+        box = BoxLayout(orientation = 'vertical', padding = (10))
+        btn1 = Button(text = "OK")   
+        box.add_widget(btn1)
+        if error == "out of reg":
+            popup = Popup(title="Too many registers used, try using less mixers or splitters.", title_size= (30), 
+                    title_align = 'center', content = box,
+                    size_hint=(None, None), size=(400, 400),
+                    auto_dismiss = True)
+        btn1.bind(on_press = popup.dismiss) 
+        popup.open()
 
     #-------------------------------------------
     def get_free_register(self):
@@ -351,7 +401,8 @@ class FXCoreDesignerApp(App):
             return 14
         elif self.registers_used["r15"] == 0:
             return 15
-        return None
+        else:
+            self.error_trap("out of reg")
     
     #-------------------------------------------
     def replace_substrings(self, d, s):
@@ -538,7 +589,11 @@ class FXCoreDesignerApp(App):
                                 continue
 
                         if conline.end_connector == 1: #control connector   
-                            node.add_control(conline.start_connector,1,conline.end_block.ID)     
+                            if "Constant" in conline.end_block.name:
+                                print("HERE 1 !!!!!!!!!!!!!!!!!!!!!!")
+                                node.add_control(conline.start_connector,2,conline.end_block.constant)  
+                            else:
+                                node.add_control(conline.start_connector,1,conline.end_block.ID) 
 
                         elif "Mixer" in conline.end_block.name: # mixer block
                             if conline.end_block.usageState == 0: # if this is the first time using this mixer
@@ -599,7 +654,11 @@ class FXCoreDesignerApp(App):
                                 break   
                             
                         if conline.start_connector == 1: # control connector  
-                            node.add_control(conline.end_connector,1,conline.start_block.ID)  
+                            if "Constant" in conline.start_block.name:
+                                print("HERE 2 !!!!!!!!!!!!!!!!!!!!!!")
+                                node.add_control(conline.end_connector,2,conline.start_block.constant)  
+                            else:
+                                node.add_control(conline.end_connector,1,conline.start_block.ID)  
                             
                         elif "Mixer" in conline.start_block.name:
                             if conline.start_block.usageState == 0: # if this is the first time using this mixer
