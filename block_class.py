@@ -59,27 +59,32 @@ class Block(Widget):
             self.rect = Rectangle(pos=(self.Xpos,self.Ypos), size=(BLOCK_WIDTH,BLOCK_HEIGHT))
             self.label = Label(pos=(self.Xpos, self.Ypos - (self.rect.size[Y]/2)),text=name)
 
-            Color(0.8,0.8,0.8,OPAQUE, mode="rgba")
-            
+       
             if inputConnector: 
+                Color(0,0.5,1,OPAQUE, mode="rgba")
                 self.input = Rectangle(pos=(self.Xpos,self.Ypos+20), size=(10,10))
                 self.inputExists = True
 
             if outputConnector: 
+                Color(0,0.5,1,OPAQUE, mode="rgba")
                 self.output = Rectangle(pos=(self.Xpos+90,self.Ypos+20), size=(10,10))
                 self.outputExists = True
 
             if self.nParams == SPLITTER: 
+                Color(0,0.5,1,OPAQUE, mode="rgba")
                 self.output1 = Rectangle(pos=(self.Xpos+90,self.Ypos+30), size=(10,10))
                 self.output2 = Rectangle(pos=(self.Xpos+90,self.Ypos+10), size=(10,10))
 
             elif self.nParams == MIXER: 
+                Color(0,0.5,1,OPAQUE, mode="rgba")
                 self.input1 = Rectangle(pos=(self.Xpos,self.Ypos+30), size=(10,10))
                 self.input2 = Rectangle(pos=(self.Xpos,self.Ypos+10), size=(10,10))
+                Color(0.5,0,1,OPAQUE, mode="rgba")
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
 
             elif self.nParams == 6:  
+                Color(0.5,0,1,OPAQUE, mode="rgba")
                 self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+40), size=(10,10))
                 self.param2Con = Rectangle(pos=(self.Xpos+45,self.Ypos+40), size=(10,10))
                 self.param3Con = Rectangle(pos=(self.Xpos+75,self.Ypos+40), size=(10,10))
@@ -88,6 +93,7 @@ class Block(Widget):
                 self.param6Con = Rectangle(pos=(self.Xpos+75,self.Ypos), size=(10,10))         
 
             elif self.nParams == 5:
+                Color(0.5,0,1,OPAQUE, mode="rgba")
                 self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+40), size=(10,10))
                 self.param2Con = Rectangle(pos=(self.Xpos+45,self.Ypos+40), size=(10,10))
                 self.param3Con = Rectangle(pos=(self.Xpos+75,self.Ypos+40), size=(10,10))
@@ -95,21 +101,25 @@ class Block(Widget):
                 self.param5Con = Rectangle(pos=(self.Xpos+60,self.Ypos), size=(10,10))
 
             elif self.nParams == 4: 
+                Color(0.5,0,1,OPAQUE, mode="rgba")
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
                 self.param3Con = Rectangle(pos=(self.Xpos+30,self.Ypos), size=(10,10))
                 self.param4Con = Rectangle(pos=(self.Xpos+60,self.Ypos), size=(10,10))
 
             elif self.nParams == 3:
+                Color(0.5,0,1,OPAQUE, mode="rgba")
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
                 self.param3Con = Rectangle(pos=(self.Xpos+45,self.Ypos), size=(10,10))
 
             elif self.nParams == 2:
+                Color(0.5,0,1,OPAQUE, mode="rgba")
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
 
             elif self.nParams == 1:
+                Color(0.5,0,1,OPAQUE, mode="rgba")
                 if self.outputExists:
                     self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+40), size=(10,10))
                 else: # if a potentiometer or constant block

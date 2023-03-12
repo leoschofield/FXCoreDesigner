@@ -41,7 +41,7 @@ class Click(Widget):
                                 if temp == block.name:
                                     nameCounter = nameCounter + 1
                                     if name == 'Input' or name == 'Output' or name == 'Switch':
-                                        if nameCounter > 4:
+                                        if nameCounter > 3:
                                             return
                                     if name == 'Pot':
                                         if nameCounter > 5:

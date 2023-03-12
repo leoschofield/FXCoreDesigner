@@ -1,15 +1,80 @@
 
-cpy_cs    r0, in0;       Input 0
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.equ      shiftbase0  -1048576      ; shift of +1 octave
+.mem      pdelay0     4096          ; Define the delay block for the pitch delay
+
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.equ      shiftbase1  -1048576      ; shift of +1 octave
+.mem      pdelay1     4096          ; Define the delay block for the pitch delay
+
+cpy_cs    r0 , in0    ;Input 0
 
 cpy_cc    r1 , r0     ;splitter state 1
+
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cpy_cs    r3 , pot0_smth      ; pitch shift amount
+addsi     r3 , -0.5          ; ranges -0.5 to 0.5 in acc32
+wrdld     r3 , shiftbase0.u ; Put upper part of shiftbase into temp
+multrr    acc32 , r3         ; Multiply the adjusted param value by shiftbase
+jgez      acc32 , OK0               ; If positive jump over the multiply by 2
+sls       acc32 , 1                  ; Do the multiply by shifting left 1 bit
+OK0:
+cpy_sc    ramp0_f , acc32            ; Write the result to the ramp0 frequency control
+
+cpy_cc    r2 , r0           ; Read input
+wrdel     pdelay0 , r2     ; Write it to the delay
+
+pitch     rmp0|l4096 , pdelay0      ; Do the shift, result will be in acc32 
+wrdld     r3 , 0.5*32767    ;load value 0.5 into parameter register
+multrr    r3 , acc32         ; multiply it
+cpy_cc    r3 , acc32         ; and save to temp
+
+wrdld     acc32 , 0.5*32767    ;load value 0.5 into parameter register
+multrr    acc32 , r2        ; multiply it
+adds      acc32 , r3         ; add result of first shifter
+
+cpy_cc    r0, acc32
 
 cpy_cc    r2 , r0     ;mixer state 1
 
 cpy_cc    r0 , r1     ;splitter state 2
 
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cpy_cs    r3 , pot1_smth      ; pitch shift amount
+addsi     r3 , -0.5          ; ranges -0.5 to 0.5 in acc32
+wrdld     r3 , shiftbase1.u ; Put upper part of shiftbase into temp
+multrr    acc32 , r3         ; Multiply the adjusted param value by shiftbase
+jgez      acc32 , OK1               ; If positive jump over the multiply by 2
+sls       acc32 , 1                  ; Do the multiply by shifting left 1 bit
+OK1:
+cpy_sc    ramp1_f , acc32            ; Write the result to the ramp0 frequency control
+
+cpy_cc    r1 , r0           ; Read input
+wrdel     pdelay1 , r1     ; Write it to the delay
+
+pitch     rmp1|l4096 , pdelay1      ; Do the shift, result will be in acc32 
+wrdld     r3 , 0.5*32767    ;load value 0.5 into parameter register
+multrr    r3 , acc32         ; multiply it
+cpy_cc    r3 , acc32         ; and save to temp
+
+wrdld     acc32 , 0.5*32767    ;load value 0.5 into parameter register
+multrr    acc32 , r1        ; multiply it
+adds      acc32 , r3         ; add result of first shifter
+
+cpy_cc    r0, acc32
+
 cpy_cc    r1 , r0     ;mixer state 2
-cpy_cc    r2 , acc32
-cpy_cc    r1 , acc32
-adds      r2 , r1 ;perfom addition and save in acc32
-cpy_cc    r0 , acc32
-cpy_sc    out0, r0;      Output 0
+ cpy_cs    acc32 , pot2_smth ; in 1 level    ; @pot to acc32@ 
+multrr    acc32 , r2 
+cpy_cc    r2 , acc32 
+cpy_cs    acc32 , pot3_smth ; in 2 level    ; @pot to acc32@ 
+multrr    acc32 , r1 
+cpy_cc    r1 , acc32 
+adds      r2 , r1    ;perfom addition and save in acc32
+cpy_cc    r0 , acc32 
+
+cpy_sc    out0 , r0    ;Output 0

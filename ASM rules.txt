@@ -1,6 +1,6 @@
 If param going to acc32 tag it in comment with ;@pot to acc32@
 
-Tags like $REG_temp$ must have a space before commas 
+Tags like $REG_temp$ must have a space afterwards as the code needs to see the space character to work correctly
 
 Parameter tags start at 1 and must be in the form $PAMAM1$ , $PARAM2$ exactly (parameter tags replaces pot registers eg "pot0_smth")
 
@@ -15,3 +15,5 @@ Names for goto labels must be wrapped in dollars OK: -> $OK$:
 refences to ramps lfos etc must be wrapped in dollars e.g. rmp0|l4096 -> $rmp$|l4096 ,  ramp0_f -> $ramp$_f
 
 Dollar signs $ and at signs @ must only be used when tagging, and the correct rules must be followed when tagging
+
+Remember to rename Instructions when replacing inputs and outputs eg. in0 -> r0 = cpy_cs -> cpy_cc

@@ -223,8 +223,8 @@ class FXCoreDesignerApp(App):
 
         #--------------------------------
         AboutButton = Button(text ='About')
-        popup = Popup(title='FXCoreDesigner v0.1 - Leo Schofield 2023',
-        content=Label(text='                             Simplifies developing programs for the FXCore DSP from Experimental Noize                                                          Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple lines are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
+        popup = Popup(title='FXCoreDesigner v0.1 - XX/XX/2023',
+        content=Label(text='                             A Visual programming environment for the FXCore DSP from Experimental Noize                                                           Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple lines are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
         size_hint=(None, None), size=(400,0))
 
         AboutButton.bind(on_release = lambda none: popup.open())
@@ -255,7 +255,7 @@ class FXCoreDesignerApp(App):
         if args[3] == 'd':
             for block in blocks:
                     if block.selected == 1:
-                        block.remove_block()#remove block/connector graphics
+                        block.remove_block( )# remove block/connector graphics
                         for line in block.conLines:
                             line.remove_line()
                             block.conLines.remove(line)
@@ -269,7 +269,7 @@ class FXCoreDesignerApp(App):
                                     block2.conLines.remove(line)
                         blocks.remove(block)
                     else:
-                        for line in block.conLines:#search for dragging lines
+                        for line in block.conLines: # search for dragging lines
                             if line.dragging == DRAGGING:
                                 line.dragging = NOT_DRAGGING
                                 block.conLines.remove(line)
@@ -292,7 +292,7 @@ class FXCoreDesignerApp(App):
 
                 if block.conLines != []:
                     for conLine in block.conLines:
-                        if conLine.dragging == DRAGGING:# when first dragging the line keep hold of it until clicked in block or deleted
+                        if conLine.dragging == DRAGGING: # when first dragging the line keep hold of it until clicked in block or deleted
                             conLine.drag_line(mousepos,DRAG_MODE1)
 
     #-------------------------------------------clear_screen
@@ -352,18 +352,21 @@ class FXCoreDesignerApp(App):
         elif self.registers_used["r15"] == 0:
             return 15
         return None
-
+    
+    #-------------------------------------------
     def replace_substrings(self, d, s):
         for k, v in d.items():
             k2 = '$' + k + '$'
             s = s.replace(k2, k + str(v - 1))
         return s
 
+    #-------------------------------------------
     def add_dicts(self, dict1, dict2):
         for key in dict2.keys():
             dict1[key] = dict1.get(key, 0) + dict2[key]
         return dict1
 
+    #-------------------------------------------
     def find_names(self, string):
         names_dict = {}
         start_index = 0
@@ -381,6 +384,24 @@ class FXCoreDesignerApp(App):
         return names_dict
 
     #-------------------------------------------
+    def modify_strings_and_registers(self,node):
+        node.add_controls_to_asm() # leaving the current node so add its controls
+        node.add_registers_to_asm()
+                    
+        # count occuraces of names so that unique names can be created with replace_substrings
+        dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) 
+        self.asm_string += self.replace_substrings(dict,node.asm_string)
+        self.directive_string += self.replace_substrings(dict,node.directive_string)    
+
+        #clear registers 
+        for reg in range(1, 15): # loop through registers r1-r15
+            if self.registers_used["r"+str(reg)] == node.name: # if register is used by block
+                if "Mixer" in node.name:
+                    if node.usage_state == 1:# break if not finished using mixer yet
+                        break
+                    self.registers_used["r"+str(reg)] = 0 # free register
+        
+    #-------------------------------------------
     def recursive_add_nodes(self,node,prev_node=0):
         if prev_node == 0: # input block condition:
             node.block.conLines.sort(key=lambda x: x.end_connector) # sort list by conline end connector so that control blocks come first
@@ -396,9 +417,9 @@ class FXCoreDesignerApp(App):
                     if "Mixer" in conline.end_block.name: # mixer block
                         if conline.end_block.usageState == 0: # if this is the first time using this mixer
                             conline.end_block.usageState = 1  # now set it as used
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
+                            
+                            self.modify_strings_and_registers(node) #leaving node so modify strings
+                            
                             save_reg = self.get_free_register() # get the next free register
                             self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
                             new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,save_reg,conline.end_connector) 
@@ -408,13 +429,13 @@ class FXCoreDesignerApp(App):
 
                         elif conline.end_block.usageState == 1: # this mixer has previously been used in another path
                             conline.end_block.usageState = 2 # second path using this mixer
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
+                            
+                            self.modify_strings_and_registers(node) #leaving node so modify strings
+                            
                             for reg in range(1, 15): # loop through registers r1-r15
                                 if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                     new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
-                                    self.registers_used["r"+str(reg)] = 0 # free register
+                                    # self.registers_used["r"+str(reg)] = 0 # free register
                                     self.asm_nodes.append(new_node)
                                     conline.end_block.usageState = 3 
                                     self.recursive_add_nodes(new_node,node)
@@ -422,9 +443,9 @@ class FXCoreDesignerApp(App):
                     elif "Splitter" in conline.end_block.name: # mixer block
                         if conline.end_block.usageState == 0: # if this is the first time using this splitter
                             conline.end_block.usageState = 1  # now set it as used
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
+                            
+                            self.modify_strings_and_registers(node) #leaving node so modify strings
+
                             save_reg = self.get_free_register() # get the next free register
                             self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
                             new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,save_reg,conline.end_connector) 
@@ -434,18 +455,13 @@ class FXCoreDesignerApp(App):
                             continue   
                                                        
                     elif conline.end_connector != OUTPUT and conline.end_connector != SPLITTER + 1 and conline.end_connector != SPLITTER + 2: # dont go up a path
-                        node.add_controls_to_asm() # leaving the current node so add its controls
-                        node.add_registers_to_asm()
-                        
-                        dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) # count occuraces of names so that unique names can be created with replace_substrings
-                        self.asm_string += self.replace_substrings(dict,node.asm_string)
-                        self.directive_string += self.replace_substrings(dict,node.directive_string)
+                        self.modify_strings_and_registers(node) #leaving node so modify strings
 
                         new_node = asm_node(conline.end_block,self.registers_used)
                         self.asm_nodes.append(new_node)
                         if "Output" not in new_node.block.name:
                             self.recursive_add_nodes(new_node,node)
-                        else:
+                        else: # Output Block
                             self.asm_string += new_node.asm_string
                             break
                         
@@ -459,9 +475,9 @@ class FXCoreDesignerApp(App):
                     if "Mixer" in conline.start_block.name:
                         if conline.start_block.usageState == 0: # if this is the first time using this mixer
                             conline.start_block.usageState = 1  # now set it as used
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
+                            
+                            self.modify_strings_and_registers(node) #leaving node so modify strings
+
                             save_reg = self.get_free_register() # get the next free register
                             self.registers_used["r"+str(save_reg)] = conline.start_block.name # set the free register as now used by this block
                             new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,conline.start_connector,save_reg)
@@ -471,22 +487,22 @@ class FXCoreDesignerApp(App):
 
                         elif conline.start_block.usageState == 1: # this mixer has previously been used in another path
                             conline.start_block.usageState = 2 # second path using this mixer
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
+                            
+                            self.modify_strings_and_registers(node) #leaving node so modify strings
+
                             for reg in range(1, 15): #loop through registers r0-r15
                                 if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
                                     new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
-                                    self.registers_used["r"+str(reg)] = 0 # free register
+                                    # self.registers_used["r"+str(reg)] = 0 # free register
                                     self.asm_nodes.append(new_node)
                                     self.recursive_add_nodes(new_node,node)
 
                     elif 'Splitter' in conline.start_block.name:
                         if conline.start_block.usageState == 0: # first time using this splitter
                             conline.start_block.usageState = 1  # now set it as used
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-                            self.asm_string += node.asm_string
+                            
+                            self.modify_strings_and_registers(node) #leaving node so modify strings
+
                             save_reg = self.get_free_register() # get the next free register
                             self.registers_used["r"+str(save_reg)] = conline.start_block.name # set the free register as now used by this block
                             new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,save_reg,conline.start_connector)
@@ -496,12 +512,7 @@ class FXCoreDesignerApp(App):
                             continue
 
                     elif conline.start_connector != OUTPUT and conline.start_connector != SPLITTER + 1 and conline.start_connector != SPLITTER + 2: # dont go up a path
-                        node.add_controls_to_asm() # leaving the current node so add its controls
-                        node.add_registers_to_asm()
-
-                        dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) # count occuraces of names so that unique names can be created with replace_substrings
-                        self.asm_string += self.replace_substrings(dict,node.asm_string)
-                        self.directive_string += self.replace_substrings(dict,node.directive_string)
+                        self.modify_strings_and_registers(node) #leaving node so modify strings
 
                         new_node = asm_node(conline.start_block,self.registers_used)   
                         self.asm_nodes.append(new_node) 
@@ -532,9 +543,9 @@ class FXCoreDesignerApp(App):
                         elif "Mixer" in conline.end_block.name: # mixer block
                             if conline.end_block.usageState == 0: # if this is the first time using this mixer
                                 conline.end_block.usageState = 1  # now set it as used
-                                node.add_controls_to_asm() # leaving the current node so add its controls
-                                node.add_registers_to_asm()
-                                self.asm_string += node.asm_string
+                                
+                                self.modify_strings_and_registers(node) #leaving node so modify strings
+
                                 save_reg = self.get_free_register() # get the next free register
                                 self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
                                 new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,save_reg,conline.end_connector) 
@@ -544,22 +555,22 @@ class FXCoreDesignerApp(App):
 
                             elif conline.end_block.usageState == 1: # this mixer has previously been used in another path
                                 conline.end_block.usageState = 2 # second path using this mixer
-                                node.add_controls_to_asm() # leaving the current node so add its controls
-                                node.add_registers_to_asm()
-                                self.asm_string += node.asm_string
+
+                                self.modify_strings_and_registers(node) #leaving node so modify strings
+
                                 for reg in range(1, 15): # loop through registers r1-r15
                                     if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                         new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
-                                        self.registers_used["r"+str(reg)] = 0 # free register
+                                        # self.registers_used["r"+str(reg)] = 0 # free register
                                         self.asm_nodes.append(new_node)    
                                         self.recursive_add_nodes(new_node,node)
 
                         elif "Splitter" in conline.end_block.name: # splitter block
                             if conline.end_block.usageState == 0: # if this is the first time using this splitter
                                 conline.end_block.usageState = 1  # now set it as used
-                                node.add_controls_to_asm() # leaving the current node so add its controls
-                                node.add_registers_to_asm()
-                                self.asm_string += node.asm_string
+                                
+                                self.modify_strings_and_registers(node) #leaving node so modify strings
+                                
                                 save_reg = self.get_free_register() # get the next free register
                                 self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
                                 new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,save_reg,conline.end_connector) 
@@ -569,12 +580,7 @@ class FXCoreDesignerApp(App):
                                 continue
 
                         elif conline.end_connector != OUTPUT and conline.end_connector != SPLITTER + 1 and conline.end_connector != SPLITTER + 2: # dont go up a path
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()
-
-                            dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) # count occuraces of names so that unique names can be created with replace_substrings
-                            self.asm_string += self.replace_substrings(dict,node.asm_string)
-                            self.directive_string += self.replace_substrings(dict,node.directive_string)
+                            self.modify_strings_and_registers(node) #leaving node so modify strings
 
                             new_node = asm_node(conline.end_block,self.registers_used)
                             self.asm_nodes.append(new_node)
@@ -598,9 +604,9 @@ class FXCoreDesignerApp(App):
                         elif "Mixer" in conline.start_block.name:
                             if conline.start_block.usageState == 0: # if this is the first time using this mixer
                                 conline.start_block.usageState = 1  # now set it as used
-                                node.add_controls_to_asm()
-                                node.add_registers_to_asm()
-                                self.asm_string += node.asm_string
+                                
+                                self.modify_strings_and_registers(node) #leaving node so modify strings
+
                                 save_reg = self.get_free_register() # get the next free register
                                 self.registers_used["r"+str(save_reg)] = conline.start_block.name # set the free register as now used by this block
                                 new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,save_reg,conline.start_connector)
@@ -610,22 +616,22 @@ class FXCoreDesignerApp(App):
 
                             elif conline.start_block.usageState == 1: # this mixer has previously been used in another path
                                 conline.start_block.usageState = 2 # second path using this mixer
-                                node.add_controls_to_asm()
-                                node.add_registers_to_asm()
-                                self.asm_string += node.asm_string
+                                
+                                self.modify_strings_and_registers(node) #leaving node so modify strings
+
                                 for reg in range(1, 15): #loop through registers r0-r15
                                     if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
                                         new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
-                                        self.registers_used["r"+str(reg)] = 0 # free register
+                                        # self.registers_used["r"+str(reg)] = 0 # free register
                                         self.asm_nodes.append(new_node)
                                         self.recursive_add_nodes(new_node,node)
 
                         elif "Splitter" in conline.start_block.name:
                             if conline.start_block.usageState == 0: # if this is the first time using this splitter
                                 conline.start_block.usageState = 1  # now set it as used
-                                node.add_controls_to_asm()
-                                node.add_registers_to_asm()
-                                self.asm_string += node.asm_string
+
+                                self.modify_strings_and_registers(node) #leaving node so modify strings
+                                
                                 save_reg = self.get_free_register() # get the next free register
                                 self.registers_used["r"+str(save_reg)] = conline.start_block.name # set the free register as now used by this block
                                 new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,save_reg,conline.start_connector)
@@ -635,13 +641,9 @@ class FXCoreDesignerApp(App):
                                 continue
 
                         elif conline.start_connector != OUTPUT and conline.start_connector != SPLITTER + 1 and conline.start_connector != SPLITTER + 2: #dont go up a path 
-                            node.add_controls_to_asm() # leaving the current node so add its controls
-                            node.add_registers_to_asm()        
                             
-                            dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) # count occuraces of names so that unique names can be created with replace_substrings
-                            self.asm_string += self.replace_substrings(dict,node.asm_string)
-                            self.directive_string += self.replace_substrings(dict,node.directive_string)
-    
+                            self.modify_strings_and_registers(node) #leaving node so modify strings
+     
                             new_node = asm_node(conline.start_block,self.registers_used)   
                             self.asm_nodes.append(new_node)
                             if "Output" not in new_node.block.name:
@@ -649,6 +651,8 @@ class FXCoreDesignerApp(App):
                             else:
                                 self.asm_string += new_node.asm_string
                                 break
+
+                        
 
     #-------------------------------------------generate_asm
     def generate_asm(self):
