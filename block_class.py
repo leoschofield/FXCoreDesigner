@@ -40,7 +40,7 @@ Y = 1
 THRESH = 20
 
 class Block(Widget):
-    def __init__(self,name,nameID,inputConnector,outputConnector,nParams, **kwargs):
+    def __init__(self,name,nameID,inputConnector,outputConnector,nParams,nUsers,nSwitches,tapSwitch, **kwargs):
         super(Block, self).__init__(**kwargs)     
         self.name = name
         self.ID = nameID
@@ -48,21 +48,27 @@ class Block(Widget):
         self.Ypos = random.randrange(100, 800)
         self.selected = RELEASED
         self.nParams = nParams
+        self.nUserOuts = nUsers
+        self.nSwitches = nSwitches
+        self.tapSwitch = tapSwitch
         self.paramCons = []
         self.conLines = []
         self.inputExists = 0 
         self.outputExists = 0
         self.usageState = 0
-        self.constant = 0
+        self.constant = 0 
+
         with self.canvas:
             Color(0.4,0.4,0.4,OPAQUE, mode="rgba")
 
             self.rect = Rectangle(pos=(self.Xpos,self.Ypos), size=(BLOCK_WIDTH,BLOCK_HEIGHT))
             self.label = Label(pos=(self.Xpos, self.Ypos - (self.rect.size[Y]/2)),text=name)
-
        
             if inputConnector: 
-                Color(0,0.5,1,OPAQUE, mode="rgba")
+                if "User" in self.name:
+                    Color(0,1,1,OPAQUE, mode="rgba")
+                else:
+                    Color(0,0.5,1,OPAQUE, mode="rgba")
                 self.input = Rectangle(pos=(self.Xpos,self.Ypos+20), size=(10,10))
                 self.inputExists = True
 
@@ -71,12 +77,12 @@ class Block(Widget):
                 self.output = Rectangle(pos=(self.Xpos+90,self.Ypos+20), size=(10,10))
                 self.outputExists = True
 
-            if self.nParams == SPLITTER: 
+            if "Splitter" in self.name:
                 Color(0,0.5,1,OPAQUE, mode="rgba")
                 self.output1 = Rectangle(pos=(self.Xpos+90,self.Ypos+30), size=(10,10))
                 self.output2 = Rectangle(pos=(self.Xpos+90,self.Ypos+10), size=(10,10))
 
-            elif self.nParams == MIXER: 
+            if "Mixer" in self.name: 
                 Color(0,0.5,1,OPAQUE, mode="rgba")
                 self.input1 = Rectangle(pos=(self.Xpos,self.Ypos+30), size=(10,10))
                 self.input2 = Rectangle(pos=(self.Xpos,self.Ypos+10), size=(10,10))
@@ -84,7 +90,22 @@ class Block(Widget):
                 self.param1Con = Rectangle(pos=(self.Xpos+30,self.Ypos+40), size=(10,10))
                 self.param2Con = Rectangle(pos=(self.Xpos+60,self.Ypos+40), size=(10,10))
 
-            elif self.nParams == 6:  
+
+            if self.nUserOuts >= 1:
+                Color(0,1,1,OPAQUE, mode="rgba")
+                self.user0Con = Rectangle(pos=(self.Xpos+90,self.Ypos+30), size=(10,10))  
+                if self.nUserOuts == 2:
+                    self.user1Con = Rectangle(pos=(self.Xpos+90,self.Ypos+10), size=(10,10))
+
+            if self.tapSwitch:
+                Color(1,0,1,OPAQUE, mode="rgba") 
+                self.tapCon = Rectangle(pos=(self.Xpos+90,self.Ypos+30), size=(10,10))  
+
+            if self.nSwitches >= 1:
+                Color(1,1,0,OPAQUE, mode="rgba") 
+                self.tapCon = Rectangle(pos=(self.Xpos+90,self.Ypos+20), size=(10,10))  
+
+            if self.nParams == 6:  
                 Color(0.5,0,1,OPAQUE, mode="rgba")
                 self.param1Con = Rectangle(pos=(self.Xpos+15,self.Ypos+40), size=(10,10))
                 self.param2Con = Rectangle(pos=(self.Xpos+45,self.Ypos+40), size=(10,10))
@@ -123,7 +144,11 @@ class Block(Widget):
                 Color(0.5,0,1,OPAQUE, mode="rgba")
                 if self.outputExists:
                     self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+40), size=(10,10))
-                else: # if a potentiometer or constant block
+                else: # if a Control block
+                    if "Tap Tempo" in self.name:
+                        Color(1,0,0,OPAQUE, mode="rgba")
+                    if "Switch" in self.name:
+                        Color(0.5,1,0,OPAQUE, mode="rgba")
                     self.param1Con = Rectangle(pos=(self.Xpos+45,self.Ypos+0), size=(10,10))
 
                     
@@ -158,10 +183,10 @@ class Block(Widget):
                 self.canvas.remove(self.input)
             if self.outputExists: 
                 self.canvas.remove(self.output)                
-            if self.nParams == SPLITTER:
+            elif "Splitter" in self.name:
                 self.canvas.remove(self.output1)      
                 self.canvas.remove(self.output2)  
-            elif self.nParams == MIXER:
+            elif "Mixer" in self.name:
                 self.canvas.remove(self.input1)      
                 self.canvas.remove(self.input2)  
                 self.canvas.remove(self.param1Con)
@@ -328,7 +353,7 @@ class Block(Widget):
             self.output.pos = tuple(temp)
         
         #========================================Splitter
-        if self.nParams == SPLITTER: 
+        if "Splitter" in self.name: 
             #**********************************output 1
             temp = list(self.output1.pos)
             if moveX:
@@ -360,7 +385,7 @@ class Block(Widget):
             self.output2.pos = tuple(temp)
 
         #========================================Mixer
-        if self.nParams == MIXER: 
+        if "Mixer" in self.name: 
             #**********************************Level 1
             temp = list(self.param1Con.pos)
             if moveX:
@@ -791,7 +816,7 @@ class Block(Widget):
                             self.assign_line(touch,10)
                     return 10  
         #============================================SPLITTER
-        if self.nParams == SPLITTER:
+        if "Splitter" in self.name: 
             if touch.pos[X] > self.output1.pos[X] and touch.pos[X] < (self.output1.pos[X] + self.output1.size[X]):
                 if touch.pos[Y] > self.output1.pos[Y] and touch.pos[Y] < (self.output1.pos[Y] + self.output1.size[Y]):
                     self.selected = RELEASED
@@ -827,7 +852,7 @@ class Block(Widget):
                     return SPLITTER+2      
             
         #============================================MIXER
-        if self.nParams == MIXER:
+        if "Mixer" in self.name: 
             if touch.pos[X] > self.input1.pos[X] and touch.pos[X] < (self.input1.pos[X] + self.input1.size[X]):
                 if touch.pos[Y] > self.input1.pos[Y] and touch.pos[Y] < (self.input1.pos[Y] + self.input1.size[Y]):
                     self.selected = RELEASED

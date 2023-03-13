@@ -8,7 +8,7 @@ cpy_cs    r0 , in0    ;Input 0
 
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-wrdld    r2 , 0.68*32767    ;load value 0.5 into parameter register
+wrdld    r2 , 0.24*32767    ;load value 0.5 into parameter register
 addsi     r2 , -0.5          ; ranges -0.5 to 0.5 in acc32
 wrdld     r2 , shiftbase0.u ; Put upper part of shiftbase into temp
 multrr    acc32 , r2         ; Multiply the adjusted param value by shiftbase
@@ -21,11 +21,11 @@ cpy_cc    r1 , r0           ; Read input
 wrdel     pdelay0 , r1     ; Write it to the delay
 
 pitch     rmp0|l4096 , pdelay0      ; Do the shift, result will be in acc32 
-wrdld    r2 , 0.87*32767    ;load value 0.5 into parameter register
+wrdld    r2 , 0.5*32767    ;load value 0.5 into parameter register
 multrr    r2 , acc32         ; multiply it
 cpy_cc    r2 , acc32         ; and save to temp
 
-wrdld    acc32, 0.89*32767 ;load constant into parameter register
+wrdld    acc32 , 0.5*32767    ;load value 0.5 into parameter register
 multrr    acc32 , r1        ; multiply it
 adds      acc32 , r2         ; add result of first shifter
 

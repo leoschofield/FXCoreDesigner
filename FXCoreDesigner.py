@@ -43,7 +43,7 @@ SPLITTER = 30
 INPUT = 11
 OUTPUT = 10
 
-NUM_COLUMNS = 10
+NUM_COLUMNS = 11
 
 class popUpParamLabel(Widget):
     def __init__(self,**kwargs):
@@ -84,7 +84,7 @@ class FXCoreDesignerApp(App):
         "r12":  0,
         "r13":  0,
         "r14":  0,
-        "r15":  0
+        # "r15":  0
         }
         self.block_latch = None
         
@@ -101,13 +101,16 @@ class FXCoreDesignerApp(App):
         IOdrop = DropDown()
         #
         inBtn = Button(text ='Input', size_hint_y = None, height = BUTTON_HEIGHT)
-        inBtn.bind(on_release = lambda none: self.click.assign_block('Input',0,1,0))
+        inBtn.bind(on_release = lambda none: self.click.assign_block('Input',0,1,0,0,0,0))
         IOdrop.add_widget(inBtn)
         #
         outBtn = Button(text ='Output', size_hint_y = None, height = BUTTON_HEIGHT)
-        outBtn.bind(on_release = lambda none: self.click.assign_block('Output',1,0,0))
-        IOdrop.add_widget(outBtn)
-        
+        outBtn.bind(on_release = lambda none: self.click.assign_block('Output',1,0,0,0,0,0))
+        IOdrop.add_widget(outBtn)            
+        #
+        userBtn = Button(text ='User', size_hint_y = None, height = BUTTON_HEIGHT)
+        userBtn.bind(on_release = lambda none: self.click.assign_block('User',1,0,0,0,0,0))
+        IOdrop.add_widget(userBtn)
         #--------------------------------FXdrop
         FXdrop = DropDown()
         #
@@ -119,10 +122,20 @@ class FXCoreDesignerApp(App):
         # delayBtn.bind(on_release = lambda none: self.click.assign_block('Delay',1,1,5))
         # FXdrop.add_widget(delayBtn)
 
-        # #Chorus
-        # chorusBtn = Button(text ='Chorus', size_hint_y = None, height = BUTTON_HEIGHT)
-        # chorusBtn.bind(on_release = lambda none: self.click.assign_block('Chorus',1,1,4))
-        # FXdrop.add_widget(chorusBtn)
+        #Chorus
+        chorusBtn = Button(text ='Chorus', size_hint_y = None, height = BUTTON_HEIGHT)
+        chorusBtn.bind(on_release = lambda none: self.click.assign_block('Chorus',1,1,3,1,0,0))
+        FXdrop.add_widget(chorusBtn)
+
+        #Flanger
+        flangerBtn = Button(text ='Flanger', size_hint_y = None, height = BUTTON_HEIGHT)
+        flangerBtn.bind(on_release = lambda none: self.click.assign_block('Flanger',1,1,4,1,0,1))
+        FXdrop.add_widget(flangerBtn)
+        
+        #Through-Zero Flanger
+        zeroFlangerBtn = Button(text ='Through-Zero Flanger', size_hint_y = None, height = BUTTON_HEIGHT)
+        zeroFlangerBtn.bind(on_release = lambda none: self.click.assign_block('T0 Flanger',1,1,5,1,0,1))
+        FXdrop.add_widget(zeroFlangerBtn)
 
         # #Tremelo
         # tremoloBtn = Button(text ='Tremelo', size_hint_y = None, height = BUTTON_HEIGHT)
@@ -131,12 +144,12 @@ class FXCoreDesignerApp(App):
 
         #Distortion
         distBtn = Button(text ='Distortion', size_hint_y = None, height = BUTTON_HEIGHT)
-        distBtn.bind(on_release = lambda none: self.click.assign_block('Distortion',1,1,4))
+        distBtn.bind(on_release = lambda none: self.click.assign_block('Distortion',1,1,4,0,0,0))
         FXdrop.add_widget(distBtn)
 
         #Pitch Shift
         pitchBtn = Button(text ='Pitch Shifter', size_hint_y = None, height = BUTTON_HEIGHT)
-        pitchBtn.bind(on_release = lambda none: self.click.assign_block('Pitch',1,1,3))
+        pitchBtn.bind(on_release = lambda none: self.click.assign_block('Pitch',1,1,3,0,0,0))
         FXdrop.add_widget(pitchBtn)
 
         # #Looper
@@ -145,44 +158,40 @@ class FXCoreDesignerApp(App):
         # FXdrop.add_widget(looperBtn)
 
         #--------------------------------AnalysisDrop
-        # AnalysisDrop = DropDown()
-        #
-        # FFTBtn = Button(text ='FFT', size_hint_y = None, height = BUTTON_HEIGHT)
-        # FFTBtn.bind(on_release = lambda  none: self.click.assign_block('FFT',1,1,2))
-        # AnalysisDrop.add_widget(FFTBtn)
-        #
-        # envelopeFollowerBtn = Button(text ='Envelope', size_hint_y = None, height = BUTTON_HEIGHT)
-        # envelopeFollowerBtn.bind(on_release = lambda  none: self.click.assign_block('Envelope',1,1,1))
-        # AnalysisDrop.add_widget(envelopeFollowerBtn)
+        AnalysisDrop = DropDown()
+
+        envelopeFollowerBtn = Button(text ='Envelope Follower', size_hint_y = None, height = BUTTON_HEIGHT)
+        envelopeFollowerBtn.bind(on_release = lambda  none: self.click.assign_block('Envelope',1,1,1,0,0,0))
+        AnalysisDrop.add_widget(envelopeFollowerBtn)
         
         #--------------------------------ControlsDrop
         ControlsDrop = DropDown()
         # 
         PotentiomenterBtn = Button(text ='Potentiometer', size_hint_y = None, height = BUTTON_HEIGHT)
-        PotentiomenterBtn.bind(on_release = lambda  none: self.click.assign_block('Pot',0,0,1))
+        PotentiomenterBtn.bind(on_release = lambda  none: self.click.assign_block('Pot',0,0,1,0,0,0))
         ControlsDrop.add_widget(PotentiomenterBtn)
         #
         ConstantBtn = Button(text ='Constant', size_hint_y = None, height = BUTTON_HEIGHT)
-        ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1))
+        ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1,0,0,0))
         ControlsDrop.add_widget(ConstantBtn)
-        # #
-        # TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
-        # TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Tap Tempo',0,0,1))
-        # ControlsDrop.add_widget(TapTempoBtn)
-        # #
-        # ToggleBtn = Button(text ='Switch', size_hint_y = None, height = BUTTON_HEIGHT)
-        # ToggleBtn.bind(on_release = lambda  none: self.click.assign_block('Switch',0,0,1))
-        # ControlsDrop.add_widget(ToggleBtn)
+        # 
+        TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
+        TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Tap Tempo',0,0,1,0,0,0))
+        ControlsDrop.add_widget(TapTempoBtn)
+        # 
+        SwitchBtn = Button(text ='Switch', size_hint_y = None, height = BUTTON_HEIGHT)
+        SwitchBtn.bind(on_release = lambda  none: self.click.assign_block('Switch',0,0,1,0,0,0))
+        ControlsDrop.add_widget(SwitchBtn)
 
         #--------------------------------Routingdrop
         RoutingDrop = DropDown()
         #
         splitterBtn = Button(text ='Splitter', size_hint_y = None, height = BUTTON_HEIGHT)
-        splitterBtn.bind(on_release = lambda none: self.click.assign_block('Splitter',1,0,SPLITTER))
+        splitterBtn.bind(on_release = lambda none: self.click.assign_block('Splitter',1,0,0,0,0,0))
         RoutingDrop.add_widget(splitterBtn)
         #
         mixerBtn = Button(text ='Mixer', size_hint_y = None, height = BUTTON_HEIGHT)
-        mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1,MIXER))
+        mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1,0,0,0,0))
         RoutingDrop.add_widget(mixerBtn)
 
         #-------------------------------- Buttons For Dropdowns
@@ -192,8 +201,8 @@ class FXCoreDesignerApp(App):
         FXbutton = Button(text ='FX')
         FXbutton.bind(on_release = FXdrop.open)
         #
-        # AnalysisButton = Button(text ='Analysis')
-        # AnalysisButton.bind(on_release = AnalysisDrop.open)
+        AnalysisButton = Button(text ='Analysis')
+        AnalysisButton.bind(on_release = AnalysisDrop.open)
         #
         ControlsButton = Button(text ='Controls')
         ControlsButton.bind(on_release = ControlsDrop.open)
@@ -234,7 +243,7 @@ class FXCoreDesignerApp(App):
         #---------------------------------------------
         self.layout.add_widget(IObutton)
         self.layout.add_widget(FXbutton)
-        # self.layout.add_widget(AnalysisButton)
+        self.layout.add_widget(AnalysisButton)
         self.layout.add_widget(ControlsButton)
         self.layout.add_widget(RoutingButton)
         self.layout.add_widget(CodeButton)
@@ -399,8 +408,8 @@ class FXCoreDesignerApp(App):
             return 13
         elif self.registers_used["r14"] == 0:
             return 14
-        elif self.registers_used["r15"] == 0:
-            return 15
+        # elif self.registers_used["r15"] == 0:
+        #     return 15
         else:
             self.error_trap("out of reg")
     
@@ -445,7 +454,7 @@ class FXCoreDesignerApp(App):
         self.directive_string += self.replace_substrings(dict,node.directive_string)    
 
         #clear registers 
-        for reg in range(1, 15): # loop through registers r1-r15
+        for reg in range(1, 14): #loop through registers r1-r14
             if self.registers_used["r"+str(reg)] == node.name: # if register is used by block
                 if "Mixer" in node.name:
                     if node.usage_state == 1:# break if not finished using mixer yet
@@ -483,7 +492,7 @@ class FXCoreDesignerApp(App):
                             
                             self.modify_strings_and_registers(node) #leaving node so modify strings
                             
-                            for reg in range(1, 15): # loop through registers r1-r15
+                            for reg in range(1, 14): #loop through registers r1-r14
                                 if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                     new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                     # self.registers_used["r"+str(reg)] = 0 # free register
@@ -541,7 +550,7 @@ class FXCoreDesignerApp(App):
                             
                             self.modify_strings_and_registers(node) #leaving node so modify strings
 
-                            for reg in range(1, 15): #loop through registers r0-r15
+                            for reg in range(1, 14): #loop through registers r1-r14
                                 if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
                                     new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                     # self.registers_used["r"+str(reg)] = 0 # free register
@@ -590,7 +599,6 @@ class FXCoreDesignerApp(App):
 
                         if conline.end_connector == 1: #control connector   
                             if "Constant" in conline.end_block.name:
-                                print("HERE 1 !!!!!!!!!!!!!!!!!!!!!!")
                                 node.add_control(conline.start_connector,2,conline.end_block.constant)  
                             else:
                                 node.add_control(conline.start_connector,1,conline.end_block.ID) 
@@ -613,7 +621,7 @@ class FXCoreDesignerApp(App):
 
                                 self.modify_strings_and_registers(node) #leaving node so modify strings
 
-                                for reg in range(1, 15): # loop through registers r1-r15
+                                for reg in range(1, 14): #loop through registers r1-r14
                                     if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                         new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                         # self.registers_used["r"+str(reg)] = 0 # free register
@@ -655,7 +663,6 @@ class FXCoreDesignerApp(App):
                             
                         if conline.start_connector == 1: # control connector  
                             if "Constant" in conline.start_block.name:
-                                print("HERE 2 !!!!!!!!!!!!!!!!!!!!!!")
                                 node.add_control(conline.end_connector,2,conline.start_block.constant)  
                             else:
                                 node.add_control(conline.end_connector,1,conline.start_block.ID)  
@@ -678,7 +685,7 @@ class FXCoreDesignerApp(App):
                                 
                                 self.modify_strings_and_registers(node) #leaving node so modify strings
 
-                                for reg in range(1, 15): #loop through registers r0-r15
+                                for reg in range(1, 14): #loop through registers r1-r14
                                     if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
                                         new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
                                         # self.registers_used["r"+str(reg)] = 0 # free register
@@ -734,7 +741,7 @@ class FXCoreDesignerApp(App):
         self.registers_used["r12"] = 0
         self.registers_used["r13"] = 0
         self.registers_used["r14"] = 0
-        self.registers_used["r15"] = 0
+        # self.registers_used["r15"] = 0
 
         for block in blocks:#loop through blocks until a start block is found
             if block.conLines != []:
@@ -744,7 +751,7 @@ class FXCoreDesignerApp(App):
                             continue
                         elif block.usageState == 1:
                             block.usageState = 2
-                            for reg in range(1, 15): #loop through registers r1-r15
+                            for reg in range(1, 14): #loop through registers r1-r14
                                 if self.registers_used["r"+str(reg)] == block.name: # find register used by splitter previously
                                     input_node = asm_node(block,self.registers_used,block.usageState,reg)
                                     self.registers_used["r"+str(reg)] = 0

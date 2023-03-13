@@ -22,14 +22,14 @@ DRAG_MODE1 = 1
 
 class Click(Widget):
     #-------------------------------------------
-    def assign_block(self,name,inputNode,outputNode,nParams):
+    def assign_block(self,name,inputNode,outputNode,nParams,nUsers,nSwitches,tapSwitch):
         with self.canvas:
             nameCounter = 0
             create_block = 0
             temp = name + " " + str(nameCounter)
 
             if blocks == []:
-                block = Block(temp,nameCounter,inputNode,outputNode,nParams)   
+                block = Block(temp,nameCounter,inputNode,outputNode,nParams,nUsers,nSwitches,tapSwitch)   
                 blocks.append(block)
             else:
                 while create_block == 0:
@@ -40,20 +40,26 @@ class Click(Widget):
                                 temp = name + " " + str(nameCounter)
                                 if temp == block.name:
                                     nameCounter = nameCounter + 1
-                                    if name == 'Input' or name == 'Output' or name == 'Switch':
+                                    if name == 'User': # user out for leds etc
+                                        if nameCounter > 1:
+                                            return
+                                    if name == 'Input' or name == 'Output':
                                         if nameCounter > 3:
+                                            return
+                                    if  name == 'Switch':
+                                        if nameCounter > 4:
                                             return
                                     if name == 'Pot':
                                         if nameCounter > 5:
                                             return       
                                     if name == 'Tap Tempo':
-                                        if nameCounter > 1:
+                                        if nameCounter > 0:
                                             return   
                             create_block = 1
                         else:
                             create_block = 1
                 temp = name + " " + str(nameCounter)
-                block = Block(temp,nameCounter,inputNode,outputNode,nParams)
+                block = Block(temp,nameCounter,inputNode,outputNode,nParams,nUsers,nSwitches,tapSwitch)
                 blocks.append(block)
                 
     #--------------------------------------------

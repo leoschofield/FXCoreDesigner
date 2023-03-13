@@ -33,7 +33,6 @@ class asm_node():
     def add_constant(self, control):
         # Split the long string into individual lines
         lines = self.asm_string.split("\n")
-        print("PARAM" + str(control.param_num))
         # Loop over the lines and look for lines that contain the substring and value
         for i in range(len(lines)):
             if "PARAM" + str(control.param_num) in lines[i]:
@@ -45,7 +44,6 @@ class asm_node():
                     end_index = lines[i].find('$', start_index + 1)
                     if start_index >= 0 and end_index > start_index:
                         substring = lines[i][start_index:end_index + 1]
-                        print("SUBSTRING", substring)
                         lines[i] = new_line.replace("REPLACE_ME",substring)
 
         # Join the lines back together into a single string
@@ -170,9 +168,9 @@ class asm_node():
         elif self.registers_used["r14"] == 0:
             print("r14!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 14
-        elif self.registers_used["r15"] == 0:
-            print("r15!!!!!!!!!!!!!!!!!!!!!!!!!")
-            return 15
+        # elif self.registers_used["r15"] == 0:
+        #     print("r15!!!!!!!!!!!!!!!!!!!!!!!!!")
+        #     return 15
         return None
   
     #--------------------------------------------
@@ -195,7 +193,7 @@ class asm_node():
             if "3" in self.name:
                 self.asm_string = "\ncpy_cs    r0 , in3    ;Input 3\n"
 
-        if "Output" in self.name:
+        elif "Output" in self.name:
             self.directive_string = ""
             if "0" in self.name:
                 self.asm_string = "\ncpy_sc    out0 , r0    ;Output 0\n"
@@ -206,23 +204,30 @@ class asm_node():
             if "3" in self.name:
                 self.asm_string = "\ncpy_sc    out3 , r0    ;Output 3\n" 
 
-        if "Pot" in self.name:
+        elif "User" in self.name:
+            self.directive_string = ""
+            # if "0" in self.name:
+            #     self.asm_string = "\ncpy_sc    user0 , r0    ;User 0\n"
+            # if "1" in self.name:
+            #     self.asm_string = "\ncpy_sc    user1 , r0    ;User 1\n"
+
+        elif "Pot" in self.name:
             self.connector1 = ""
             pass
 
-        if "Switch" in self.name:
+        elif "Switch" in self.name:
             self.connector1 = ""
             pass
             
-        if "Constant" in self.name:
+        elif "Constant" in self.name:
             self.connector1 = ""
             pass
               
-        if "Tap Tempo" in self.name:
+        elif "Tap Tempo" in self.name:
             self.connector1 = ""
             pass
   
-        if "Mixer" in self.name:
+        elif "Mixer" in self.name:
             self.connector1 = 'Input Level 1'
             self.connector2 = 'Input Level 2'    
             self.asm_string = ""
@@ -260,7 +265,7 @@ class asm_node():
                 self.asm_string +=      "adds      r" + str(free_register)  + " , r" + str(free_register2) + "    ;perfom addition and save in acc32\n" #perform the weighted sum and save in acc32
                 self.asm_string +=      "cpy_cc    r0 , acc32 \n"
 
-        if "Splitter" in self.name:
+        elif "Splitter" in self.name:
             self.asm_string = ""
             self.directive_string = ""
             if self.usage_state == 1:
@@ -268,12 +273,38 @@ class asm_node():
             if self.usage_state == 2:
                 self.asm_string +=  "\ncpy_cc    r0 , r" + str(free_register)  + "     ;splitter state 2\n"#copy the spare register to acc32 for output
 
+        elif "Envelope" in self.name:
+            self.connector1 = "Sensitivity"
+            self.directive_string = ".equ $env_coeff$ 0.0006 * (2^31 - 1)"
+            self.asm_string = """; ##### Envelope follower #####
+; adjust pot for sensitivity
+cpy_cs    acc32 , $PARAM1$  @pot to acc32@
+multri    acc32 , 0.8
+addsi     acc32 , 0.2
+cpy_cc    $REG_sens$ , acc32
 
-
+wrdld     $REG_temp$ , $env_coeff$.u       ; load in lp coefficient
+ori       $REG_temp$ , $env_coeff$.l
+cpy_cc    $REG_temp$ , acc32             ; coeff in temp now
+multrr    r0 , r0                  ; square the signal
+subs      acc32 , $REG_envlp$            ; in - lp
+multrr    acc32 , $REG_temp$             ; *K
+adds      acc32 , $REG_envlp$            ; + lp
+cpy_cc    $REG_envlp$ , acc32            ; save to lp
+; square root
+log2      acc32                    ; log2
+sra       acc32 , 1                ; /2 to take square root
+exp2      acc32                    ; and back to linear
+multrr    $REG_sens$ , acc32
+sls       acc32 , 2                 ; multiply by 4 to control SVF
+cpy_cc    $REG_env$ , acc32              ; save to env
+"""
+            
+           
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #////////////////////////////////////////  PITCH SHIFT  ///////////////////////////////////////////////////////////////
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        if "Pitch" in self.name:
+        elif "Pitch" in self.name:
             self.connector1 = 'Pitch'
             self.connector2 = 'Pitch Level'
             self.connector3 = 'Dry Level'
@@ -315,7 +346,7 @@ cpy_cc    r0, acc32
 # pot1 = Low-pass frequency control
 # pot2 = Low-pass Q control
 # pot3 = Output level
-        if "Distortion" in self.name:
+        elif "Distortion" in self.name:
             self.connector1 = 'Gain'
             self.connector2 = 'Low Pass Freq'
             self.connector3 = 'Low Pass Q'
@@ -386,13 +417,13 @@ multrr    acc32 , $REG_lp$
 cpy_cc    r0 , acc32               ; Send to output
 """ 
 
-
-
-
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #//////////////////////////////////////// CHORUS  ///////////////////////////////////////////////////////////////
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        if "Chorus" in self.name:
+        elif "Chorus" in self.name:
+            self.connector1 = 'Rate'
+            self.connector2 = 'Depth'
+            self.connector3 = 'Level'
             self.directive_string = """
 .equ    fs          48000
 .equ    flow        .2
@@ -483,10 +514,154 @@ cpy_sc  r0, acc32
 # ori       acc32, 1                ; Set acc32[0] for the LED on case
 
 # doLED:
-# set       user0|0, acc32           ; set the usr1 output per the acc32 LSB"""
+# set       $user0$|0, acc32           ; set the usr1 output per the acc32 LSB"""
 
 
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# #////////////////////////////////////////  Through Zero Flanger  ////////////////////////////////////////////////////
+# #////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        elif "T0 Flanger" in self.name:
+            self.connector1 = 'Rate Out'
+            self.connector2 = 'Rate Back'
+            self.connector3 = 'Feedback'
+            self.connector4 = 'Level'
+            self.connector5 = 'Zero Point'
+            self.directive_string = """
+.equ      $maxdel$        8192  
+.equ      $zp$            $maxdel$/32  
+.equ      $sweep$         0x0100    
+.mem      $delay$         $maxdel$  
+.mem      $zp_del$        $zp$
+    """
+            self.asm_string = """
+cpy_cs    $REG_p3$ , $PARAM4$           ; get level pot
+cpy_cs    $REG_temp$ , r0               ; get input
+wrdel     $zp_del$ , $REG_temp$            ; write input to dry delay line  
+adds      $REG_temp$ , $REG_feedback$          ; add feedback to dry    
+multrr    acc32 , $REG_p3$               ; adjust level
+wrdel     $delay$ , acc32            ; write to flanger delay line
 
+
+cpy_cs    acc32 , $PARAM5$             ; get zero point pot @raw pot@
+wrdld     $REG_temp$ , $zp$                ; get length of zero point delay
+multrr    acc32 , $REG_temp$             ; calculate length
+multri    acc32 , 0.99             ; limit max value to allow for adding a small amount
+wrdld     $REG_temp$ , 0x0004            ; add a small amount to not be 0  
+add       $REG_temp$ , acc32    
+cpy_cc    $REG_zero_point$ , acc32       ; zero point
+
+xor       acc32 , acc32            ; clear acc32
+ori       acc32 , 0x0010           ; load a minimum value into acc32 in case pot is 0
+cpy_cc    $REG_temp$ , acc32             ; save it
+cpy_cs    acc32 , $PARAM1$        ; read in pot0
+multrr    acc32 , acc32
+adds      acc32 , $REG_temp$             ; add the minimum value
+cpy_cc    $REG_p0$ , acc32               ; save it
+cpy_cs    acc32 , $PARAM2$         ; read in pot 1
+multrr    acc32 , acc32
+adds      acc32 , $REG_temp$             ; add the minimum value
+cpy_cc    $REG_p1$ , acc32               ; save it
+andi      flags , taplvl           ; get the tap button state
+jnz       acc32 , $isnzero$          ; if != 0 jump (pin has pull-up so pressed button is a 0)
+xor       acc32 , acc32            ; clear acc
+ori       acc32 , $sweep$            ; load in a small increment value
+multrr    acc32 , $REG_p0$               ; multiply by out speed pot
+adds      $REG_counter$ , acc32          ; add the increment to the counter
+cpy_cc    $REG_counter$ , acc32          ; save it back but check it
+wrdld     $REG_temp$ , $maxdel$            ; load the max delay line length
+subs      $REG_temp$ , acc32             ; maxlength - counter value
+jgez      acc32 , $ango$             ; if >=0 we are less than or equal to max so jump
+cpy_cc    $REG_counter$ , $REG_temp$           ; if here counter > maxlength so load max length
+jmp       $ango$                    ; jump over the decrement part
+
+$isnzero$:
+jz        $REG_counter$ , $ango$           ; if count is 0 jump to output
+xor       acc32 , acc32            ; clear acc
+ori       acc32 , $sweep$            ; load in a small increment value
+multrr    acc32 , $REG_p1$               ; multiply by in speed pot
+subs      $REG_counter$ , acc32          ; subtract the value
+jgez      acc32 , $ldres$            ; if >= 0 jump
+xor       acc32 , acc32            ; was <0 so load 0
+$ldres$:
+cpy_cc    $REG_counter$ , acc32          ; save to counter reg
+
+$ango$:
+interp    $REG_counter$ , $delay$          ; linear interp the values in the delay line
+cpy_cc    $REG_temp$ , acc32             ; save to temp
+interp    $REG_zero_point$ , $zp_del$      ; linear interp zero point sample    
+subs      acc32 , $REG_temp$             ; subtract the value from the delay line so we can get a null at  
+                                         ; the zero point if feedback is zero, more comb effect if no  
+
+cpy_cc    r0 , acc32             ; write to the output  
+cpy_cc    $REG_temp$ , acc32             ; copy to temp
+cpy_cs    acc32 , $PARAM3$        ; get feedback level  
+multri    acc32 , 0.8              ; limit fedback range    
+multrr    $REG_temp$ , acc32             ; set feedback
+cpy_cc    $REG_feedback$ , acc32         ; and save
+    """
+            
+        elif "Flanger" in self.name:
+            self.connector1 = 'Rate Out'
+            self.connector2 = 'Rate Back'
+            self.connector3 = 'Feedback'
+            self.connector4 = 'Level'
+            self.directive_string = """
+.equ      $maxdel$        8192
+.equ      $sweep$         0x0100
+.mem      $delay$         $maxdel$
+    """
+            self.asm_string = """
+cpy_cs    $REG_p3$ , $PARAM4$
+cpy_cs    $REG_temp$ , r0
+adds      $REG_temp$ , feedback
+multrr    acc32 , $REG_p3$
+wrdel     $delay$ , acc32
+ 
+xor       acc32 , acc32            ; clear acc32
+ori       acc32 , 0x0010           ; load a minimum value into acc32 in case pot is 0
+cpy_cc    $REG_temp$ , acc32             ; save it
+cpy_cs    acc32 , $PARAM1$        ; read in pot0
+multrr    acc32 , acc32
+adds      acc32 , $REG_temp$             ; add the minimum value
+cpy_cc    $REG_p0$ , acc32               ; save it
+cpy_cs    acc32 , $PARAM2$         ; read in pot 1
+multrr    acc32 , acc32
+adds      acc32 , $REG_temp$             ; add the minimum value
+cpy_cc    $REG_p1$ , acc32               ; save it
+andi      flags , taplvl           ; get the tap button state
+jnz       acc32 , $isnzero$          ; if != 0 jump (pin has pull-up so pressed button is a 0)
+xor       acc32 , acc32            ; clear acc
+ori       acc32 , $sweep$            ; load in a small increment value
+multrr    acc32 , $REG_p0$               ; multiply by out speed pot
+adds      $REG_counter$ , acc32          ; add the increment to the counter
+cpy_cc    $REG_counter$ , acc32          ; save it back but check it
+wrdld     $REG_temp$ , $maxdel$            ; load the max delay line length
+subs      $REG_temp$ , acc32             ; maxlength - counter value
+jgez      acc32 , $ango$             ; if >=0 we are less than or equal to max so jump
+cpy_cc    $REG_counter$ , $REG_temp$           ; if here counter > maxlength so load max length
+jmp       $ango$                    ; jump over the decrement part
+$isnzero$:
+jz        $REG_counter$ , $ango$           ; if count is 0 jump to output
+xor       acc32 , acc32            ; clear acc
+ori       acc32 , $sweep$            ; load in a small increment value
+multrr    acc32 , $REG_p1$               ; multiply by in speed pot
+subs      $REG_counter$ , acc32          ; subtract the value
+jgez      acc32 , $ldres$            ; if >= 0 jump
+xor       acc32 , acc32            ; was <0 so load 0
+$ldres$:
+cpy_cc    $REG_counter$ , acc32          ; save to counter reg
+
+$ango$:
+interp    $REG_counter$ , $delay$          ; linear interp the values in the delay line
+;multrr   p3, acc32
+cpy_cs    $REG_temp$ , r0               ; read in the input
+adds      acc32 , $REG_temp$              ; add the value from the delay line
+cpy_cc    r0 , acc32             ; write to the output
+cpy_cs    $REG_temp$ , pot2_smth
+multrr    $REG_temp$ , acc32
+cpy_cc    $REG_feedback$, acc32
+     """
+            
 
 
 # #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -644,3 +819,4 @@ cpy_sc  r0, acc32
 
 # doLED1:
 # set       user1|0, acc32           ; set the usr0 output per the acc32 LSB"""
+
