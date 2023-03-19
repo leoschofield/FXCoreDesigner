@@ -22,7 +22,7 @@ DRAG_MODE1 = 1
 
 class Click(Widget):
     #-------------------------------------------
-    def assign_block(self,name,inputNode,outputNode,nParams,nUsers,nSwitches,tapSwitch):
+    def assign_block(self,name,inputNode=0,outputNode=0,nParams=0,nUsers=0,nSwitches=0,tapSwitch=0):
         with self.canvas:
             nameCounter = 0
             create_block = 0
@@ -46,7 +46,7 @@ class Click(Widget):
                                     if name == 'Input' or name == 'Output':
                                         if nameCounter > 3:
                                             return
-                                    if  name == 'Switch':
+                                    if  name == 'Switch': # S0-S4
                                         if nameCounter > 4:
                                             return
                                     if name == 'Pot':
@@ -104,8 +104,8 @@ class Click(Widget):
                                     if newConnector is not None:   #here only allow line to stop dragging if inside a valid connector, which depends on the start connector
                                         if((conLine.start_connector == 10 or conLine.start_connector == 31 or conLine.start_connector == 32) and (newConnector == 11 or newConnector == 21 or newConnector == 22)) or \
                                             ((conLine.start_connector == 11 or conLine.start_connector == 21 or conLine.start_connector == 22) and (newConnector == 10 or newConnector == 31 or newConnector == 32)) or \
-                                            (conLine.start_connector <=6 and newConnector == 1 and (block2.inputExists == 0)) or\
-                                            (conLine.start_connector == 1 and (block1.inputExists == 0) and newConnector <=6):
+                                            (conLine.start_connector <=6 and newConnector == 1 and (block2.inputConnector == 0)) or\
+                                            (conLine.start_connector == 1 and (block1.inputConnector == 0) and newConnector <=6):
                                                 if block2.conLines != []: # block2 has lines?
                                                     for conLine2 in block2.conLines:
                                                         if conLine2.start_block.name == block2.name: #only check the connections that start on block 2

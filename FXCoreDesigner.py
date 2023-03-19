@@ -45,6 +45,21 @@ OUTPUT = 10
 
 NUM_COLUMNS = 11
 
+PARAM1 = 1
+PARAM2 = 2
+PARAM3 = 3
+PARAM4 = 4
+PARAM5 = 5
+PARAM6 = 6
+USER0OUT = 40
+USER1OUT = 41
+TAP_TEMPO = 42
+SW0 = 44
+SW1 = 45
+SW2 = 46
+SW3 = 47
+SW4 = 48
+
 class popUpParamLabel(Widget):
     def __init__(self,**kwargs):
         super(popUpParamLabel, self).__init__(**kwargs)
@@ -60,7 +75,7 @@ class popUpParamLabel(Widget):
     def update_label(self,mousepos,name):
         with self.canvas:
             if self.released == 1:
-                self.paramlabel.pos=(mousepos[X]-50, mousepos[Y]+20)
+                self.paramlabel.pos=(mousepos[X]-50, mousepos[Y]+40)
                 self.paramlabel.text=name
                 self.released = 0
 
@@ -101,15 +116,15 @@ class FXCoreDesignerApp(App):
         IOdrop = DropDown()
         #
         inBtn = Button(text ='Input', size_hint_y = None, height = BUTTON_HEIGHT)
-        inBtn.bind(on_release = lambda none: self.click.assign_block('Input',0,1,0,0,0,0))
+        inBtn.bind(on_release = lambda none: self.click.assign_block('Input',0,1))
         IOdrop.add_widget(inBtn)
         #
         outBtn = Button(text ='Output', size_hint_y = None, height = BUTTON_HEIGHT)
-        outBtn.bind(on_release = lambda none: self.click.assign_block('Output',1,0,0,0,0,0))
+        outBtn.bind(on_release = lambda none: self.click.assign_block('Output',1))
         IOdrop.add_widget(outBtn)            
         #
         userBtn = Button(text ='User', size_hint_y = None, height = BUTTON_HEIGHT)
-        userBtn.bind(on_release = lambda none: self.click.assign_block('User',1,0,0,0,0,0))
+        userBtn.bind(on_release = lambda none: self.click.assign_block('User',1))
         IOdrop.add_widget(userBtn)
         #--------------------------------FXdrop
         FXdrop = DropDown()
@@ -124,7 +139,7 @@ class FXCoreDesignerApp(App):
 
         #Chorus
         chorusBtn = Button(text ='Chorus', size_hint_y = None, height = BUTTON_HEIGHT)
-        chorusBtn.bind(on_release = lambda none: self.click.assign_block('Chorus',1,1,3,1,0,0))
+        chorusBtn.bind(on_release = lambda none: self.click.assign_block('Chorus',1,1,3,1))
         FXdrop.add_widget(chorusBtn)
 
         #Flanger
@@ -134,7 +149,7 @@ class FXCoreDesignerApp(App):
         
         #Through-Zero Flanger
         zeroFlangerBtn = Button(text ='Through-Zero Flanger', size_hint_y = None, height = BUTTON_HEIGHT)
-        zeroFlangerBtn.bind(on_release = lambda none: self.click.assign_block('T0 Flanger',1,1,5,1,0,1))
+        zeroFlangerBtn.bind(on_release = lambda none: self.click.assign_block('Thru0 Flanger',1,1,5,1,0,1))
         FXdrop.add_widget(zeroFlangerBtn)
 
         # #Tremelo
@@ -144,54 +159,59 @@ class FXCoreDesignerApp(App):
 
         #Distortion
         distBtn = Button(text ='Distortion', size_hint_y = None, height = BUTTON_HEIGHT)
-        distBtn.bind(on_release = lambda none: self.click.assign_block('Distortion',1,1,4,0,0,0))
+        distBtn.bind(on_release = lambda none: self.click.assign_block('Distortion',1,1,4))
         FXdrop.add_widget(distBtn)
 
         #Pitch Shift
         pitchBtn = Button(text ='Pitch Shifter', size_hint_y = None, height = BUTTON_HEIGHT)
-        pitchBtn.bind(on_release = lambda none: self.click.assign_block('Pitch',1,1,3,0,0,0))
+        pitchBtn.bind(on_release = lambda none: self.click.assign_block('Pitch',1,1,3))
         FXdrop.add_widget(pitchBtn)
 
         # #Looper
         # looperBtn = Button(text ='Looper', size_hint_y = None, height = BUTTON_HEIGHT)
         # looperBtn.bind(on_release = lambda none: self.click.assign_block('Looper',1,1,2))
         # FXdrop.add_widget(looperBtn)
+        
+        #Test
+        testBtn = Button(text ='Test', size_hint_y = None, height = BUTTON_HEIGHT)
+        testBtn.bind(on_release = lambda none: self.click.assign_block('Test',1,1,6,2,5,1))
+        FXdrop.add_widget(testBtn)
 
         #--------------------------------AnalysisDrop
         AnalysisDrop = DropDown()
 
         envelopeFollowerBtn = Button(text ='Envelope Follower', size_hint_y = None, height = BUTTON_HEIGHT)
-        envelopeFollowerBtn.bind(on_release = lambda  none: self.click.assign_block('Envelope',1,1,1,0,0,0))
+        envelopeFollowerBtn.bind(on_release = lambda  none: self.click.assign_block('Envelope',1,1))
         AnalysisDrop.add_widget(envelopeFollowerBtn)
         
         #--------------------------------ControlsDrop
         ControlsDrop = DropDown()
         # 
         PotentiomenterBtn = Button(text ='Potentiometer', size_hint_y = None, height = BUTTON_HEIGHT)
-        PotentiomenterBtn.bind(on_release = lambda  none: self.click.assign_block('Pot',0,0,1,0,0,0))
+        PotentiomenterBtn.bind(on_release = lambda  none: self.click.assign_block('Pot'))
         ControlsDrop.add_widget(PotentiomenterBtn)
         #
         ConstantBtn = Button(text ='Constant', size_hint_y = None, height = BUTTON_HEIGHT)
-        ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant',0,0,1,0,0,0))
+        ConstantBtn.bind(on_release = lambda  none: self.click.assign_block('Constant'))
         ControlsDrop.add_widget(ConstantBtn)
         # 
         TapTempoBtn = Button(text ='Tap Tempo', size_hint_y = None, height = BUTTON_HEIGHT)
-        TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Tap Tempo',0,0,1,0,0,0))
+        TapTempoBtn.bind(on_release = lambda  none: self.click.assign_block('Tap Tempo'))
         ControlsDrop.add_widget(TapTempoBtn)
         # 
         SwitchBtn = Button(text ='Switch', size_hint_y = None, height = BUTTON_HEIGHT)
-        SwitchBtn.bind(on_release = lambda  none: self.click.assign_block('Switch',0,0,1,0,0,0))
+        SwitchBtn.bind(on_release = lambda  none: self.click.assign_block('Switch'))
         ControlsDrop.add_widget(SwitchBtn)
 
         #--------------------------------Routingdrop
         RoutingDrop = DropDown()
         #
         splitterBtn = Button(text ='Splitter', size_hint_y = None, height = BUTTON_HEIGHT)
-        splitterBtn.bind(on_release = lambda none: self.click.assign_block('Splitter',1,0,0,0,0,0))
+        splitterBtn.bind(on_release = lambda none: self.click.assign_block('Splitter',1))
         RoutingDrop.add_widget(splitterBtn)
         #
         mixerBtn = Button(text ='Mixer', size_hint_y = None, height = BUTTON_HEIGHT)
-        mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1,0,0,0,0))
+        mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1))
         RoutingDrop.add_widget(mixerBtn)
 
         #-------------------------------- Buttons For Dropdowns
@@ -235,7 +255,7 @@ class FXCoreDesignerApp(App):
         #--------------------------------
         AboutButton = Button(text ='About')
         popup = Popup(title='FXCoreDesigner v0.1 - XX/XX/2023',
-        content=Label(text='                             A Visual programming environment for the FXCore DSP from Experimental Noize                                                           Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple lines are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
+        content=Label(text='A visual programming environment for the FXCore DSP from Experimental Noize                                                           Instructions: Click a dropdown button to select a block, link other blocks with lines by clicking in the light grey connectors on each block, green lines are for audio signals, purple lines are for control signals. Press d when dragging a block to delete that block and its lines.             Press d when dragging a line to delete that line.',text_size=(380,300)),
         size_hint=(None, None), size=(400,0))
 
         AboutButton.bind(on_release = lambda none: popup.open())
@@ -255,7 +275,7 @@ class FXCoreDesignerApp(App):
         self.layout.add_widget(AboutButton)
         self.layout.add_widget(self.popUpLabel)
         self.layout.add_widget(self.click)
-    
+
         return self.layout
 
    #------------------------------------------- mouse hover event
@@ -323,6 +343,7 @@ class FXCoreDesignerApp(App):
                     myPos.pos[X] = mousepos[0]
                     myPos.pos[Y] = mousepos[1]
                     readConnector = block.is_inside_connector(myPos,DONT_ASSIGN_LINE)
+                    print("readConnector",readConnector)
                     if readConnector != 0:
                         if "Constant" in block.name:
                             self.block_latch = block.name
@@ -364,6 +385,15 @@ class FXCoreDesignerApp(App):
         self.layout.add_widget(self.click)
         popup.dismiss()
 
+        # above method is not working as there is still collision but method commented below doesnt delete all the graphics
+        # global blocks
+        #     for block in blocks:              
+        #         block.remove_block( )# remove block/connector graphics
+        #         for line in block.conLines:
+        #             line.remove_line()
+        #             block.conLines.remove(line)
+        #         blocks.remove(block)            
+        #     popup.dismiss()
     #-------------------------------------------    
     def error_trap(self,error):
         
@@ -599,7 +629,7 @@ class FXCoreDesignerApp(App):
 
                         if conline.end_connector == 1: #control connector   
                             if "Constant" in conline.end_block.name:
-                                node.add_control(conline.start_connector,2,conline.end_block.constant)  
+                                node.add_control(conline.start_connector,2,conline.end_block.constant) 
                             else:
                                 node.add_control(conline.start_connector,1,conline.end_block.ID) 
 

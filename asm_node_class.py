@@ -1,7 +1,21 @@
 import re
 
+PARAM1 = 1
+PARAM2 = 2
+PARAM3 = 3
+PARAM4 = 4
+PARAM5 = 5
+PARAM6 = 6
 MIXER = 20
 SPLITTER = 30
+USER0OUT = 40
+USER1OUT = 41
+TAP_TEMPO = 42
+SW0 = 44
+SW1 = 45
+SW2 = 46
+SW3 = 47
+SW4 = 48
 
 class control_node():
     def __init__(self,param_num, control_type,val):
@@ -111,19 +125,38 @@ class asm_node():
 
     #--------------------------------------------
     def get_connector_name(self, connector):
-        if connector == 1:
-            return self.connector1
-        if connector == 2:
-            return self.connector2
-        if connector == 3:
-            return self.connector3      
-        if connector == 4:
-            return self.connector4
-        if connector == 5:
-            return self.connector5
-        if connector == 6:
-            return self.connector6
+        print("get_connector_name",connector)
+        if connector == PARAM1:
+            return self.param1
+        if connector == PARAM2:
+            return self.param2
+        if connector == PARAM3:
+            return self.param3      
+        if connector == PARAM4:
+            return self.param4
+        if connector == PARAM5:
+            return self.param5
+        if connector == PARAM6:
+            return self.param6
+        if connector == USER0OUT:
+            return self.user0
+        if connector == USER1OUT:
+            return self.user1
+        if connector == TAP_TEMPO:
+            return self.tapTempo
+        if connector == SW0:
+            return self.switch0
+        if connector == SW1:
+            return self.switch1
+        if connector == SW2:
+            return self.switch2
+        if connector == SW3:
+            return self.switch3
+        if connector == SW4:
+            return self.switch4
 
+        else:
+            return ""
     #--------------------------------------------
     def get_free_register(self):
         if self.registers_used["r1"] == 0:
@@ -212,24 +245,20 @@ class asm_node():
             #     self.asm_string = "\ncpy_sc    user1 , r0    ;User 1\n"
 
         elif "Pot" in self.name:
-            self.connector1 = ""
             pass
 
         elif "Switch" in self.name:
-            self.connector1 = ""
             pass
             
         elif "Constant" in self.name:
-            self.connector1 = ""
             pass
               
         elif "Tap Tempo" in self.name:
-            self.connector1 = ""
             pass
   
         elif "Mixer" in self.name:
-            self.connector1 = 'Input Level 1'
-            self.connector2 = 'Input Level 2'    
+            self.param1 = 'Input Level 1'
+            self.param2 = 'Input Level 2'    
             self.asm_string = ""
             self.directive_string = ""
             if self.usage_state == 1:
@@ -274,7 +303,7 @@ class asm_node():
                 self.asm_string +=  "\ncpy_cc    r0 , r" + str(free_register)  + "     ;splitter state 2\n"#copy the spare register to acc32 for output
 
         elif "Envelope" in self.name:
-            self.connector1 = "Sensitivity"
+            self.param1 = "Sensitivity"
             self.directive_string = ".equ $env_coeff$ 0.0006 * (2^31 - 1)"
             self.asm_string = """; ##### Envelope follower #####
 ; adjust pot for sensitivity
@@ -300,14 +329,32 @@ sls       acc32 , 2                 ; multiply by 4 to control SVF
 cpy_cc    $REG_env$ , acc32              ; save to env
 """
             
-           
+        elif "Test" in self.name:
+            self.param1 = 'pot0'
+            self.param2 = 'pot1'
+            self.param3 = 'pot2'
+            self.param4 = 'pot3'
+            self.param5 = 'pot4'
+            self.param6 = 'pot5'
+            self.tapTempo = 'tap input'
+            self.user0 = 'led0'
+            self.user1 = 'led1'
+            self.switch0 = 'switch0'
+            self.switch1 = 'switch1'
+            self.switch2 = 'switch2'
+            self.switch3 = 'switch3'
+            self.switch4 = 'switch4'
+            self.directive_string = ""
+            self.asm_string = ""
+
+
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #////////////////////////////////////////  PITCH SHIFT  ///////////////////////////////////////////////////////////////
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         elif "Pitch" in self.name:
-            self.connector1 = 'Pitch'
-            self.connector2 = 'Pitch Level'
-            self.connector3 = 'Dry Level'
+            self.param1 = 'Pitch'
+            self.param2 = 'Pitch Level'
+            self.param3 = 'Dry Level'
             self.directive_string = """\n
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .equ      $shiftbase$  -1048576      ; shift of +1 octave
@@ -347,10 +394,10 @@ cpy_cc    r0, acc32
 # pot2 = Low-pass Q control
 # pot3 = Output level
         elif "Distortion" in self.name:
-            self.connector1 = 'Gain'
-            self.connector2 = 'Low Pass Freq'
-            self.connector3 = 'Low Pass Q'
-            self.connector4 = 'Output Level'
+            self.param1 = 'Gain'
+            self.param2 = 'Low Pass Freq'
+            self.param3 = 'Low Pass Q'
+            self.param4 = 'Output Level'
             self.directive_string = ""
             self.asm_string = """\n
 ; gain
@@ -421,9 +468,12 @@ cpy_cc    r0 , acc32               ; Send to output
 #//////////////////////////////////////// CHORUS  ///////////////////////////////////////////////////////////////
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         elif "Chorus" in self.name:
-            self.connector1 = 'Rate'
-            self.connector2 = 'Depth'
-            self.connector3 = 'Level'
+            self.param1 = 'Rate'
+            self.param2 = 'Depth'
+            self.param3 = 'Level'
+            self.tapTempo = 'tap input'
+            self.user0 = 'led0'
+
             self.directive_string = """
 .equ    fs          48000
 .equ    flow        .2
@@ -520,12 +570,15 @@ cpy_sc  r0, acc32
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 # #////////////////////////////////////////  Through Zero Flanger  ////////////////////////////////////////////////////
 # #////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        elif "T0 Flanger" in self.name:
-            self.connector1 = 'Rate Out'
-            self.connector2 = 'Rate Back'
-            self.connector3 = 'Feedback'
-            self.connector4 = 'Level'
-            self.connector5 = 'Zero Point'
+        elif "Thru0 Flanger" in self.name:
+            self.param1 = 'Rate Out'
+            self.param2 = 'Rate Back'
+            self.param3 = 'Feedback'
+            self.param4 = 'Level'
+            self.param5 = 'Zero Point'
+            self.tapTempo = 'tap input'
+            self.user0 = 'led0'
+
             self.directive_string = """
 .equ      $maxdel$        8192  
 .equ      $zp$            $maxdel$/32  
@@ -601,10 +654,13 @@ cpy_cc    $REG_feedback$ , acc32         ; and save
     """
             
         elif "Flanger" in self.name:
-            self.connector1 = 'Rate Out'
-            self.connector2 = 'Rate Back'
-            self.connector3 = 'Feedback'
-            self.connector4 = 'Level'
+            self.param1 = 'Rate Out'
+            self.param2 = 'Rate Back'
+            self.param3 = 'Feedback'
+            self.param4 = 'Level'
+            self.tapTempo = 'tap input'
+            self.user0 = 'led0'
+
             self.directive_string = """
 .equ      $maxdel$        8192
 .equ      $sweep$         0x0100

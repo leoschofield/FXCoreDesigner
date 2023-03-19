@@ -17,6 +17,15 @@ DRAG_MODE1 = 1
 X = 0
 Y = 1 
 
+USER0OUT = 40
+USER1OUT = 41
+TAP_TEMPO = 42
+SW0 = 44
+SW1 = 45
+SW2 = 46
+SW3 = 47
+SW4 = 48
+
 class MyLine(Widget):
 
     def __init__(self, touch, start_block, start_connector, **kwargs): 
@@ -31,10 +40,16 @@ class MyLine(Widget):
         self.name = "line_"+start_block.name +"_"+str(start_connector)
         self.removed = 0
         with self.canvas:
-            if start_connector >= 10: # light blue line for inputs/outputs etc
-                Color(0,0.5,1,OPAQUE, mode="rgba")
-            elif start_connector <= 10: # purple line for potentiometers
-                Color(0.50, 0.00, 1.00, OPAQUE) 
+            if start_connector == 10 or start_connector == 11:
+                Color(0,0.5,1,OPAQUE, mode="rgba") # blue 
+            elif "Tap" in start_block.name or start_connector == TAP_TEMPO:
+                Color(1.0,0.0,0.0,OPAQUE, mode="rgba") # red
+            elif "Pot" in start_block.name or "Constant" in start_block.name or "Envelope" in start_block.name or start_connector <= 10:
+                Color(0.50, 0.00, 1.00, OPAQUE)  # purple
+            elif "Switch" in start_block.name or (start_connector >= SW0 and start_connector <= SW4):
+                Color(1,0.5,0,OPAQUE, mode="rgba") # orange
+            elif "User" in start_block.name or start_connector == USER0OUT or start_connector == USER1OUT:
+                Color(0,1,0,OPAQUE, mode="rgba") # green
             self.line = Line(points=[self.start_point[X], self.start_point[Y], self.end_point[X], self.end_point[Y]], width=2.5, cap='round', joint='none')
         
     def drag_line(self, touch,mode):
