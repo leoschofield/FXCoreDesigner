@@ -1,4 +1,4 @@
-# Leo Schofield 01/01/2022
+import os
 from kivy.config import Config
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.app import App
@@ -13,52 +13,8 @@ from kivy.core.window import Window
 from kivy.uix.slider import Slider
 from click_class import Click
 from asm_node_class import asm_node
-from config import blocks 
-import os
-import re
+from config import *
 
-BUTTON_HEIGHT = 30
-
-DONT_ASSIGN_LINE = 0
-ASSIGN_LINE = 1
-
-DRAG_MODE0 = 0
-DRAG_MODE1 = 1
-
-X = 0
-Y = 1 
-
-TRUE = 1
-FALSE = 0
-
-SELECTED = 1 
-RELEASED = 0
-
-DRAGGING = 1
-NOT_DRAGGING = 0
-
-MIXER = 20
-SPLITTER = 30
-
-INPUT = 11
-OUTPUT = 10
-
-NUM_COLUMNS = 11
-
-PARAM1 = 1
-PARAM2 = 2
-PARAM3 = 3
-PARAM4 = 4
-PARAM5 = 5
-PARAM6 = 6
-USER0OUT = 40
-USER1OUT = 41
-TAP_TEMPO = 42
-SW0 = 44
-SW1 = 45
-SW2 = 46
-SW3 = 47
-SW4 = 48
 
 class popUpParamLabel(Widget):
     def __init__(self,**kwargs):
@@ -124,15 +80,15 @@ class FXCoreDesignerApp(App):
         IOdrop.add_widget(outBtn)            
         #
         userBtn = Button(text ='User', size_hint_y = None, height = BUTTON_HEIGHT)
-        userBtn.bind(on_release = lambda none: self.click.assign_block('User',1))
+        userBtn.bind(on_release = lambda none: self.click.assign_block('User'))
         IOdrop.add_widget(userBtn)
         #--------------------------------FXdrop
         FXdrop = DropDown()
-        #
+        
         # reverbBtn = Button(text ='Reverb', size_hint_y = None, height = BUTTON_HEIGHT)
         # reverbBtn.bind(on_release = lambda none: self.click.assign_block('Reverb',1,1,6))
         # FXdrop.add_widget(reverbBtn)
-        # #
+        
         # delayBtn = Button(text ='Delay', size_hint_y = None, height = BUTTON_HEIGHT)
         # delayBtn.bind(on_release = lambda none: self.click.assign_block('Delay',1,1,5))
         # FXdrop.add_widget(delayBtn)
@@ -144,12 +100,12 @@ class FXCoreDesignerApp(App):
 
         #Flanger
         flangerBtn = Button(text ='Flanger', size_hint_y = None, height = BUTTON_HEIGHT)
-        flangerBtn.bind(on_release = lambda none: self.click.assign_block('Flanger',1,1,4,1,0,1))
+        flangerBtn.bind(on_release = lambda none: self.click.assign_block('Flanger',1,1,4,0,0,1))
         FXdrop.add_widget(flangerBtn)
         
         #Through-Zero Flanger
         zeroFlangerBtn = Button(text ='Through-Zero Flanger', size_hint_y = None, height = BUTTON_HEIGHT)
-        zeroFlangerBtn.bind(on_release = lambda none: self.click.assign_block('Thru0 Flanger',1,1,5,1,0,1))
+        zeroFlangerBtn.bind(on_release = lambda none: self.click.assign_block('Thru0 Flanger',1,1,5,0,0,1))
         FXdrop.add_widget(zeroFlangerBtn)
 
         # #Tremelo
@@ -285,7 +241,7 @@ class FXCoreDesignerApp(App):
         if args[3] == 'd':
             for block in blocks:
                     if block.selected == 1:
-                        block.remove_block( )# remove block/connector graphics
+                        block.remove_block()# remove block/connector graphics
                         for line in block.conLines:
                             line.remove_line()
                             block.conLines.remove(line)
@@ -308,13 +264,6 @@ class FXCoreDesignerApp(App):
             self.change_constant()    
 
   #-------------------------------------------
-    def change_constant2(self,val):
-        for block in blocks:
-            if block.name == self.block_latch:
-                block.constant = round(val,2)
-        self.block_latch = None        
-
-  #-------------------------------------------
     def change_constant(self):
         if self.hover == 1:
 
@@ -333,6 +282,13 @@ class FXCoreDesignerApp(App):
             btn2.bind(on_press = popup.dismiss) 
             popup.open()
 
+  #-------------------------------------------
+    def change_constant2(self,val):
+        for block in blocks:
+            if block.name == self.block_latch:
+                block.constant = round(val,2)
+        self.block_latch = None  
+
   #------------------------------------------- mouse hover event
     def on_mouse_pos(self, window, mousepos):
         myPos = myMousePos() 
@@ -343,17 +299,17 @@ class FXCoreDesignerApp(App):
                     myPos.pos[X] = mousepos[0]
                     myPos.pos[Y] = mousepos[1]
                     readConnector = block.is_inside_connector(myPos,DONT_ASSIGN_LINE)
-                    print("readConnector",readConnector)
-                    if readConnector != 0:
+                    # print("readConnector",readConnector) 
+                    if readConnector != FALSE:
                         if "Constant" in block.name:
                             self.block_latch = block.name
-                            self.hover = 1
+                            self.hover = TRUE
                             self.popUpLabel.update_label(mousepos,str(block.constant))
                             return
                         self.popUpLabel.update_label(mousepos,block.get_connector_name(readConnector))
                         return
                     else:
-                        self.hover = 0
+                        self.hover = FALSE
                         self.popUpLabel.destroy_label()
 
                 if block.conLines != []:
@@ -401,7 +357,7 @@ class FXCoreDesignerApp(App):
         btn1 = Button(text = "OK")   
         box.add_widget(btn1)
         if error == "out of reg":
-            popup = Popup(title="Too many registers used, try using less mixers or splitters.", title_size= (30), 
+            popup = Popup(title="Too many registers used. Try using less mixers and splitters.", title_size= (30), 
                     title_align = 'center', content = box,
                     size_hint=(None, None), size=(400, 400),
                     auto_dismiss = True)
@@ -483,11 +439,11 @@ class FXCoreDesignerApp(App):
         self.asm_string += self.replace_substrings(dict,node.asm_string)
         self.directive_string += self.replace_substrings(dict,node.directive_string)    
 
-        #clear registers 
-        for reg in range(1, 14): #loop through registers r1-r14
+        # clear registers 
+        for reg in range(1, 14): # loop through registers r1-r14
             if self.registers_used["r"+str(reg)] == node.name: # if register is used by block
                 if "Mixer" in node.name:
-                    if node.usage_state == 1:# break if not finished using mixer yet
+                    if node.usage_state == 1: # break if not finished using mixer yet
                         break
                     self.registers_used["r"+str(reg)] = 0 # free register
         
@@ -520,12 +476,11 @@ class FXCoreDesignerApp(App):
                         elif conline.end_block.usageState == 1: # this mixer has previously been used in another path
                             conline.end_block.usageState = 2 # second path using this mixer
                             
-                            self.modify_strings_and_registers(node) #leaving node so modify strings
+                            self.modify_strings_and_registers(node) # leaving node so modify strings
                             
-                            for reg in range(1, 14): #loop through registers r1-r14
+                            for reg in range(1, 14): # loop through registers r1-r14
                                 if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                     new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
-                                    # self.registers_used["r"+str(reg)] = 0 # free register
                                     self.asm_nodes.append(new_node)
                                     conline.end_block.usageState = 3 
                                     self.recursive_add_nodes(new_node,node)
@@ -545,7 +500,7 @@ class FXCoreDesignerApp(App):
                             continue   
                                                        
                     elif conline.end_connector != OUTPUT and conline.end_connector != SPLITTER + 1 and conline.end_connector != SPLITTER + 2: # dont go up a path
-                        self.modify_strings_and_registers(node) #leaving node so modify strings
+                        self.modify_strings_and_registers(node) # leaving node so modify strings
 
                         new_node = asm_node(conline.end_block,self.registers_used)
                         self.asm_nodes.append(new_node)
@@ -578,12 +533,11 @@ class FXCoreDesignerApp(App):
                         elif conline.start_block.usageState == 1: # this mixer has previously been used in another path
                             conline.start_block.usageState = 2 # second path using this mixer
                             
-                            self.modify_strings_and_registers(node) #leaving node so modify strings
+                            self.modify_strings_and_registers(node) # leaving node so modify strings
 
                             for reg in range(1, 14): #loop through registers r1-r14
                                 if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
                                     new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
-                                    # self.registers_used["r"+str(reg)] = 0 # free register
                                     self.asm_nodes.append(new_node)
                                     self.recursive_add_nodes(new_node,node)
 
@@ -602,7 +556,7 @@ class FXCoreDesignerApp(App):
                             continue
 
                     elif conline.start_connector != OUTPUT and conline.start_connector != SPLITTER + 1 and conline.start_connector != SPLITTER + 2: # dont go up a path
-                        self.modify_strings_and_registers(node) #leaving node so modify strings
+                        self.modify_strings_and_registers(node) # leaving node so modify strings
 
                         new_node = asm_node(conline.start_block,self.registers_used)   
                         self.asm_nodes.append(new_node) 
@@ -614,30 +568,36 @@ class FXCoreDesignerApp(App):
                         
         #========================================================= current block is not an input block                    
         else:
-            node.block.conLines.sort(key=lambda x: x.end_connector)# sort list by conline end connector so that control blocks come first
-            node.block.conLines.sort(key=lambda x: x.start_connector)# sort list again by conline start connector
+            node.block.conLines.sort(key=lambda x: x.end_connector) # sort list by conline end connector so that control blocks come first
+            node.block.conLines.sort(key=lambda x: x.start_connector) # sort list again by conline start connector
 
             for conline in node.block.conLines: # loop through block connector lines
 
                 #*****************************************************************************
-                if conline.start_block.name == node.block.name:#if a new line starts on the current iteration block
-                    if conline.end_block.name != prev_node.block.name:#dont add the previous block   
+                if conline.start_block.name == node.block.name: # if a new line starts on the current iteration block
+                    if conline.end_block.name != prev_node.block.name: # dont add the previous block   
 
                         if 'Splitter' in node.block.name:
-                            if(conline.start_connector == SPLITTER + 2):#dont allow the second splitter path to be processed
+                            if(conline.start_connector == SPLITTER + 2): # dont allow the second splitter path to be processed
                                 continue
 
-                        if conline.end_connector == 1: #control connector   
+                        if conline.end_connector == VAL_OUT: # pot or constant
                             if "Constant" in conline.end_block.name:
-                                node.add_control(conline.start_connector,2,conline.end_block.constant) 
+                                node.add_control(conline.start_connector,CONSTANT,conline.end_block.constant) 
                             else:
-                                node.add_control(conline.start_connector,1,conline.end_block.ID) 
-
+                                node.add_control(conline.start_connector,POT,conline.end_block.ID) 
+                        elif conline.end_connector == TAP_OUT:
+                            node.add_control(conline.start_connector,TAP_OUT) 
+                        elif conline.end_connector == SWITCH_OUT:
+                            node.add_control(conline.start_connector,SWITCH_OUT,conline.end_block.ID) 
+                        elif conline.end_connector == USER_BLOCK_IN:
+                            node.add_control(conline.start_connector,USER_BLOCK_IN,conline.end_block.ID)
+                                
                         elif "Mixer" in conline.end_block.name: # mixer block
                             if conline.end_block.usageState == 0: # if this is the first time using this mixer
                                 conline.end_block.usageState = 1  # now set it as used
                                 
-                                self.modify_strings_and_registers(node) #leaving node so modify strings
+                                self.modify_strings_and_registers(node) # leaving node so modify strings
 
                                 save_reg = self.get_free_register() # get the next free register
                                 self.registers_used["r"+str(save_reg)] = conline.end_block.name # set the free register as now used by this block
@@ -651,10 +611,9 @@ class FXCoreDesignerApp(App):
 
                                 self.modify_strings_and_registers(node) #leaving node so modify strings
 
-                                for reg in range(1, 14): #loop through registers r1-r14
+                                for reg in range(1, 14): # loop through registers r1-r14
                                     if self.registers_used["r"+str(reg)] == conline.end_block.name: # if register is used by block
                                         new_node = asm_node(conline.end_block,self.registers_used,conline.end_block.usageState,reg,conline.end_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
-                                        # self.registers_used["r"+str(reg)] = 0 # free register
                                         self.asm_nodes.append(new_node)    
                                         self.recursive_add_nodes(new_node,node)
 
@@ -691,12 +650,18 @@ class FXCoreDesignerApp(App):
                             if(conline.end_connector == SPLITTER + 2):#dont allow the second splitter path to be processed
                                 break   
                             
-                        if conline.start_connector == 1: # control connector  
+                        if conline.start_connector == VAL_OUT: # pot or constant
                             if "Constant" in conline.start_block.name:
-                                node.add_control(conline.end_connector,2,conline.start_block.constant)  
+                                node.add_control(conline.end_connector,CONSTANT,conline.start_block.constant) 
                             else:
-                                node.add_control(conline.end_connector,1,conline.start_block.ID)  
-                            
+                                node.add_control(conline.end_connector,POT,conline.start_block.ID) 
+                        elif conline.start_connector == TAP_OUT:
+                            node.add_control(conline.end_connector,TAP_OUT) 
+                        elif conline.start_connector == SWITCH_OUT:
+                            node.add_control(conline.end_connector,SWITCH_OUT,conline.start_block.ID) 
+                        elif conline.start_connector == USER_BLOCK_IN:
+                            node.add_control(conline.end_connector,USER_BLOCK_IN,conline.start_block.ID)
+
                         elif "Mixer" in conline.start_block.name:
                             if conline.start_block.usageState == 0: # if this is the first time using this mixer
                                 conline.start_block.usageState = 1  # now set it as used
@@ -718,7 +683,6 @@ class FXCoreDesignerApp(App):
                                 for reg in range(1, 14): #loop through registers r1-r14
                                     if self.registers_used["r"+str(reg)] == conline.start_block.name: # if register is used by block
                                         new_node = asm_node(conline.start_block,self.registers_used,conline.start_block.usageState,reg,conline.start_connector) #use the register in the weighted sum with the current acc32, get another free register for storing temp values
-                                        # self.registers_used["r"+str(reg)] = 0 # free register
                                         self.asm_nodes.append(new_node)
                                         self.recursive_add_nodes(new_node,node)
 
@@ -748,7 +712,6 @@ class FXCoreDesignerApp(App):
                                 self.asm_string += new_node.asm_string
                                 break
 
-                        
 
     #-------------------------------------------generate_asm
     def generate_asm(self):

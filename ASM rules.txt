@@ -17,3 +17,6 @@ refences to ramps lfos etc must be wrapped in dollars e.g. rmp0|l4096 -> $rmp$|l
 Dollar signs $ and at signs @ must only be used when tagging, and the correct rules must be followed when tagging
 
 Remember to rename Instructions when replacing inputs and outputs eg. in0 -> r0 = cpy_cs -> cpy_cc
+
+the first user output a block uses should be renamed $USER1$ and a second as $USER2$, e.g. user0|0, -> $USER1$|0, 
+

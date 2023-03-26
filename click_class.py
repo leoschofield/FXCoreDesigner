@@ -1,27 +1,9 @@
 from kivy.uix.widget import Widget
 from block_class import Block
-from config import blocks
+from config import *
 
-TRUE = 1
-FALSE = 0
-
-DRAGGING = 1
-NOT_DRAGGING = 0
-
-SELECTED = 1 
-RELEASED = 0
-
-DONT_ASSIGN_LINE = 0
-ASSIGN_LINE = 1
-
-MOVING = 1
-STILL = 0
-
-DRAG_MODE0 = 0
-DRAG_MODE1 = 1
 
 class Click(Widget):
-    #-------------------------------------------
     def assign_block(self,name,inputNode=0,outputNode=0,nParams=0,nUsers=0,nSwitches=0,tapSwitch=0):
         with self.canvas:
             nameCounter = 0
@@ -62,14 +44,12 @@ class Click(Widget):
                 block = Block(temp,nameCounter,inputNode,outputNode,nParams,nUsers,nSwitches,tapSwitch)
                 blocks.append(block)
                 
-    #--------------------------------------------
     def detect_collisions(self, touch, moving):
         for block in blocks:
             if block.is_touch_detected(touch,moving): 
                 return TRUE
         return FALSE
 
-    #-------------------------------------------
     def on_touch_down(self, touch):
         if blocks != []:
             for block in blocks:
@@ -80,7 +60,6 @@ class Click(Widget):
                             return #don't check for collision with block if dragging a line
             self.detect_collisions(touch,STILL)
 
-    #-------------------------------------------
     def on_touch_move(self, touch):
         if blocks != []:
             for block in blocks:
@@ -90,7 +69,6 @@ class Click(Widget):
                 #         if conLine.dragging == DRAGGING:
                 #             conLine.drag_line(touch,DRAG_MODE0)
 
-    #-------------------------------------------
     def on_touch_up(self,touch):
         for block1 in blocks:
             block1.release_block(touch)
@@ -102,10 +80,16 @@ class Click(Widget):
                                 newConnector = block2.is_inside_connector(touch,DONT_ASSIGN_LINE) #inside a connector of block 2?
                                 if newConnector != 0:                                             # ...yes!
                                     if newConnector is not None:   #here only allow line to stop dragging if inside a valid connector, which depends on the start connector
-                                        if((conLine.start_connector == 10 or conLine.start_connector == 31 or conLine.start_connector == 32) and (newConnector == 11 or newConnector == 21 or newConnector == 22)) or \
-                                            ((conLine.start_connector == 11 or conLine.start_connector == 21 or conLine.start_connector == 22) and (newConnector == 10 or newConnector == 31 or newConnector == 32)) or \
-                                            (conLine.start_connector <=6 and newConnector == 1 and (block2.inputConnector == 0)) or\
-                                            (conLine.start_connector == 1 and (block1.inputConnector == 0) and newConnector <=6):
+                                        if((conLine.start_connector == OUTPUT or conLine.start_connector == SPLITTER+1 or conLine.start_connector == SPLITTER+2) and (newConnector == INPUT or newConnector == MIXER+1 or newConnector == MIXER+2)) or \
+                                            ((conLine.start_connector == INPUT or conLine.start_connector == MIXER + 1 or conLine.start_connector == MIXER + 2) and (newConnector == OUTPUT or newConnector == SPLITTER + 1 or newConnector == SPLITTER + 2)) or \
+                                            (conLine.start_connector <= MAX_PARAMS and newConnector == VAL_OUT) or \
+                                            (conLine.start_connector == VAL_OUT and newConnector <= MAX_PARAMS) or \
+                                            ((conLine.start_connector == USER0OUT or conLine.start_connector == USER1OUT) and newConnector == USER_BLOCK_IN) or \
+                                            (conLine.start_connector == USER_BLOCK_IN and (newConnector == USER0OUT or newConnector == USER1OUT)) or \
+                                            (conLine.start_connector == TAP_IN and newConnector == TAP_OUT) or \
+                                            (conLine.start_connector == TAP_OUT and newConnector == TAP_IN) or \
+                                            (conLine.start_connector == SWITCH_OUT and (newConnector >= SW0_IN and newConnector <= SW4_IN)) or \
+                                            ((conLine.start_connector >= SW0_IN and conLine.start_connector <= SW4_IN) and newConnector == SWITCH_OUT):
                                                 if block2.conLines != []: # block2 has lines?
                                                     for conLine2 in block2.conLines:
                                                         if conLine2.start_block.name == block2.name: #only check the connections that start on block 2

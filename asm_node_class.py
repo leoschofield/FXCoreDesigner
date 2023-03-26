@@ -1,21 +1,5 @@
-import re
+from config import *
 
-PARAM1 = 1
-PARAM2 = 2
-PARAM3 = 3
-PARAM4 = 4
-PARAM5 = 5
-PARAM6 = 6
-MIXER = 20
-SPLITTER = 30
-USER0OUT = 40
-USER1OUT = 41
-TAP_TEMPO = 42
-SW0 = 44
-SW1 = 45
-SW2 = 46
-SW3 = 47
-SW4 = 48
 
 class control_node():
     def __init__(self,param_num, control_type,val):
@@ -23,14 +7,9 @@ class control_node():
         self.control_type = control_type
         self.val = val
 
+
 class asm_node():
 
-    #--------------------------------------------
-    def swap_param_strings(self,search_string,start_string,param_num,new_string):
-        pattern = "$" + search_string + str(param_num)  + "$"
-        self.asm_string =  start_string.replace(pattern,new_string)
-
-    #--------------------------------------------
     def unique_substrings(self, long_string, substring):
         substrings = long_string.split(' ')
         unique_substrings = set()
@@ -39,11 +18,6 @@ class asm_node():
                 unique_substrings.add(string)
         return list(unique_substrings)
 
-    #--------------------------------------------
-    def add_control(self,param_num, control_type,val):
-        temp_control = control_node(param_num, control_type,val)
-        self.controls.append(temp_control)
-
     def add_constant(self, control):
         # Split the long string into individual lines
         lines = self.asm_string.split("\n")
@@ -51,9 +25,9 @@ class asm_node():
         for i in range(len(lines)):
             if "PARAM" + str(control.param_num) in lines[i]:
                 if  "@pot to acc32@" in lines[i]:
-                    lines[i] = "wrdld    acc32, " + str(control.val) + "*32767 ;load constant into parameter register"
+                    lines[i] = "wrdld     acc32, " + str(control.val) + "*32767 ;load constant into parameter register"
                 else:
-                    new_line = "wrdld    REPLACE_ME , " + str(control.val) + "*32767    ;load value 0.5 into parameter register"
+                    new_line = "wrdld     REPLACE_ME , " + str(control.val) + "*32767    ;load value 0.5 into parameter register"
                     start_index = lines[i].find('$REG')
                     end_index = lines[i].find('$', start_index + 1)
                     if start_index >= 0 and end_index > start_index:
@@ -63,17 +37,16 @@ class asm_node():
         # Join the lines back together into a single string
         self.asm_string = "\n".join(lines)
 
-    #--------------------------------------------
     def swap_pots_with_constants(self):
         new_lines = []
         for line in self.asm_string.split("\n"):
             if  "@pot to acc32@" in line:  
                 if "$PARAM" in line:
-                    new_lines.append("wrdld    acc32 , 0.5*32767    ;load value 0.5 into parameter register")
+                    new_lines.append("wrdld     acc32 , 0.5*32767    ;load value 0.5 into parameter register")
                 else:
                     new_lines.append(line)
             elif "$PARAM" in line:
-                    new_line = "wrdld    REPLACE_ME , 0.5*32767    ;load value 0.5 into parameter register"
+                    new_line = "wrdld     REPLACE_ME , 0.5*32767    ;load value 0.5 into parameter register"
                     start_index = line.find('$REG')
                     end_index = line.find('$', start_index + 1)
                     if start_index >= 0 and end_index > start_index:
@@ -86,30 +59,56 @@ class asm_node():
                 new_lines.append(line)
         self.asm_string = "\n".join(new_lines)
 
-    #--------------------------------------------
+    def add_control(self,param_num, control_type,val = 0):
+        new_control = control_node(param_num, control_type,val)
+        self.controls.append(new_control)
+
+    def swap_control_strings(self,search_string,start_string,param_num,new_string):
+        pattern = "$" + search_string + str(param_num)  + "$"
+        self.asm_string =  start_string.replace(pattern,new_string)
+
     def add_controls_to_asm(self):
         if self.controls != []:
             for control in self.controls:
-                if control.control_type == 1: #if using a potentiometer or expression input
-                    if control.val == 0:#val is the potentiometer number, param_num is the number given to the parameter in the asm
-                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"pot0_smth")
-                    elif control.val == 1:
-                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"pot1_smth")
-                    elif control.val == 2:
-                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"pot2_smth")
-                    elif control.val == 3:
-                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"pot3_smth")
-                    elif control.val == 4:
-                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"pot4_smth")
-                    elif control.val == 5:  
-                        self.swap_param_strings("PARAM", self.asm_string, control.param_num,"pot5_smth")
-                elif control.control_type == 2: # if using a constant, val is the constant's value
-                    self.add_constant(control)
-                else: # TODO Buttons, Switches etc
-                    pass
-        self.swap_pots_with_constants()
+                print("control.val",control.val)
+                print("control.control_type", control.control_type)
+                print("control.param_num", control.param_num)
 
-    #-------------------------------------------- add_registers_to_asm 
+                if control.control_type == POT: #if using a potentiometer or expression input
+                    if control.val == 0: # val is the potentiometer number, param_num is the number given to the parameter in the asm
+                        self.swap_control_strings("PARAM", self.asm_string, control.param_num,"pot0_smth")
+                    elif control.val == 1:
+                        self.swap_control_strings("PARAM", self.asm_string, control.param_num,"pot1_smth")
+                    elif control.val == 2:
+                        self.swap_control_strings("PARAM", self.asm_string, control.param_num,"pot2_smth")
+                    elif control.val == 3:
+                        self.swap_control_strings("PARAM", self.asm_string, control.param_num,"pot3_smth")
+                    elif control.val == 4:
+                        self.swap_control_strings("PARAM", self.asm_string, control.param_num,"pot4_smth")
+                    elif control.val == 5:  
+                        self.swap_control_strings("PARAM", self.asm_string, control.param_num,"pot5_smth")
+
+                elif control.control_type == CONSTANT: # if using a constant, val is the constant's value
+                    self.add_constant(control)
+
+                # elif control.control_type == TAP_OUT:
+                #     self.swap_control_strings("TAP", self.asm_string, control.param_num,"tap_asm_string")
+                
+                # elif control.control_type == SWITCH_OUT:
+                #     self.swap_control_strings("SWITCH", self.asm_string, control.param_num,"tap_asm_string")
+
+                elif control.control_type == USER_BLOCK_IN:
+                    if control.val == 0: # USER OUT 0  
+                        self.swap_control_strings("USER", self.asm_string, control.param_num-USER_OUT_BASE,"user0")
+                    elif control.val == 1: # USER OUT 1
+                        self.swap_control_strings("USER", self.asm_string, control.param_num-USER_OUT_BASE,"user1") 
+                    pass
+
+        self.swap_pots_with_constants()
+        # TODO remove unused user out code
+        # TODO remove unused tap tempo code
+        # TODO remove unused switch code
+
     def add_registers_to_asm(self):
         substrings = self.unique_substrings(self.asm_string,"$REG")
         for substring in substrings:
@@ -123,9 +122,7 @@ class asm_node():
                 if self.registers_used[key] == 1:
                     self.registers_used[key] = 0
 
-    #--------------------------------------------
     def get_connector_name(self, connector):
-        print("get_connector_name",connector)
         if connector == PARAM1:
             return self.param1
         if connector == PARAM2:
@@ -142,71 +139,54 @@ class asm_node():
             return self.user0
         if connector == USER1OUT:
             return self.user1
-        if connector == TAP_TEMPO:
+        if connector == TAP_IN:
             return self.tapTempo
-        if connector == SW0:
+        if connector == SW0_IN:
             return self.switch0
-        if connector == SW1:
+        if connector == SW1_IN:
             return self.switch1
-        if connector == SW2:
+        if connector == SW2_IN:
             return self.switch2
-        if connector == SW3:
+        if connector == SW3_IN:
             return self.switch3
-        if connector == SW4:
+        if connector == SW4_IN:
             return self.switch4
-
         else:
             return ""
-    #--------------------------------------------
+    
     def get_free_register(self):
         if self.registers_used["r1"] == 0:
-            print("r1!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 1
         elif self.registers_used["r2"] == 0:
-            print("r2!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 2
         elif self.registers_used["r3"] == 0:
-            print("r3!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 3
         elif self.registers_used["r4"] == 0:
-            print("r4!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 4
         elif self.registers_used["r5"] == 0:
-            print("r5!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 5
         elif self.registers_used["r6"] == 0:
-            print("r6!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 6
         elif self.registers_used["r7"] == 0:
-            print("r7!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 7     
         elif self.registers_used["r8"] == 0:
-            print("r8!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 8      
         elif self.registers_used["r9"] == 0:
-            print("r9!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 9
         elif self.registers_used["r10"] == 0:
-            print("r10!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 10
         elif self.registers_used["r11"] == 0:
-            print("r11!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 11
         elif self.registers_used["r12"] == 0:
-            print("r12!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 12
         elif self.registers_used["r13"] == 0:
-            print("r13!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 13
         elif self.registers_used["r14"] == 0:
-            print("r14!!!!!!!!!!!!!!!!!!!!!!!!!")
             return 14
         # elif self.registers_used["r15"] == 0:
-        #     print("r15!!!!!!!!!!!!!!!!!!!!!!!!!")
         #     return 15
         return None
   
-    #--------------------------------------------
     def __init__(self,block,free_registers = {}, usage_state = 0, free_register = None, connector = 0,):
         
         self.name = block.name
@@ -534,37 +514,35 @@ adds    acc32, $REG_temp$
 
 ; write it to output
 cpy_sc  r0, acc32
-"""
 
-# TODO LED FOR CHORUS
 
-# ; The PWM value becomes updated every 256 samples translating to a
-# ; PWM frequency of 125Hz @32k with 8 bit resolution.
-# ; While this is not exactly a high resolution PWM it might still
-# ; good enough for generating basic control voltages in some applications.
-# ; For driving the LEDs in this case it is perfectly enough.
-# cpy_cs    acc32, samplecnt        ; Get the sample counter
-# andi      acc32, 0xFF             ; Mask b[7:0]
-# jnz       acc32, doPWM            ;
+; The PWM value becomes updated every 256 samples translating to a
+; PWM frequency of 125Hz @32k with 8 bit resolution.
+; While this is not exactly a high resolution PWM it might still
+; good enough for generating basic control voltages in some applications.
+; For driving the LEDs in this case it is perfectly enough.
+cpy_cs    acc32, samplecnt        ; Get the sample counter
+andi      acc32, 0xFF             ; Mask b[7:0]
+jnz       acc32, doPWM            ;
 
-# ; Reload new PWM value from LFOx_s into "bright"
-# cpy_cs    temp, $lfo$_s            ; read in sin wave ranges -1.0 to +1.0 (well, almost)
-# sra       temp, 1                 ; /2 to +/- 1/2
-# addsi     acc32, 0.5              ; ranges 0 to 1
-# sra       acc32, 23               ; shift the PWM value in place
-# cpy_cc    $REG_bright$, acc32           ; save it
+; Reload new PWM value from LFOx_s into "bright"
+cpy_cs    temp, $lfo$_s            ; read in sin wave ranges -1.0 to +1.0 (well, almost)
+sra       temp, 1                 ; /2 to +/- 1/2
+addsi     acc32, 0.5              ; ranges 0 to 1
+sra       acc32, 23               ; shift the PWM value in place
+cpy_cc    $REG_bright$, acc32           ; save it
 
-# doPWM:
-# ; Performing the decrement prior to driving the LED makes sure
-# ; that the LED can go completly off.
-# addi      $REG_bright$, -1              ; suntract 1 from on time
-# cpy_cc    $REG_bright$, acc32           ; Save updated "bright"
-# xor       acc32, acc32            ; Clear acc32 for the LED off case
-# jneg      $REG_bright$, doLED           ;
-# ori       acc32, 1                ; Set acc32[0] for the LED on case
+doPWM:
+; Performing the decrement prior to driving the LED makes sure
+; that the LED can go completly off.
+addi      $REG_bright$, -1              ; suntract 1 from on time
+cpy_cc    $REG_bright$, acc32           ; Save updated "bright"
+xor       acc32, acc32            ; Clear acc32 for the LED off case
+jneg      $REG_bright$, doLED           ;
+ori       acc32, 1                ; Set acc32[0] for the LED on case
 
-# doLED:
-# set       $user0$|0, acc32           ; set the usr1 output per the acc32 LSB"""
+doLED:
+set       $USER1$|0, acc32           ; set the usr1 output per the acc32 LSB"""
 
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -576,8 +554,7 @@ cpy_sc  r0, acc32
             self.param3 = 'Feedback'
             self.param4 = 'Level'
             self.param5 = 'Zero Point'
-            self.tapTempo = 'tap input'
-            self.user0 = 'led0'
+            self.tapTempo = 'Tap Input'
 
             self.directive_string = """
 .equ      $maxdel$        8192  
@@ -658,8 +635,7 @@ cpy_cc    $REG_feedback$ , acc32         ; and save
             self.param2 = 'Rate Back'
             self.param3 = 'Feedback'
             self.param4 = 'Level'
-            self.tapTempo = 'tap input'
-            self.user0 = 'led0'
+            self.tapTempo = 'Tap Input'
 
             self.directive_string = """
 .equ      $maxdel$        8192
@@ -876,3 +852,89 @@ cpy_cc    $REG_feedback$, acc32
 # doLED1:
 # set       user1|0, acc32           ; set the usr0 output per the acc32 LSB"""
 
+
+
+# #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# #/////////////////////////////////////////////  DELAY  ///////////////////////////////////////////////////////////////
+# #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#         if "Looper" in self.name:
+#             self.directive_string = """.mem      delay     dlen
+""""""
+	# 		; set some tap tempo SFR values
+	# 		; adding .i to force integer as we have no idea what a user will pass
+	# 		.sreg.i     MAXtempo  dlen
+
+	# 		; set LP pot control range
+	# 		cpy_cs    r0, LP_POT
+	# 		multri    r0, 0.75
+	# 		addsi     acc32, 0.25
+	# 		cpy_cc    r2, acc32
+
+	# 		; write a 0 to the delay head 
+	# 		xor       acc32, acc32            ; clear acc32
+	# 		wrdel     delay, acc32            ; write 0 to head of delay
+
+	# 		andi      flags, newTT            ; New tap temp?
+	# 		jz        acc32, no_tap           ; if no new tap make no change
+	# 		cpy_cs    r1, taptempo     ; get the tap count into r1
+	# 		sl        r1, 16           ; shift to 31:16
+	# 		cpy_cc    r1, acc32
+
+	# 		no_tap:
+	# 		interp    r1, delay       ; linearly interpolate the result from the delay line
+
+	# 		; Add the dry signal to the delayed signal
+	# 		cpy_cm    r0, in_sig
+	# 		adds      r0, acc32
+
+	# 		; Output it
+	# 		cpy_mc    out_sig, acc32
+
+	# 		; multiply by feedback
+	# 		cpy_cs    r0, FB_POT
+	# 		multrr    acc32, r0
+
+	# 		; LP filter it
+	# 		cpy_cm    r3, LP
+	# 		subs      acc32, r3
+	# 		multrr    acc32, r2
+	# 		adds      acc32, r3
+	# 		cpy_mc    LP, acc32
+
+	# 		; write to delay line
+	# 		wrdel     delay, acc32
+
+	# 		; flash LED at delay rate 50% duty cycle
+	# 		cpy_cm	  r4, blink
+	# 		cpy_cm	  r5, led_state
+	# 		cpy_cm	  r6, old_delay
+	# 		; old delay time - current delay time to see if it has changed
+	# 		sr        r1, 16          ; put calculated delay value into acc32[15:0]
+	# 		cpy_cc    r7, acc32       ; save back
+	# 		xor       acc32, acc32            ; clear acc32
+	# 		subs      r6, r7   ; subtract current calculated delay from old one
+	# 		jz        acc32, same             ; if same jump over saving new value
+	# 		; new value, set LED and update the time
+	# 		ori       r5, 0x1        ; turn on LED
+	# 		cpy_cc    r5, acc32      ; save current state
+	# 		cpy_cc    r6, r7   ; over write the old delay time
+	# 		sr        r7, 1           ; /2 for 50% duty cycle
+	# 		cpy_cc    r4, acc32       ; copy to the blink time
+
+	# 		same:
+	# 		xor       acc32, acc32            ; clear acc32
+	# 		ori       acc32, 1                ; set the LSB
+	# 		subs      r4, acc32       ; subtract it
+	# 		cpy_cc    r4, acc32       ; copy result to r4
+	# 		jnz       acc32,not_zero          ; if not 0 jump over the rest
+	# 		cpy_cc    r6, r7   ; timed out, get the latest count
+	# 		sr        r6, 1            ; load count/2 back in
+	# 		cpy_cc    r4, acc32       ; copy to timer counter
+	# 		xori      r5, 0x1        ; flip user0 state
+	# 		cpy_cc    r5, acc32
+	# 		not_zero:
+	# 		set       user_bit|0, r5     ; bit 0 of r5 is sent to user output
+	# 		cpy_mc	  blink, r4
+	# 		cpy_mc	  led_state, r5
+	# 		cpy_mc	  old_delay, r6"""
