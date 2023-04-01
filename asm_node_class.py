@@ -9,6 +9,25 @@ class control_node():
 
 
 class asm_node():
+    def remove_user_block(self):
+        lines = self.asm_string.split('\n')
+        start_index = None
+        end_index = None
+        for i, line in enumerate(lines):
+            if "@USER START@" in line:
+                start_index = i
+            elif "@USER END@" in line:
+                end_index = i
+                del lines[start_index:end_index+1]
+        return '\n'.join(lines)
+
+    def remove_asm_line(self, text, substr):
+        lines = text.split('\n')
+        for i, line in enumerate(lines):
+            if substr in line:
+                del lines[i]
+                break
+        return '\n'.join(lines)
 
     def unique_substrings(self, long_string, substring):
         substrings = long_string.split(' ')
@@ -70,9 +89,9 @@ class asm_node():
     def add_controls_to_asm(self):
         if self.controls != []:
             for control in self.controls:
-                print("control.val",control.val)
-                print("control.control_type", control.control_type)
-                print("control.param_num", control.param_num)
+                # print("control.val",control.val)
+                # print("control.control_type", control.control_type)
+                # print("control.param_num", control.param_num)
 
                 if control.control_type == POT: #if using a potentiometer or expression input
                     if control.val == 0: # val is the potentiometer number, param_num is the number given to the parameter in the asm
@@ -105,7 +124,7 @@ class asm_node():
                     pass
 
         self.swap_pots_with_constants()
-        # TODO remove unused user out code
+        self.asm_string = self.remove_user_block()
         # TODO remove unused tap tempo code
         # TODO remove unused switch code
 
@@ -284,7 +303,7 @@ class asm_node():
 
         elif "Envelope" in self.name:
             self.param1 = "Sensitivity"
-            self.directive_string = ".equ $env_coeff$ 0.0006 * (2^31 - 1)"
+            self.directive_string = ".equ env_coeff  0.0006 * (2^31 - 1)"
             self.asm_string = """; ##### Envelope follower #####
 ; adjust pot for sensitivity
 cpy_cs    acc32 , $PARAM1$  @pot to acc32@
@@ -292,8 +311,8 @@ multri    acc32 , 0.8
 addsi     acc32 , 0.2
 cpy_cc    $REG_sens$ , acc32
 
-wrdld     $REG_temp$ , $env_coeff$.u       ; load in lp coefficient
-ori       $REG_temp$ , $env_coeff$.l
+wrdld     $REG_temp$ , env_coeff.u       ; load in lp coefficient
+ori       $REG_temp$ , env_coeff.l
 cpy_cc    $REG_temp$ , acc32             ; coeff in temp now
 multrr    r0 , r0                  ; square the signal
 subs      acc32 , $REG_envlp$            ; in - lp
@@ -337,14 +356,14 @@ cpy_cc    $REG_env$ , acc32              ; save to env
             self.param3 = 'Dry Level'
             self.directive_string = """\n
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.equ      $shiftbase$  -1048576      ; shift of +1 octave
+.equ      shiftbase  -1048576      ; shift of +1 octave
 .mem      $pdelay$     4096          ; Define the delay block for the pitch delay
 """
             self.asm_string = """\n
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 cpy_cs    $REG_temp$ , $PARAM1$      ; pitch shift amount
 addsi     $REG_temp$ , -0.5          ; ranges -0.5 to 0.5 in acc32
-wrdld     $REG_temp$ , $shiftbase$.u ; Put upper part of shiftbase into temp
+wrdld     $REG_temp$ , shiftbase.u ; Put upper part of shiftbase into temp
 multrr    acc32 , $REG_temp$         ; Multiply the adjusted param value by shiftbase
 jgez      acc32 , $OK$               ; If positive jump over the multiply by 2
 sls       acc32 , 1                  ; Do the multiply by shifting left 1 bit
@@ -380,6 +399,7 @@ cpy_cc    r0, acc32
             self.param4 = 'Output Level'
             self.directive_string = ""
             self.asm_string = """\n
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISTORTION ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; gain
 cpy_cc    $REG_temp$ , r0
 cpy_cs    $REG_temp2$ , $PARAM1$ 
@@ -455,94 +475,100 @@ cpy_cc    r0 , acc32               ; Send to output
             self.user0 = 'led0'
 
             self.directive_string = """
-.equ    fs          48000
-.equ    flow        .2
-.equ    fhigh       10
-.equ    $pi$        3.14159
-.equ    $clow$      (2^31 - 1) * (2*pi*flow)/fs
-.equ    $chigh$     (2^31 - 1) * (2*pi*fhigh)/fs
-.equ    $cdiff$     chigh - clow
-
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CHORUS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.equ    fs          48000 ; 
+.equ    flow       .2 ; 
+.equ    fhigh       10 ; 
+.equ    pi        3.14159 
+.equ    clow      (2^31 - 1) * (2*pi*flow)/fs
+.equ    chigh     (2^31 - 1) * (2*pi*fhigh)/fs 
+.equ    cdiff     chigh - clow
 .mem    $delay$       1024
  """
             self.asm_string = """
-cpy_cs  $REG_temp$, $PARAM1$       ; read in frequency control pot
-wrdld   acc32, $cdiff$.u           ; load difference between low and high frequency
-ori     acc32, $cdiff$.l
-multrr  $REG_temp$, acc32          ; pot0 * cdiff
-cpy_cc  $REG_temp$, acc32
-wrdld   acc32, $clow$.u            ; load low freq coeff
-ori     acc32, $clow$.l
-adds    acc32, $REG_temp$          ; add low freq
-cpy_sc  $lfo$_f, acc32             ; write to lfo0 frequency control
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CHORUS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cpy_cs  $REG_temp$ , $PARAM1$       ; read in frequency control pot
+wrdld   acc32 , cdiff.u           ; load difference between low and high frequency
+ori     acc32 , cdiff.l
+multrr  $REG_temp$ , acc32          ; pot0 * cdiff
+cpy_cc  $REG_temp$ , acc32
+wrdld   acc32 , clow.u            ; load low freq coeff
+ori     acc32 , clow.l
+adds    acc32 , $REG_temp$          ; add low freq
+cpy_sc  $lfo$_f , acc32             ; write to lfo0 frequency control
 
-cpy_cs  $REG_temp$, $PARAM2$       ; read in depth control pot
-wrdld   acc32, 400
-multrr  $REG_temp$, acc32
-cpy_cc  $REG_r15$, acc32
+cpy_cs  $REG_temp$ , $PARAM2$       ; read in depth control pot
+wrdld   acc32 , 400
+multrr  $REG_temp$ , acc32
+cpy_cc  r15 , acc32
 
-cpy_cs  $REG_temp$, in0
-wrdel   $delay$, $REG_temp$
+cpy_cs  $REG_temp$ , r0
+wrdel   $delay$ , $REG_temp$ 
 
 ; voice 1
 chr     $lfo$|sin $delay$+1400
-cpy_cc  $REG_voice1$, acc32
+cpy_cc  $REG_voice1$ , acc32
 
 ; voice 2
 chr     $lfo$|cos $delay$+256
-cpy_cc  $REG_voice2$, acc32
+cpy_cc  $REG_voice2$ , acc32
 
 ; voice 3
 chr     $lfo$|sin|neg $delay$+16
-cpy_cc  $REG_voice3$, acc32
+cpy_cc  $REG_voice3$ , acc32
 
 ; voice 4
 chr     $lfo$|cos|neg $delay$+768
 
 ; sum the voices
-adds    acc32, $REG_voice3$
-adds    acc32, $REG_voice2$
-adds    acc32, $REG_voice1$
+adds    acc32 , $REG_voice3$ 
+adds    acc32 , $REG_voice2$ 
+adds    acc32 , $REG_voice1$ 
 
 ; get effects level pot and scale effect
-cpy_cs  $REG_temp$, $PARAM3$
-multrr  acc32, $REG_temp$
+cpy_cs  $REG_temp$ , $PARAM3$  
+multrr  acc32 , $REG_temp$ 
 
 ; add in dry
-cpy_cs  $REG_temp$, r0
-adds    acc32, $REG_temp$
+cpy_cc  $REG_temp$ , r0
+adds    acc32 , $REG_temp$ 
 
 ; write it to output
-cpy_sc  r0, acc32
+cpy_cc  r0 , acc32 
 
+; @USER START@
 
 ; The PWM value becomes updated every 256 samples translating to a
 ; PWM frequency of 125Hz @32k with 8 bit resolution.
 ; While this is not exactly a high resolution PWM it might still
 ; good enough for generating basic control voltages in some applications.
 ; For driving the LEDs in this case it is perfectly enough.
-cpy_cs    acc32, samplecnt        ; Get the sample counter
-andi      acc32, 0xFF             ; Mask b[7:0]
-jnz       acc32, doPWM            ;
+cpy_cs    acc32 , samplecnt        ; Get the sample counter
+andi      acc32 , 0xFF             ; Mask b[7:0]
+jnz       acc32 , $doPWM$          ;
 
 ; Reload new PWM value from LFOx_s into "bright"
-cpy_cs    temp, $lfo$_s            ; read in sin wave ranges -1.0 to +1.0 (well, almost)
-sra       temp, 1                 ; /2 to +/- 1/2
-addsi     acc32, 0.5              ; ranges 0 to 1
-sra       acc32, 23               ; shift the PWM value in place
-cpy_cc    $REG_bright$, acc32           ; save it
+cpy_cs    temp , $lfo$_s            ; read in sin wave ranges -1.0 to +1.0 (well, almost)
+sra       temp , 1                 ; /2 to +/- 1/2
+addsi     acc32 , 0.5              ; ranges 0 to 1
+sra       acc32 , 23               ; shift the PWM value in place
+cpy_cc    $REG_bright$ , acc32           ; save it
 
-doPWM:
+$doPWM$:
 ; Performing the decrement prior to driving the LED makes sure
 ; that the LED can go completly off.
-addi      $REG_bright$, -1              ; suntract 1 from on time
-cpy_cc    $REG_bright$, acc32           ; Save updated "bright"
-xor       acc32, acc32            ; Clear acc32 for the LED off case
-jneg      $REG_bright$, doLED           ;
-ori       acc32, 1                ; Set acc32[0] for the LED on case
+addi      $REG_bright$ , -1           ; subtract 1 from on time
+cpy_cc    $REG_bright$ , acc32      ; Save updated "bright"
+xor       acc32 , acc32            ; Clear acc32 for the LED off case
+jneg      $REG_bright$ , $doLED$   ;
+ori       acc32 , 1                ; Set acc32[0] for the LED on case
 
-doLED:
-set       $USER1$|0, acc32           ; set the usr1 output per the acc32 LSB"""
+$doLED$:
+set       $USER1$|0 , acc32           ; set the user output per the acc32 LSB
+; @USER END@
+
+
+"""
 
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

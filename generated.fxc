@@ -1,36 +1,67 @@
 
-
-;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.equ      shiftbase0  -1048576      ; shift of +1 octave
-.mem      pdelay0     4096          ; Define the delay block for the pitch delay
-
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CHORUS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.equ    fs          48000 ; 
+.equ    flow       .2 ; 
+.equ    fhigh       10 ; 
+.equ    pi        3.14159 
+.equ    clow      (2^31 - 1) * (2*pi*flow)/fs
+.equ    chigh     (2^31 - 1) * (2*pi*fhigh)/fs 
+.equ    cdiff     chigh - clow
+.mem    delay0       1024
+ 
 cpy_cs    r0 , in0    ;Input 0
 
-cpy_cc    r0 , r1     ;splitter state 2
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CHORUS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+wrdld     r4 , 0.5*32767    ;load value 0.5 into parameter register
+wrdld   acc32 , cdiff.u           ; load difference between low and high frequency
+ori     acc32 , cdiff.l
+multrr  r4 , acc32          ; pot0 * cdiff
+cpy_cc  r4 , acc32
+wrdld   acc32 , clow.u            ; load low freq coeff
+ori     acc32 , clow.l
+adds    acc32 , r4          ; add low freq
+cpy_sc  lfo0_f , acc32             ; write to lfo0 frequency control
+
+wrdld     r4 , 0.5*32767    ;load value 0.5 into parameter register
+wrdld   acc32 , 400
+multrr  r4 , acc32
+cpy_cc  r15 , acc32
+
+cpy_cs  r4 , r0
+wrdel   delay0 , r4 
+
+; voice 1
+chr     lfo0|sin delay0+1400
+cpy_cc  r1 , acc32
+
+; voice 2
+chr     lfo0|cos delay0+256
+cpy_cc  r2 , acc32
+
+; voice 3
+chr     lfo0|sin|neg delay0+16
+cpy_cc  r3 , acc32
+
+; voice 4
+chr     lfo0|cos|neg delay0+768
+
+; sum the voices
+adds    acc32 , r3 
+adds    acc32 , r2 
+adds    acc32 , r1 
+
+; get effects level pot and scale effect
+wrdld     r4 , 0.5*32767    ;load value 0.5 into parameter register
+multrr  acc32 , r4 
+
+; add in dry
+cpy_cc  r4 , r0
+adds    acc32 , r4 
+
+; write it to output
+cpy_cc  r0 , acc32 
 
 
-;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PITCH SHIFT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cpy_cs    r2 , pot2_smth      ; pitch shift amount
-addsi     r2 , -0.5          ; ranges -0.5 to 0.5 in acc32
-wrdld     r2 , shiftbase0.u ; Put upper part of shiftbase into temp
-multrr    acc32 , r2         ; Multiply the adjusted param value by shiftbase
-jgez      acc32 , OK0               ; If positive jump over the multiply by 2
-sls       acc32 , 1                  ; Do the multiply by shifting left 1 bit
-OK0:
-cpy_sc    ramp0_f , acc32            ; Write the result to the ramp0 frequency control
 
-cpy_cc    r1 , r0           ; Read input
-wrdel     pdelay0 , r1     ; Write it to the delay
 
-pitch     rmp0|l4096 , pdelay0      ; Do the shift, result will be in acc32 
-cpy_cs    r2 , pot3_smth      ; pitch shift level
-multrr    r2 , acc32         ; multiply it
-cpy_cc    r2 , acc32         ; and save to temp
-
-wrdld     acc32 , 0.5*32767    ;load value 0.5 into parameter register
-multrr    acc32 , r1        ; multiply it
-adds      acc32 , r2         ; add result of first shifter
-
-cpy_cc    r0, acc32
-
-cpy_cc    r1 , r0     ;mixer state 1
+cpy_sc    out0 , r0    ;Output 0

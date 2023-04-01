@@ -17,11 +17,11 @@ class MyLine(Widget):
         self.name = "line_"+start_block.name +"_"+str(start_connector)
         self.removed = 0
         with self.canvas:
-            if start_connector == INPUT or start_connector == OUTPUT:
-                Color(0,0.5,1,OPAQUE, mode="rgba") # blue 
+            if start_connector == INPUT or start_connector == OUTPUT or start_connector == MIXER + 1  or start_connector == MIXER + 2:
+                Color(0,0.5,1,OPAQUE, mode="rgba") # blue
             elif "Tap" in start_block.name or start_connector == TAP_IN:
                 Color(1.0,0.0,0.0,OPAQUE, mode="rgba") # red
-            elif "Pot" in start_block.name or "Constant" in start_block.name or "Envelope" in start_block.name or start_connector <= 10:
+            elif "Pot" in start_block.name or "Constant" in start_block.name or "Envelope" in start_block.name or start_connector <= PARAM6:
                 Color(0.50, 0.00, 1.00, OPAQUE)  # purple
             elif "Switch" in start_block.name or (start_connector >= SW0_IN and start_connector <= SW4_IN):
                 Color(1,0.5,0,OPAQUE, mode="rgba") # orange

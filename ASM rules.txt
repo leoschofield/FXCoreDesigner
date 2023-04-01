@@ -1,14 +1,18 @@
 If param going to acc32 tag it in comment with ;@pot to acc32@
 
-Tags like $REG_temp$ must have a space afterwards as the code needs to see the space character to work correctly
+Register tags like $REG_temp$ must have a space afterwards as the code needs to see the space character to work correctly
 
 Parameter tags start at 1 and must be in the form $PAMAM1$ , $PARAM2$ exactly (parameter tags replaces pot registers eg "pot0_smth")
 
 All register names should be renamed like temp -> $REG_temp$ do not add them to the directive as registers are handled automatically
 
+r15 can be left alone
+
 Input to blocks are received from r0 outputs must be passed to r0, currently no support for stereo blocks
 
-Names for .equ and .mems must wrapped with a pair of dollar signs e.g. shiftbase.u -> $shiftbase$.u
+Names .mems must wrapped with a pair of dollar signs e.g. delay -> $delay$
+
+Names for .equs can be left alone
 
 Names for goto labels must be wrapped in dollars OK: -> $OK$: 
 
@@ -20,3 +24,4 @@ Remember to rename Instructions when replacing inputs and outputs eg. in0 -> r0 
 
 the first user output a block uses should be renamed $USER1$ and a second as $USER2$, e.g. user0|0, -> $USER1$|0, 
 
+different blocks must not have a common name for an equ

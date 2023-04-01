@@ -234,7 +234,6 @@ class FXCoreDesignerApp(App):
 
         return self.layout
 
-   #------------------------------------------- mouse hover event
     def key_action(self, *args):
         global blocks
         # print("got a key event: %s" % list(args))
@@ -263,7 +262,6 @@ class FXCoreDesignerApp(App):
         if args[3] == 'c':
             self.change_constant()    
 
-  #-------------------------------------------
     def change_constant(self):
         if self.hover == 1:
 
@@ -282,14 +280,12 @@ class FXCoreDesignerApp(App):
             btn2.bind(on_press = popup.dismiss) 
             popup.open()
 
-  #-------------------------------------------
     def change_constant2(self,val):
         for block in blocks:
             if block.name == self.block_latch:
                 block.constant = round(val,2)
         self.block_latch = None  
 
-  #------------------------------------------- mouse hover event
     def on_mouse_pos(self, window, mousepos):
         myPos = myMousePos() 
         
@@ -317,7 +313,6 @@ class FXCoreDesignerApp(App):
                         if conLine.dragging == DRAGGING: # when first dragging the line keep hold of it until clicked in block or deleted
                             conLine.drag_line(mousepos,DRAG_MODE1)
 
-    #-------------------------------------------clear_screen
     def clear_screen(self):
         box = BoxLayout(orientation = 'vertical', padding = (10))
         btn1 = Button(text = "No")
@@ -332,7 +327,6 @@ class FXCoreDesignerApp(App):
         btn2.bind(on_press = lambda none:self.clear_screen2(popup))
         popup.open()
 
-    #-------------------------------------------clear_screen2
     def clear_screen2(self,popup):       
         global blocks
         blocks = []
@@ -350,7 +344,7 @@ class FXCoreDesignerApp(App):
         #             block.conLines.remove(line)
         #         blocks.remove(block)            
         #     popup.dismiss()
-    #-------------------------------------------    
+        
     def error_trap(self,error):
         
         box = BoxLayout(orientation = 'vertical', padding = (10))
@@ -364,55 +358,54 @@ class FXCoreDesignerApp(App):
         btn1.bind(on_press = popup.dismiss) 
         popup.open()
 
-    #-------------------------------------------
     def get_free_register(self):
         if self.registers_used["r1"] == 0:
+            print("r1!")
             return 1
         elif self.registers_used["r2"] == 0:
+            print("r2!")
             return 2
         elif self.registers_used["r3"] == 0:
+            print("r3!")
             return 3
         elif self.registers_used["r4"] == 0:
+            print("r4!")
             return 4
         elif self.registers_used["r5"] == 0:
+            print("r5!")
             return 5
         elif self.registers_used["r6"] == 0:
+            print("r6!")
             return 6
         elif self.registers_used["r7"] == 0:
+            print("r7!")
             return 7     
         elif self.registers_used["r8"] == 0:
+            print("r8!")
             return 8      
         elif self.registers_used["r9"] == 0:
+            print("r9!")
             return 9
         elif self.registers_used["r10"] == 0:
+            print("r10!")
             return 10
         elif self.registers_used["r11"] == 0:
+            print("r11!")
             return 11
         elif self.registers_used["r12"] == 0:
+            print("r12!")
             return 12
         elif self.registers_used["r13"] == 0:
+            print("r13!")
             return 13
         elif self.registers_used["r14"] == 0:
+            print("r14!")
             return 14
         # elif self.registers_used["r15"] == 0:
         #     return 15
         else:
             self.error_trap("out of reg")
-    
-    #-------------------------------------------
-    def replace_substrings(self, d, s):
-        for k, v in d.items():
-            k2 = '$' + k + '$'
-            s = s.replace(k2, k + str(v - 1))
-        return s
-
-    #-------------------------------------------
-    def add_dicts(self, dict1, dict2):
-        for key in dict2.keys():
-            dict1[key] = dict1.get(key, 0) + dict2[key]
-        return dict1
-
-    #-------------------------------------------
+ 
     def find_names(self, string):
         names_dict = {}
         start_index = 0
@@ -428,14 +421,25 @@ class FXCoreDesignerApp(App):
                 names_dict[name] = 1
             start_index = end_index + 1
         return names_dict
+    
+    def add_dicts(self, dict1, dict2):
+        for key in dict2.keys():
+            dict1[key] = dict1.get(key, 0) + dict2[key]
+        return dict1
+    
+    def replace_substrings(self, dict, string): # replace tagged names in asm and directive with name + name val
+        for k, v in dict.items():
+            k2 = '$' + k + '$'
+            string = string.replace(k2, k + str(v - 1)) # -1 to start from 0
+        return string
 
-    #-------------------------------------------
     def modify_strings_and_registers(self,node):
         node.add_controls_to_asm() # leaving the current node so add its controls
         node.add_registers_to_asm()
                     
         # count occuraces of names so that unique names can be created with replace_substrings
-        dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string)) 
+        dict = self.add_dicts(self.main_names_dict,self.find_names(node.asm_string))
+
         self.asm_string += self.replace_substrings(dict,node.asm_string)
         self.directive_string += self.replace_substrings(dict,node.directive_string)    
 
@@ -446,8 +450,20 @@ class FXCoreDesignerApp(App):
                     if node.usage_state == 1: # break if not finished using mixer yet
                         break
                     self.registers_used["r"+str(reg)] = 0 # free register
-        
-    #-------------------------------------------
+
+    def remove_extra_equ(self,text):
+            lines = text.split('\n')
+            result = []
+            equ_found = set()
+            for line in lines:
+                if '.equ' in line:
+                    if line not in equ_found:
+                        result.append(line)
+                        equ_found.add(line)
+                else:
+                    result.append(line)
+            return '\n'.join(result)
+                        
     def recursive_add_nodes(self,node,prev_node=0):
         if prev_node == 0: # input block condition:
             node.block.conLines.sort(key=lambda x: x.end_connector) # sort list by conline end connector so that control blocks come first
@@ -712,8 +728,6 @@ class FXCoreDesignerApp(App):
                                 self.asm_string += new_node.asm_string
                                 break
 
-
-    #-------------------------------------------generate_asm
     def generate_asm(self):
         self.asm_nodes = []
         self.asm_string = ""
@@ -761,6 +775,7 @@ class FXCoreDesignerApp(App):
         for node in self.asm_nodes:
             print(node.name)
 
+        self.directive_string = self.remove_extra_equ(self.directive_string)
         final_string = self.directive_string + self.asm_string 
         print(final_string)
         
