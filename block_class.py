@@ -433,7 +433,7 @@ class Block(Widget):
                     if conLine.start_connector == INPUT:
                         conLine.move_line(temp[X]+5,temp[Y]+5) 
                 elif conLine.end_block.name == self.name:
-                    if conLine.start_connector == INPUT:
+                    if conLine.end_connector == INPUT:
                         conLine.move_line(temp[X]+5,temp[Y]+5)
             self.input.pos = tuple(temp)
 
