@@ -12,23 +12,23 @@
 cpy_cs    r0 , in0    ;Input 0
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CHORUS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-wrdld     r4 , 0.5*32767    ;load value 0.5 into parameter register
+wrdld     r2 , 0.5*32767    ;load value 0.5 into parameter register
 wrdld   acc32 , cdiff.u           ; load difference between low and high frequency
 ori     acc32 , cdiff.l
-multrr  r4 , acc32          ; pot0 * cdiff
-cpy_cc  r4 , acc32
+multrr  r2 , acc32          ; pot0 * cdiff
+cpy_cc  r2 , acc32
 wrdld   acc32 , clow.u            ; load low freq coeff
 ori     acc32 , clow.l
-adds    acc32 , r4          ; add low freq
+adds    acc32 , r2          ; add low freq
 cpy_sc  lfo0_f , acc32             ; write to lfo0 frequency control
 
-wrdld     r4 , 0.5*32767    ;load value 0.5 into parameter register
+wrdld     r2 , 0.5*32767    ;load value 0.5 into parameter register
 wrdld   acc32 , 400
-multrr  r4 , acc32
+multrr  r2 , acc32
 cpy_cc  r15 , acc32
 
-cpy_cs  r4 , r0
-wrdel   delay0 , r4 
+cpy_cs  r2 , r0
+wrdel   delay0 , r2 
 
 ; voice 1
 chr     lfo0|sin delay0+1400
@@ -36,27 +36,27 @@ cpy_cc  r1 , acc32
 
 ; voice 2
 chr     lfo0|cos delay0+256
-cpy_cc  r2 , acc32
+cpy_cc  r3 , acc32
 
 ; voice 3
 chr     lfo0|sin|neg delay0+16
-cpy_cc  r3 , acc32
+cpy_cc  r4 , acc32
 
 ; voice 4
 chr     lfo0|cos|neg delay0+768
 
 ; sum the voices
+adds    acc32 , r4 
 adds    acc32 , r3 
-adds    acc32 , r2 
 adds    acc32 , r1 
 
 ; get effects level pot and scale effect
-wrdld     r4 , 0.5*32767    ;load value 0.5 into parameter register
-multrr  acc32 , r4 
+wrdld     r2 , 0.5*32767    ;load value 0.5 into parameter register
+multrr  acc32 , r2 
 
 ; add in dry
-cpy_cc  r4 , r0
-adds    acc32 , r4 
+cpy_cc  r2 , r0
+adds    acc32 , r2 
 
 ; write it to output
 cpy_cc  r0 , acc32 

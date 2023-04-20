@@ -21,13 +21,13 @@ class asm_node():
                 del lines[start_index:end_index+1]
         return '\n'.join(lines)
 
-    def remove_asm_line(self, text, substr):
-        lines = text.split('\n')
-        for i, line in enumerate(lines):
-            if substr in line:
-                del lines[i]
-                break
-        return '\n'.join(lines)
+    # def remove_asm_line(self, text, substr):
+    #     lines = text.split('\n')
+    #     for i, line in enumerate(lines):
+    #         if substr in line:
+    #             del lines[i]
+    #             break
+    #     return '\n'.join(lines)
 
     def unique_substrings(self, long_string, substring):
         substrings = long_string.split(' ')
@@ -125,8 +125,9 @@ class asm_node():
 
         self.swap_pots_with_constants()
         self.asm_string = self.remove_user_block()
-        # TODO remove unused tap tempo code
-        # TODO remove unused switch code
+
+        # TODO remove unused tap tempo code function
+        # TODO remove unused switch code function
 
     def add_registers_to_asm(self):
         substrings = self.unique_substrings(self.asm_string,"$REG")
@@ -617,7 +618,7 @@ cpy_cs    acc32 , $PARAM2$         ; read in pot 1
 multrr    acc32 , acc32
 adds      acc32 , $REG_temp$             ; add the minimum value
 cpy_cc    $REG_p1$ , acc32               ; save it
-andi      flags , taplvl           ; get the tap button state
+andi      flags , $TAP_LVL$           ; get the tap button state
 jnz       acc32 , $isnzero$          ; if != 0 jump (pin has pull-up so pressed button is a 0)
 xor       acc32 , acc32            ; clear acc
 ori       acc32 , $sweep$            ; load in a small increment value
@@ -686,7 +687,7 @@ cpy_cs    acc32 , $PARAM2$         ; read in pot 1
 multrr    acc32 , acc32
 adds      acc32 , $REG_temp$             ; add the minimum value
 cpy_cc    $REG_p1$ , acc32               ; save it
-andi      flags , taplvl           ; get the tap button state
+andi      flags , $TAP_LVL$           ; get the tap button state
 jnz       acc32 , $isnzero$          ; if != 0 jump (pin has pull-up so pressed button is a 0)
 xor       acc32 , acc32            ; clear acc
 ori       acc32 , $sweep$            ; load in a small increment value
@@ -725,158 +726,150 @@ cpy_cc    $REG_feedback$, acc32
 # #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 # #/////////////////////////////////////////////  LOOPER  ///////////////////////////////////////////////////////////////
 # #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#         if "Looper" in self.name:
-#             self.directive_string = """
-# ; sw0    - 0: play back recording forward
-# ;          1: playback in reverse
-# ; tap    - press to record, release to play
-# ;
-# ; If user holds tap longer than max recording time then program forces to playback state
+        if "Looper" in self.name:
+            self.directive_string = """
+; sw0    - 0: play back recording forward
+;          1: playback in reverse
+; tap    - press to record, release to play
+;
+; If user holds tap longer than max recording time then program forces to playback state
 
-# .rn      temp      r0
-# .rn      ptr       r1
-# .rn      status    r2
-# .rn      xfade     r3
-# .rn      length    r4
-# .rn      bright    r5
-# .rn      bright2   r6
+; status - 0 : Playback
+;          1 : Record
+;          2 : We are in a forced playback state but not first time
+;          3 : Forced playback state, first time
 
+.creg    $REG_status$    0
+.creg    $REG_ptr$       0
+.creg    $REG_length$    0x100          ; Any value > 0 can be used as a default
+"""
+            self.asm_string = """\n\n
+; first check for a forced playback state where user recorded longer than
+; the 32K samples, special state as we need to ignore certain things
+andi     $REG_status$ , 0x0002           ; are we in a forced playback state?
+jz       acc32 , normal            ; no so either a record or playback
+andi     $REG_status$ , 0x0001           ; first time in forced playback?
+jz       acc32 , force_more        ; if not then check other force issues
+andi     $REG_status$ , 0x0002           ; change status to forced but not first time
+cpy_cc   $REG_status$ , acc32
+xor      acc32 , acc32             ; clear acc32
+cpy_cc   $REG_ptr$ , acc32               ; reset the pointer
+jmp      pb                       ; jump to playback
+force_more:
+andi     flags , $TAP_LVL$            ; get the tap button state
+jz       acc32 , pb                ; if == 0 jump as user is still pushing it (pin has pull-up so pressed button is a 0)
+xor      acc32 , acc32             ; if here user has released it, clear acc32
+cpy_cc   $REG_status$ , acc32            ; set status to playback, do not reset ptr as that should have been done on the first pass
+jmp      pb
 
-# ; status - 0 : Playback
-# ;          1 : Record
-# ;          2 : We are in a forced playback state but not first time
-# ;          3 : Forced playback state, first time
+normal:
+andi     flags , $TAP_LVL$            ; get the tap button state
+jnz      acc32 , playback          ; if != 0 jump (pin has pull-up so pressed button is a 0)
+andi     $REG_status$ , 0x0001           ; tap button pushed (is 0), was the last state record?
+jnz      acc32 , record            ; yes, continue recording
+xor      acc32 , acc32             ; nope, so starting a new recording
+cpy_cc   $REG_ptr$ , acc32               ; reset pointer
+cpy_cc   $REG_length$ , acc32            ; and length count
+jmp      record                   ; and record
 
-# .creg    status    0
-# .creg    ptr       0
-# .creg    length    0x100          ; Any value > 0 can be used as a default
-# """
-#             self.asm_string = """\n\n
-# ; first check for a forced playback state where user recorded longer than
-# ; the 32K samples, special state as we need to ignore certain things
-# andi     status, 0x0002           ; are we in a forced playback state?
-# jz       acc32, normal            ; no so either a record or playback
-# andi     status, 0x0001           ; first time in forced playback?
-# jz       acc32, force_more        ; if not then check other force issues
-# andi     status, 0x0002           ; change status to forced but not first time
-# cpy_cc   status, acc32
-# xor      acc32, acc32             ; clear acc32
-# cpy_cc   ptr, acc32               ; reset the pointer
-# jmp      pb                       ; jump to playback
-# force_more:
-# andi     flags, taplvl            ; get the tap button state
-# jz       acc32, pb                ; if == 0 jump as user is still pushing it (pin has pull-up so pressed button is a 0)
-# xor      acc32, acc32             ; if here user has released it, clear acc32
-# cpy_cc   status, acc32            ; set status to playback, do not reset ptr as that should have been done on the first pass
-# jmp      pb
+playback:
+; Playback
+andi     $REG_status$ , 0x0001           ; was the last state record?
+jz       acc32 , pb                ; no, continue playback
+xor      acc32 , acc32             ; yes it was
+cpy_cc   $REG_ptr$ , acc32               ; reset pointer
+cpy_cc   $REG_status$ , acc32            ; set status to playback
+pb:
+rddirx   acc32 , $REG_ptr$               ; read from current pointer position
+cpy_cs   $REG_temp$ , r0                ; get the input
+adds     acc32 , $REG_temp$              ; add them
+cpy_sc   r0 , acc32              ; write to output
 
+; read switch
+cpy_cs   acc32 , switch
+andi     acc32 , $SW1$
+jz       acc32 , forward           ; if switch 0 is 0 then forward playback
+jz       $REG_ptr$ , $ptr_zero$            ; playing back backwards, if ptr is zero we need to reset it
+subs     $REG_ptr$ , acc32               ; since the lsb was left set in the above andi we can just subtract
+cpy_cc   $REG_ptr$ , acc32               ; copy updated pointer
+jmp      $over$                     ; and jump past rest
+$ptr_zero$:
+subs     $REG_length$ , acc32            ; pointer was zero, need to rest to end
+cpy_cc   $REG_ptr$ , acc32               ; which was easy as the lsb was set in acc32 already
+jmp      $over$                     ; so just subtract it from the length, save it and jump
 
-# normal:
-# andi     flags, taplvl            ; get the tap button state
-# jnz      acc32, playback          ; if != 0 jump (pin has pull-up so pressed button is a 0)
-# andi     status, 0x0001           ; tap button pushed (is 0), was the last state record?
-# jnz      acc32, record            ; yes, continue recording
-# xor      acc32, acc32             ; nope, so starting a new recording
-# cpy_cc   ptr, acc32               ; reset pointer
-# cpy_cc   length, acc32            ; and length count
-# jmp      record                   ; and record
+forward:
+xor      acc32 , acc32             ; clear the acc32
+ori      acc32 , 0x0001            ; set lsb
+add      $REG_ptr$ , acc32               ; add to current ptr
+cpy_cc   $REG_ptr$ , acc32               ; save it
+subs     $REG_ptr$ , $REG_length$              ; ptr - length
+jnz      acc32 , $over$              ; if !=0 then not at end jump over the rest
+xor      acc32 , acc32             ; if 0 then load 0 into acc32
+cpy_cc   $REG_ptr$ , acc32               ; copy to ptr
+jmp      $over$                     ; jump to end
 
-# playback:
-# ; Playback
-# andi     status, 0x0001           ; was the last state record?
-# jz       acc32, pb                ; no, continue playback
-# xor      acc32, acc32             ; yes it was
-# cpy_cc   ptr, acc32               ; reset pointer
-# cpy_cc   status, acc32            ; set status to playback
-# pb:
-# rddirx   acc32, ptr               ; read from current pointer position
-# cpy_cs   temp, in0                ; get the dry
-# adds     acc32, temp              ; add them
-# cpy_sc   out0, acc32              ; write to output
-# cpy_sc   out1, acc32              ; and to other output
-# ; read sw0
-# cpy_cs   acc32, switch
-# andi     acc32, sw0
-# jz       acc32, forward           ; if switch 0 is 0 then forward playback
-# jz       ptr, ptr_zero            ; playing back backwards, if ptr is zero we need to reset it
-# subs     ptr, acc32               ; since the lsb was left set in the above andi we can just subtract
-# cpy_cc   ptr, acc32               ; copy updated pointer
-# jmp      over                     ; and jump past rest
-# ptr_zero:
-# subs     length, acc32            ; pointer was zero, need to rest to end
-# cpy_cc   ptr, acc32               ; which was easy as the lsb was set in acc32 already
-# jmp      over                     ; so just subtract it from the length, save it and jump
+record:
+; read input and write to delay
+xor      acc32 , acc32             ; set status to record
+ori      acc32 , 0x0001
+cpy_cc   $REG_status$ , acc32
+cpy_cs   $REG_temp$ , r0                ; read input
+wrdirx   $REG_ptr$ , $REG_temp$                ; write to delay
+cpy_cc   r0 , $REG_temp$               ; send to out
 
-# forward:
-# xor      acc32, acc32             ; clear the acc32
-# ori      acc32, 0x0001            ; set lsb
-# add      ptr, acc32               ; add to current ptr
-# cpy_cc   ptr, acc32               ; save it
-# subs     ptr, length              ; ptr - length
-# jnz      acc32, over              ; if !=0 then not at end jump over the rest
-# xor      acc32, acc32             ; if 0 then load 0 into acc32
-# cpy_cc   ptr, acc32               ; copy to ptr
-# jmp      over                     ; jump to end
+xor      acc32 , acc32             ; clear acc32
+ori      acc32 , 0x0001            ; set lsb
+add      $REG_ptr$ , acc32               ; add to current ptr
+cpy_cc   $REG_ptr$ , acc32               ; save it
+cpy_cc   $REG_length$ , acc32            ; and save to length
+xori     $REG_length$ , 0x8000           ; XOR length with 0x8000
+jnz      acc32 , $over$              ; if not 0 then not at max count
+ori      acc32 , 0x0003            ; passed the end, forced playback
+cpy_cc   $REG_status$ , acc32
 
-# record:
-# ; read input and write to delay
-# xor      acc32, acc32             ; set status to record
-# ori      acc32, 0x0001
-# cpy_cc   status, acc32
-# cpy_cs   temp, in0                ; read input 0
-# wrdirx   ptr, temp                ; write to delay
-# cpy_sc   out0, temp               ; and to out0
-# cpy_sc   out1, temp               ; and to out1
-# xor      acc32, acc32             ; clear acc32
-# ori      acc32, 0x0001            ; set lsb
-# add      ptr, acc32               ; add to current ptr
-# cpy_cc   ptr, acc32               ; save it
-# cpy_cc   length, acc32            ; and save to length
-# xori     length, 0x8000           ; XOR length with 0x8000
-# jnz      acc32, over              ; if not 0 then not at max count
-# ori      acc32, 0x0003            ; passed the end, forced playback
-# cpy_cc   status, acc32
+$over$:
+@USER start@
+cpy_cs    acc32 , samplecnt        ; Get the sample counter
+andi      acc32 , 0xFF             ; Mask b[7:0]
+jnz       acc32 , $doPWM0$           ;
 
+sr        $REG_ptr$ , 8 
+cpy_cc    $REG_bright$ , acc32           ; save it
 
-# over:
-# cpy_cs    acc32, samplecnt        ; Get the sample counter
-# andi      acc32, 0xFF             ; Mask b[7:0]
-# jnz       acc32, doPWM0           ;
+$doPWM0$:
+; Performing the decrement prior to driving the LED makes sure
+; that the LED can go completly off.
+addi      $REG_bright$ , -1              ; subtract 1 from on count
+cpy_cc    $REG_bright$ , acc32           ; Save updated "bright"
+xor       acc32 , acc32            ; Clear acc32 for the LED off case
+jneg      $REG_bright$ , $doLED0$          ;
+ori       acc32 , 1                ; Set acc32[0] for the LED on case
 
-# sr        ptr, 8
-# cpy_cc    bright, acc32           ; save it
+$doLED0$:
+set       user0|0 , acc32           ; set the usr0 output per the acc32 LSB
 
-# doPWM0:
-# ; Performing the decrement prior to driving the LED makes sure
-# ; that the LED can go completly off.
-# addi      bright, -1              ; subtract 1 from on count
-# cpy_cc    bright, acc32           ; Save updated "bright"
-# xor       acc32, acc32            ; Clear acc32 for the LED off case
-# jneg      bright, doLED0          ;
-# ori       acc32, 1                ; Set acc32[0] for the LED on case
+; PWM usr1
+cpy_cs    acc32 , samplecnt        ; Get the sample counter
+andi      acc32 , 0xFF             ; Mask b[7:0]
+jnz       acc32 , $doPWM1$           ;
 
-# doLED0:
-# set       user0|0, acc32           ; set the usr0 output per the acc32 LSB
+sr        $REG_length$ , 8
+cpy_cc    $REG_bright2$ , acc32          ; save it
 
-# ; PWM usr1
-# cpy_cs    acc32, samplecnt        ; Get the sample counter
-# andi      acc32, 0xFF             ; Mask b[7:0]
-# jnz       acc32, doPWM1           ;
+$doPWM1$:
+; Performing the decrement prior to driving the LED makes sure
+; that the LED can go completly off.
+addi      $REG_bright2$ , -1             ; subtract 1 from on count
+cpy_cc    $REG_bright2$ , acc32          ; Save updated "bright"
+xor       acc32 , acc32            ; Clear acc32 for the LED off case
+jneg      $REG_bright2$ , $doLED1$         ;
+ori       acc32 , 1                ; Set acc32[0] for the LED on case
 
-# sr        length, 8
-# cpy_cc    bright2, acc32          ; save it
-
-# doPWM1:
-# ; Performing the decrement prior to driving the LED makes sure
-# ; that the LED can go completly off.
-# addi      bright2, -1             ; subtract 1 from on count
-# cpy_cc    bright2, acc32          ; Save updated "bright"
-# xor       acc32, acc32            ; Clear acc32 for the LED off case
-# jneg      bright2, doLED1         ;
-# ori       acc32, 1                ; Set acc32[0] for the LED on case
-
-# doLED1:
-# set       user1|0, acc32           ; set the usr0 output per the acc32 LSB"""
+$doLED1$:
+set       $USER1$|0 , acc32           ; set the usr0 output per the acc32 LSB
+@USER END@
+"""
 
 
 
@@ -884,83 +877,335 @@ cpy_cc    $REG_feedback$, acc32
 # #/////////////////////////////////////////////  DELAY  ///////////////////////////////////////////////////////////////
 # #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#         if "Looper" in self.name:
-#             self.directive_string = """.mem      delay     dlen
-""""""
-	# 		; set some tap tempo SFR values
-	# 		; adding .i to force integer as we have no idea what a user will pass
-	# 		.sreg.i     MAXtempo  dlen
+        if "Delay" in self.name:
+            self.param1 = 'Delay Time'
+            self.param2 = 'Feedback'
+            self.param3 = 'LP Filter'
+            self.tapTempo = 'Tap Input'
+            self.switch0 = " Division Bit 0"
+            self.switch1 = " Division Bit 1"
+            self.user0 = "Delay Time Blink"
+            self.user1 = "Pot or Tap Mode"
 
-	# 		; set LP pot control range
-	# 		cpy_cs    r0, LP_POT
-	# 		multri    r0, 0.75
-	# 		addsi     acc32, 0.25
-	# 		cpy_cc    r2, acc32
+            self.directive_string = """
+.rn       temp      r0
+.rn       temp1     r1
+.rn       calc_delay       r2     ; final calculated delay after any divisions for 1/8th, etc
+.rn       lp_con    r3            ; low-pass control register
+.rn       lp        r4            ; lp filter
+.rn       old_pot   r5            ; old pot time
+.rn       act_count r6            ; holds active delay count from tap tempo
+.rn       potnot_tap       r7     ; 0 means pot, 1 means tap tempo
+.rn       blink_time       r8     ; blink time
+.rn       user0_state      r9     ; user0 state
+.rn       old_delay r10           ; old delay count
 
-	# 		; write a 0 to the delay head 
-	# 		xor       acc32, acc32            ; clear acc32
-	# 		wrdel     delay, acc32            ; write 0 to head of delay
+.equ      delay_len 32767
 
-	# 		andi      flags, newTT            ; New tap temp?
-	# 		jz        acc32, no_tap           ; if no new tap make no change
-	# 		cpy_cs    r1, taptempo     ; get the tap count into r1
-	# 		sl        r1, 16           ; shift to 31:16
-	# 		cpy_cc    r1, acc32
+; Define the delay line
+.mem      delay     delay_len
 
-	# 		no_tap:
-	# 		interp    r1, delay       ; linearly interpolate the result from the delay line
+; pot smoothing
+.sreg     pot0_k    12
 
-	# 		; Add the dry signal to the delayed signal
-	# 		cpy_cm    r0, in_sig
-	# 		adds      r0, acc32
+; preset MAXTEMPO to the delay line length, time out should be
+; equal to or shorter than the delay length
+.sreg     MAXTEMPO  delay_len
 
-	# 		; Output it
-	# 		cpy_mc    out_sig, acc32
+; since TAPTEMPO and TAPSTKRLD are calculated and we expect
+; equations to resolve to values between -1.0 and +0.99...
+; we inform the assembler we really want to use integer results
+; by appending ".i" to the .sreg directive
 
-	# 		; multiply by feedback
-	# 		cpy_cs    r0, FB_POT
-	# 		multrr    acc32, r0
+; preset the starting TAPTEMPO value to half the delay
+.sreg.i   TAPTEMPO  delay_len/2
 
-	# 		; LP filter it
-	# 		cpy_cm    r3, LP
-	# 		subs      acc32, r3
-	# 		multrr    acc32, r2
-	# 		adds      acc32, r3
-	# 		cpy_mc    LP, acc32
+; set the "sticky" time to 1/2 the max delay time
+; careful to not make this too short else every button
+; press can look sticky
+.sreg.i   TAPSTKRLD delay_len/2
 
-	# 		; write to delay line
-	# 		wrdel     delay, acc32
+; set debounce time, must be shorter than the sticky time
+.sreg.i   TAPDBRLD  delay_len/128
 
-	# 		; flash LED at delay rate 50% duty cycle
-	# 		cpy_cm	  r4, blink
-	# 		cpy_cm	  r5, led_state
-	# 		cpy_cm	  r6, old_delay
-	# 		; old delay time - current delay time to see if it has changed
-	# 		sr        r1, 16          ; put calculated delay value into acc32[15:0]
-	# 		cpy_cc    r7, acc32       ; save back
-	# 		xor       acc32, acc32            ; clear acc32
-	# 		subs      r6, r7   ; subtract current calculated delay from old one
-	# 		jz        acc32, same             ; if same jump over saving new value
-	# 		; new value, set LED and update the time
-	# 		ori       r5, 0x1        ; turn on LED
-	# 		cpy_cc    r5, acc32      ; save current state
-	# 		cpy_cc    r6, r7   ; over write the old delay time
-	# 		sr        r7, 1           ; /2 for 50% duty cycle
-	# 		cpy_cc    r4, acc32       ; copy to the blink time
+; Initialize potnot_tap to 0 to select POT at startup
+.creg     potnot_tap     0
 
-	# 		same:
-	# 		xor       acc32, acc32            ; clear acc32
-	# 		ori       acc32, 1                ; set the LSB
-	# 		subs      r4, acc32       ; subtract it
-	# 		cpy_cc    r4, acc32       ; copy result to r4
-	# 		jnz       acc32,not_zero          ; if not 0 jump over the rest
-	# 		cpy_cc    r6, r7   ; timed out, get the latest count
-	# 		sr        r6, 1            ; load count/2 back in
-	# 		cpy_cc    r4, acc32       ; copy to timer counter
-	# 		xori      r5, 0x1        ; flip user0 state
-	# 		cpy_cc    r5, acc32
-	# 		not_zero:
-	# 		set       user_bit|0, r5     ; bit 0 of r5 is sent to user output
-	# 		cpy_mc	  blink, r4
-	# 		cpy_mc	  led_state, r5
-	# 		cpy_mc	  old_delay, r6"""
+; set user0 led state
+.creg     user0_state    0x1
+
+; set multiply factors into mregs, don't need to set 0
+.mreg     mr1       0.5           ; 1/8 note
+.mreg     mr2       0.3333333     ; triplet
+.mreg     mr3       0.25          ; 1/16 note
+"""
+
+            self.asm_string = """
+
+; set LP pot control range
+cpy_cs    $REG_temp$, pot2_smth
+multri    $REG_temp$, 0.75
+addsi     acc32, 0.25
+cpy_cc    lp_con, acc32
+
+; write a 0 to the delay head in case user sets pot to 0
+xor       acc32, acc32            ; clear acc32
+wrdel     delay, acc32            ; write 0 to head of delay
+
+; are we "sticky"?
+andi      flags, TapStky          ; check bit 4 for a sticky event
+jz        acc32, next             ; if not sticky jump past rest
+andi      flags, TB2nTB1          ; isolate the tap button and check if it is tap 1 or 2
+jnz       acc32, next             ; if set then tap 2 sticky event so jump over rest
+andi      potnot_tap, 0x0000      ; if here we got a tap 1 sticky so clear potnot_tap to use POT
+cpy_cc    potnot_tap, acc32
+jmp       no_tap                  ; jump to delay code
+
+next:
+; decide POT or tap
+; Do we have a new TAP count?
+andi      flags, newTT            ; New tap tempo?
+jz        acc32, no_tap           ; if no new tap make no change
+ori       potnot_tap, 0x0001      ; set the lsb to indicate we now use tt
+cpy_cc    potnot_tap, acc32       ; save it
+cpy_cs    act_count, taptempo     ; get the tap count into act_count
+sl        act_count, 16           ; shift to 31:16
+cpy_cc    act_count, acc32
+jmp       $do_delay$
+
+; if here no new tap but decide if we need to update count from the POT
+; we need a little hystersis on the POT because even with smoothing it can
+; time to settle and the LSB to stop moving. While we can not hear this
+; the difference in value looks like a change to the LED flashing routine
+; so only update value if it changes by more than 0.01
+no_tap:
+andi      potnot_tap, 0x0001      ; if lsb is 1 then we are in tap mode, no pot update
+jnz       acc32, $do_delay$         ; not 0 so using tap count from above
+cpy_cs    $REG_temp$, pot0_smth         ; read in the pot value to temp1
+wrdld     $REG_temp1$, delay!           ; get length of the delay into temp[31:16]
+multrr    $REG_temp$, $REG_temp1$             ; multiply for final length
+cpy_cc    act_count, acc32        ; save delay time which has the integer portion in [31:16] and the interpolation coeff in [15:0]
+
+
+$do_delay$:
+; act_count holds the delay time so check if switches set to divide count
+cpy_cc    calc_delay, act_count   ; copy full count into calc_delay
+cpy_cs    $REG_temp$, switch            ; get switch states
+andi      $REG_temp$, $SW1$|$SW2$           ; keep two switch states
+jz        acc32, $go_delay$         ; if switches 0 then no divider and jump over rest
+cpy_cmx   $REG_temp$, acc32             ; else use the switches as a pointer to mregs to get divisor
+multrr    calc_delay, $REG_temp$        ; multiply by it
+cpy_cc    calc_delay, acc32       ; and move to temp1
+
+$go_delay$:
+interp    calc_delay, delay       ; linearly interpolate the result from the delay line
+
+; Add the dry signal to the delayed signal
+cpy_cs    $REG_temp$, r0
+adds      $REG_temp$, acc32
+
+; Output it
+cpy_cc    r0, acc32
+
+; multiply by feedback
+cpy_cs    $REG_temp$, pot1
+multrr    acc32, $REG_temp$
+
+; lp filter it
+subs      acc32, lp
+multrr    acc32, lp_con
+adds      acc32, lp
+cpy_cc    lp, acc32
+
+; write to delay line
+wrdel     delay, acc32
+
+@USER START@
+; flash LED at delay rate 50% duty cycle
+; old delay time - current delay time to see if it has changed
+sr        calc_delay, 16          ; put calculated delay value into acc32[15:0]
+cpy_cc    calc_delay, acc32       ; save back
+xor       acc32, acc32            ; clear acc32
+ori       acc32, 1024             ; load 1024 into acc32[15:0]
+cpy_cc    $REG_temp$, acc32             ; save in temp
+subs      old_delay, calc_delay   ; subtract current calculated delay from old one
+abs       acc32                   ; absolute value
+subs      acc32, $REG_temp$             ; difference minus 1024
+jneg      acc32, same             ; if negative then difference less than 1024 so jump over saving new value
+; new value, set LED and update the time
+ori       user0_state, 0x1        ; turn on LED
+cpy_cc    user0_state, acc32      ; save current state
+cpy_cc    old_delay, calc_delay   ; over write the old delay time
+sr        calc_delay, 1           ; /2 for 50% duty cycle
+cpy_cc    blink_time, acc32       ; copy to the blink time
+
+same:
+xor       acc32, acc32            ; clear acc32
+ori       acc32, 1                ; set the LSB
+subs      blink_time, acc32       ; subtract it
+cpy_cc    blink_time, acc32       ; copy result to blink_time
+jnz       acc32,not_zero          ; if not 0 jump over the rest
+cpy_cc    old_delay, calc_delay   ; timed out, get the latest count
+sr        old_delay, 1            ; load count/2 back in
+cpy_cc    blink_time, acc32       ; copy to timer counter
+xori      user0_state, 0x1        ; flip user0 state
+cpy_cc    user0_state, acc32
+not_zero:
+set       user0|0, user0_state     ; bit 0 of user0_state is sent to user0 output
+
+set       user1|0, potnot_tap      ; bit 0 of potnot_tap is sent to user1 output
+@USER END@   
+"""
+
+# #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# #/////////////////////////////////////////////  PHASER  ///////////////////////////////////////////////////////////////
+# #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+# ;
+# ; Phase shifter from AN-5
+# ; Mono in/out
+# ;
+# ; S1:S0 select 2,4,6 or 8 stages
+# ; POT0 : rate
+# ; POT1 : sweep range
+# ; POT2 : resonance (feedback)
+# ; POT3 : depth (mix)
+# ; mr0 - mr7 are the AP delays
+# ; mr8 - mr11 hold the result from each 2 stages for later selection
+
+# .rn       temp      r0            ; Temporary register
+# .rn       feedback  r1            ; Holds feedback
+# .rn       kcoeff    r2            ; K coefficient for all-pass filters
+# .rn       input     r3            ; Input from in0
+# .rn       count     r4            ; Window for the PWM
+# .rn       bright    r5            ; Number of states in count the LED is on, i.e. PWM width
+
+# .equ      lfomax    2058874       ; LFO max about 5Hz at 32K, see an-3 for equations
+# .equ      maxfb     0.875         ; Max feedback level
+# .equ      rangebase -0.45*32767   ; We want the K for the APs to range from about -0.5 to -0.95
+#                                   ; but the "wrld" instruction want an unsigned 16-bit value so we
+#                                   ; play a trick with the assembler, we calculate the 16-bit signed
+#                                   ; number but use the ".l" extension when we use the value in wrdld
+#                                   ; as adding .l forces the assembler to treat the number as an
+#                                   ; integer and mask off the lower 16-bits as an unsigned number
+
+# ; First set up the rate pot
+# cpy_cs    temp, pot0_smth         ; read POT0 into temp
+# multrr    temp, temp              ; square it so more control at lower range, result in acc32
+# wrdld     temp, lfomax.u          ; since wrdld uses just a 16-bit value use upper 16 bits, we could
+#                                   ; load the full 32-bit number but the max lfo speed is not critical
+#                                   ; in this program so losing the lower 16-bits is not an issue
+# multrr    acc32, temp             ; multiply pot by max range
+# cpy_sc    lfo0_f, acc32           ; write it to LFO0 frequency control
+
+# ; get the sin wave range -0.45 to -0.95 save in kcoeff
+# ; NOTE: Phasers want a positive feed forward and negative feed back
+# ; so make K negative as apma inverts in the feedback path and apmb does not
+# cpy_cs    temp, lfo0_s            ; read in sin wave ranges -1.0 to +1.0 (well, almost)
+# sra       temp, 2                 ; divide by 4 via right shift so ranges +/- 0.25
+# addsi     acc32, -0.25            ; now ranges 0 to -0.5
+# cpy_cs    temp, pot1_smth         ; get the range pot
+# multrr    temp, acc32             ; scale, result in acc32
+# wrdld     temp, rangebase.l       ; load in the base of -0.45 that we force the assembler to treat as unsigned
+# adds      temp, acc32             ; add base so range can go from -0.45 to -0.95
+# cpy_cc    kcoeff, acc32           ; save K in kcoeff for the APs
+
+# ; get source and add feedback
+# cpy_cs    input, in0              ; read from channel 0, put in input as we will want it later and working from core
+#                                   ; registers is faster than mregs
+# adds      input, feedback         ; add feedback from feedback
+
+# ; shift 6 bits down to avoid clipping APs, recover at end.
+# sra       acc32, 6                ; divide by 64 for headroom
+
+# ; Do the 8 all passes saving the result every 2 APs for later selection
+# apma      kcoeff, mr0             ; AP 1
+# apmb      kcoeff, mr0
+
+# apma      kcoeff, mr1             ; AP 2
+# apmb      kcoeff, mr1
+
+# cpy_mc    mr8, acc32              ; Save result for 2 stages
+
+# apma      kcoeff, mr2             ; AP 3
+# apmb      kcoeff, mr2
+
+# apma      kcoeff, mr3             ; AP 4
+# apmb      kcoeff, mr3
+
+# cpy_mc    mr9, acc32              ; Save result for 4 stages
+
+# apma      kcoeff, mr4             ; AP 5
+# apmb      kcoeff, mr4
+
+# apma      kcoeff, mr5             ; AP 6
+# apmb      kcoeff, mr5
+
+# cpy_mc    mr10, acc32             ; Save result for 6 stages
+
+# apma      kcoeff, mr6             ; AP 7
+# apmb      kcoeff, mr6
+
+# apma      kcoeff, mr7             ; AP 8
+# apmb      kcoeff, mr7
+
+# cpy_mc    mr11, acc32             ; Save result for 8 stages
+
+
+# ; Look at the switches and select the number of stages accordingly
+# cpy_cs    temp, switch            ; read in the switch sfr
+# andi      temp, sw0|sw1           ; only keep S0 and S1
+# cpy_cc    temp, acc32             ; save them
+# andi      acc32, 0                ; clear acc32
+# ori       acc32, 0x0008           ; put 8 into acc32
+# add       acc32, temp             ; add the switchs to acc32 so ranges 8 to 11 which happens
+#                                   ; to be the MRs used to save the AP results
+# cpy_cmx   temp, acc32             ; use acc32 as the pointer to the mreg to read
+
+# sls       temp, 6                 ; multiply by 64 to recover from the initial shift, result in acc32
+
+# ; use POT3 for mix level, full CCW is all dry (in0), full CW is full phase shifter output (fpo)
+# subs      acc32, input            ; acc32 = fpo - in0
+# cpy_cs    temp, pot3_smth         ; POT3 placed in temp
+# multrr    temp, acc32             ; acc32 = acc32 * POT3 = POT3*(fpo - in0)
+# adds      acc32, input            ; acc32 = acc32 + in0 = POT3*(fpo - in0) + in0
+
+# ; write to output
+# cpy_sc    out0, acc32             ; output it!
+# cpy_sC    out1, acc32
+
+# ; adjust feedback level
+# cpy_cs    r1, pot2_smth           ; Read POT2
+# multrr    acc32, r1               ; Multiply the output by the feedback
+# wrdld     temp, maxfb*32768       ; We defined maxfb above as a decimal but need it to be unsigned 16-bit for wrdld
+# multrr    acc32, temp             ; Multiply by limit
+# cpy_cc    feedback, acc32         ; save it in feedback for next time
+
+
+# ; The PWM value becomes updated every 256 samples translating to a
+# ; PWM frequency of 125Hz @32k with 8 bit resolution.
+# ; While this is not exactly a high resolution PWM it might still
+# ; good enough for generating basic control voltages in some applications.
+# ; For driving the LEDs in this case it is perfectly enough.
+# cpy_cs    acc32, samplecnt        ; Get the sample counter
+# andi      acc32, 0xFF             ; Mask b[7:0]
+# jnz       acc32, doPWM            ;
+
+# ; Reload new PWM value from LFO0_s into "bright"
+# cpy_cs    temp, lfo0_s            ; read in sin wave ranges -1.0 to +1.0 (well, almost)
+# sra       temp, 1                 ; /2 to +/- 1/2
+# addsi     acc32, 0.5              ; ranges 0 to 1
+# sra       acc32, 23               ; shift the PWM value in place
+# cpy_cc    bright, acc32           ; save it
+
+# doPWM:
+# ; Performing the decrement prior to driving the LED makes sure
+# ; that the LED can go completly off.
+# addi      bright, -1              ; subtract 1 from on count
+# cpy_cc    bright, acc32           ; Save updated "bright"
+# xor       acc32, acc32            ; Clear acc32 for the LED off case
+# jneg      bright, doLED           ;
+# ori       acc32, 1                ; Set acc32[0] for the LED on case
+
+# doLED:
+# set       user0|0, acc32          ; set the usr1 output per the acc32 LSB

@@ -25,3 +25,6 @@ Remember to rename Instructions when replacing inputs and outputs eg. in0 -> r0 
 the first user output a block uses should be renamed $USER1$ and a second as $USER2$, e.g. user0|0, -> $USER1$|0, 
 
 different blocks must not have a common name for an equ
+
+code for user outputs should be preceded by a '; @USER START@' line and followed by a '; @USER END@' line
+

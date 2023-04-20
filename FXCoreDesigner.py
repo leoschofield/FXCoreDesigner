@@ -35,9 +35,11 @@ class popUpParamLabel(Widget):
                 self.paramlabel.text=name
                 self.released = 0
 
+
 class myMousePos():
     def __init__(self):
         self.pos = [0,0]
+
 
 class FXCoreDesignerApp(App):
     def build(self):
@@ -82,36 +84,37 @@ class FXCoreDesignerApp(App):
         userBtn = Button(text ='User', size_hint_y = None, height = BUTTON_HEIGHT)
         userBtn.bind(on_release = lambda none: self.click.assign_block('User'))
         IOdrop.add_widget(userBtn)
+
         #--------------------------------FXdrop
         FXdrop = DropDown()
-        
         # reverbBtn = Button(text ='Reverb', size_hint_y = None, height = BUTTON_HEIGHT)
         # reverbBtn.bind(on_release = lambda none: self.click.assign_block('Reverb',1,1,6))
         # FXdrop.add_widget(reverbBtn)
-        
-        # delayBtn = Button(text ='Delay', size_hint_y = None, height = BUTTON_HEIGHT)
-        # delayBtn.bind(on_release = lambda none: self.click.assign_block('Delay',1,1,5))
-        # FXdrop.add_widget(delayBtn)
 
-        #Chorus
+        # Chorus
         chorusBtn = Button(text ='Chorus', size_hint_y = None, height = BUTTON_HEIGHT)
         chorusBtn.bind(on_release = lambda none: self.click.assign_block('Chorus',1,1,3,1))
         FXdrop.add_widget(chorusBtn)
 
-        #Flanger
+        # Flanger
         flangerBtn = Button(text ='Flanger', size_hint_y = None, height = BUTTON_HEIGHT)
         flangerBtn.bind(on_release = lambda none: self.click.assign_block('Flanger',1,1,4,0,0,1))
         FXdrop.add_widget(flangerBtn)
         
-        #Through-Zero Flanger
+        # Through-Zero Flanger
         zeroFlangerBtn = Button(text ='Through-Zero Flanger', size_hint_y = None, height = BUTTON_HEIGHT)
         zeroFlangerBtn.bind(on_release = lambda none: self.click.assign_block('Thru0 Flanger',1,1,5,0,0,1))
         FXdrop.add_widget(zeroFlangerBtn)
 
-        # #Tremelo
+        # Tremelo
         # tremoloBtn = Button(text ='Tremelo', size_hint_y = None, height = BUTTON_HEIGHT)
         # tremoloBtn.bind(on_release = lambda none: self.click.assign_block('Tremelo',1,1,3))
         # FXdrop.add_widget(tremoloBtn)
+
+        # Delay
+        delayBtn = Button(text ='Delay', size_hint_y = None, height = BUTTON_HEIGHT)
+        delayBtn.bind(on_release = lambda none: self.click.assign_block('Delay',1,1,3,2,2,1))
+        FXdrop.add_widget(delayBtn)
 
         #Distortion
         distBtn = Button(text ='Distortion', size_hint_y = None, height = BUTTON_HEIGHT)
@@ -123,12 +126,12 @@ class FXCoreDesignerApp(App):
         pitchBtn.bind(on_release = lambda none: self.click.assign_block('Pitch',1,1,3))
         FXdrop.add_widget(pitchBtn)
 
-        # #Looper
+        # Looper
         # looperBtn = Button(text ='Looper', size_hint_y = None, height = BUTTON_HEIGHT)
         # looperBtn.bind(on_release = lambda none: self.click.assign_block('Looper',1,1,2))
         # FXdrop.add_widget(looperBtn)
         
-        #Test
+        # Test
         testBtn = Button(text ='Test', size_hint_y = None, height = BUTTON_HEIGHT)
         testBtn.bind(on_release = lambda none: self.click.assign_block('Test',1,1,6,2,5,1))
         FXdrop.add_widget(testBtn)
@@ -161,30 +164,103 @@ class FXCoreDesignerApp(App):
 
         #--------------------------------Routingdrop
         RoutingDrop = DropDown()
-        #
+        
+        # Splitter
         splitterBtn = Button(text ='Splitter', size_hint_y = None, height = BUTTON_HEIGHT)
         splitterBtn.bind(on_release = lambda none: self.click.assign_block('Splitter',1))
         RoutingDrop.add_widget(splitterBtn)
-        #
+        
+        # Mixer
         mixerBtn = Button(text ='Mixer', size_hint_y = None, height = BUTTON_HEIGHT)
         mixerBtn.bind(on_release = lambda none: self.click.assign_block('Mixer',0,1))
         RoutingDrop.add_widget(mixerBtn)
 
+
+        #--------------------------------FlashDrop
+        FlashDrop = DropDown()
+        
+        zeroBtn = Button(text ='0', size_hint_y = None, height = BUTTON_HEIGHT)
+        zeroBtn.bind(on_release = lambda none: self.program_flash(0))
+        FlashDrop.add_widget(zeroBtn)
+        
+        oneBtn = Button(text ='1', size_hint_y = None, height = BUTTON_HEIGHT)
+        oneBtn.bind(on_release = lambda none: self.program_flash(1))
+        FlashDrop.add_widget(oneBtn)
+        
+        twoBtn = Button(text ='2', size_hint_y = None, height = BUTTON_HEIGHT)
+        twoBtn.bind(on_release = lambda none: self.program_flash(2))
+        FlashDrop.add_widget(twoBtn)
+
+        threeBtn = Button(text ='3', size_hint_y = None, height = BUTTON_HEIGHT)
+        threeBtn.bind(on_release = lambda none: self.program_flash(3))
+        FlashDrop.add_widget(threeBtn)
+
+        fourBtn = Button(text ='4', size_hint_y = None, height = BUTTON_HEIGHT)
+        fourBtn.bind(on_release = lambda none: self.program_flash(4))
+        FlashDrop.add_widget(fourBtn)
+        
+        fiveBtn = Button(text ='5', size_hint_y = None, height = BUTTON_HEIGHT)
+        fiveBtn.bind(on_release = lambda none: self.program_flash(5))
+        FlashDrop.add_widget(fiveBtn)
+        
+        sixBtn = Button(text ='6', size_hint_y = None, height = BUTTON_HEIGHT)
+        sixBtn.bind(on_release = lambda none: self.program_flash(6))
+        FlashDrop.add_widget(sixBtn)
+        
+        sevenBtn = Button(text ='7', size_hint_y = None, height = BUTTON_HEIGHT)
+        sevenBtn.bind(on_release = lambda none: self.program_flash(7))
+        FlashDrop.add_widget(sevenBtn)
+        
+        eightBtn = Button(text ='8', size_hint_y = None, height = BUTTON_HEIGHT)
+        eightBtn.bind(on_release = lambda none: self.program_flash(8))
+        FlashDrop.add_widget(eightBtn)
+        
+        nineBtn = Button(text ='9', size_hint_y = None, height = BUTTON_HEIGHT)
+        nineBtn.bind(on_release = lambda none: self.program_flash(9))
+        FlashDrop.add_widget(nineBtn)
+        
+        tenBtn = Button(text ='10', size_hint_y = None, height = BUTTON_HEIGHT)
+        tenBtn.bind(on_release = lambda none: self.program_flash(10))
+        FlashDrop.add_widget(tenBtn)
+        
+        elevenBtn = Button(text ='11', size_hint_y = None, height = BUTTON_HEIGHT)
+        elevenBtn.bind(on_release = lambda none: self.program_flash(11))
+        FlashDrop.add_widget(elevenBtn)
+        
+        twelveBtn = Button(text ='12', size_hint_y = None, height = BUTTON_HEIGHT)
+        twelveBtn.bind(on_release = lambda none: self.program_flash(12))
+        FlashDrop.add_widget(twelveBtn)
+        
+        thirteenBtn = Button(text ='13', size_hint_y = None, height = BUTTON_HEIGHT)
+        thirteenBtn.bind(on_release = lambda none: self.program_flash(13))
+        FlashDrop.add_widget(thirteenBtn)
+        
+        fourteenBtn = Button(text ='14', size_hint_y = None, height = BUTTON_HEIGHT)
+        fourteenBtn.bind(on_release = lambda none: self.program_flash(14))
+        FlashDrop.add_widget(fourteenBtn)
+        
+        fifteenBtn = Button(text ='15', size_hint_y = None, height = BUTTON_HEIGHT)
+        fifteenBtn.bind(on_release = lambda none: self.program_flash(15))
+        FlashDrop.add_widget(fifteenBtn)
+
         #-------------------------------- Buttons For Dropdowns
         IObutton = Button(text ='IO')
         IObutton.bind(on_release = IOdrop.open)
-        #
+
         FXbutton = Button(text ='FX')
         FXbutton.bind(on_release = FXdrop.open)
-        #
+
         AnalysisButton = Button(text ='Analysis')
         AnalysisButton.bind(on_release = AnalysisDrop.open)
-        #
+
         ControlsButton = Button(text ='Controls')
         ControlsButton.bind(on_release = ControlsDrop.open)
-        #
+
         RoutingButton = Button(text ='Routing')
         RoutingButton.bind(on_release = RoutingDrop.open)
+
+        FlashButton = Button(text ='Program Flash')
+        FlashButton.bind(on_release = FlashDrop.open)
 
         #--------------------------------
         CodeButton = Button(text ='Generate Code')
@@ -195,18 +271,16 @@ class FXCoreDesignerApp(App):
         ClearButton.bind(on_release = lambda none: self.clear_screen())
         
         #--------------------------------
-        SaveButton = Button(text ='Save Patch')
+        # SaveButton = Button(text ='Save Patch')
         #SaveButton.bind(on_release = lambda none: self.
+        
         #--------------------------------
-        LoadButton = Button(text ='Load Patch')
+        # LoadButton = Button(text ='Load Patch')
         #LoadButton.bind(on_release = lambda none: self.
+        
         #--------------------------------
         # RunButton = Button(text ='Run From RAM')
         #RunButton.bind(on_release = lambda none: self.
-
-        #--------------------------------
-        ProgButton = Button(text ='Load to Flash')
-        #ProgButton.bind(on_release = lambda none: self.
 
         #--------------------------------
         AboutButton = Button(text ='About')
@@ -223,11 +297,11 @@ class FXCoreDesignerApp(App):
         self.layout.add_widget(ControlsButton)
         self.layout.add_widget(RoutingButton)
         self.layout.add_widget(CodeButton)
-        self.layout.add_widget(SaveButton)
-        self.layout.add_widget(LoadButton)
+        # self.layout.add_widget(SaveButton)
+        # self.layout.add_widget(LoadButton)
         self.layout.add_widget(ClearButton)
         # self.layout.add_widget(RunButton)
-        self.layout.add_widget(ProgButton)
+        self.layout.add_widget(FlashButton)
         self.layout.add_widget(AboutButton)
         self.layout.add_widget(self.popUpLabel)
         self.layout.add_widget(self.click)
@@ -345,8 +419,11 @@ class FXCoreDesignerApp(App):
         #         blocks.remove(block)            
         #     popup.dismiss()
         
+    def program_flash(self,area):
+        print(area)
+
+
     def error_trap(self,error):
-        
         box = BoxLayout(orientation = 'vertical', padding = (10))
         btn1 = Button(text = "OK")   
         box.add_widget(btn1)
@@ -748,17 +825,16 @@ class FXCoreDesignerApp(App):
         self.registers_used["r12"] = 0
         self.registers_used["r13"] = 0
         self.registers_used["r14"] = 0
-        # self.registers_used["r15"] = 0
 
         for block in blocks:#loop through blocks until a start block is found
             if block.conLines != []:
-                if 'Input' in block.name or 'Splitter' in block.name: # start building the graph from the input   !!TODO!! signal generators can start a graph too
+                if 'Input' in block.name or 'Splitter' in block.name: # start building the graph from the input. TODO signal generators can start a graph too
                     if 'Splitter' in block.name: #if a splitter it has to be used already to start a graph
                         if block.usageState == 0:
                             continue
                         elif block.usageState == 1:
                             block.usageState = 2
-                            for reg in range(1, 14): #loop through registers r1-r14
+                            for reg in range(1, 14): # loop through registers r1-r14
                                 if self.registers_used["r"+str(reg)] == block.name: # find register used by splitter previously
                                     input_node = asm_node(block,self.registers_used,block.usageState,reg)
                                     self.registers_used["r"+str(reg)] = 0
